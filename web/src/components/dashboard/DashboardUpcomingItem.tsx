@@ -9,15 +9,25 @@ import {
 } from "flowbite-react";
 import { HiArrowNarrowRight, HiCalendar } from "react-icons/hi";
 
-export function DashboardUpcomingItem() {
+type DashboardUpcomingItemData = {
+    id: string;
+    dateTime: string;      // 필요하면 Date로 바꿔도 되고
+    displayTime: string;   // 타임라인에 그대로 보여줄 문자열
+    title: string;
+    description?: string;
+    actionLabel?: string;
+    actionHref?: string;
+};
+
+export function DashboardUpcomingItem(item: DashboardUpcomingItemData) {
     return (
             <TimelineItem>
                 <TimelinePoint icon={HiCalendar} />
                 <TimelineContent>
-                    <TimelineTime>2022년 2월</TimelineTime>
-                    <TimelineTitle>Tailwind CSS의 애플리케이션 UI 코드</TimelineTitle>
+                    <TimelineTime>{item.dateTime}</TimelineTime>
+                    <TimelineTitle>{item.title}</TimelineTitle>
                     <TimelineBody>
-                        대시보드 레이아웃, 차트, 칸반 보드, 캘린더, 사전 주문 전자상거래 및 마케팅 페이지를 포함하여 20개 이상의 페이지에 액세스하세요.
+                        {item.description}
                     </TimelineBody>
                     <Button color="gray">
                         자세히 알아보기
