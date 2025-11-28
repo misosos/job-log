@@ -1,6 +1,6 @@
 // src/App.tsx
 import { PageLayout } from "./components/layout/PageLayout";
-import {DashboardUpcomingSection} from "./components/dashboard/DashboardUpcomingSection.tsx";
+import {DashboardPage} from "./pages/dashboard/DashboardPage.tsx";
 
 function App() {
     return (
@@ -11,7 +11,7 @@ function App() {
                     <p className="text-sm text-slate-300">
                         여기에서 지원 현황, 할 일, 면접 기록을 한 번에 볼 수 있어요.
                     </p>
-                    <DashboardUpcomingSection/>
+                    <DashboardPage/>
                 </section>
             </PageLayout>
         </div>

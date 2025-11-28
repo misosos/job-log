@@ -1,13 +1,15 @@
 import {Timeline,} from "flowbite-react";
 import {DashboardUpcomingItem} from "./DashboardUpcomingItem.tsx";
+import {SectionCard} from "../common/SectionCard.tsx";
 
 export function DashboardUpcomingSection() {
     return (
         <div>
-            <h2 className="jl-section-title">다가오는 마감 / 면접</h2>
-            <Timeline>
-                <DashboardUpcomingItem />
-            </Timeline>
+            <SectionCard title={"다가오는 마감/면접"}>
+                <Timeline>
+                    <DashboardUpcomingItem />
+                </Timeline>
+            </SectionCard>
         </div>
     );
 }
