@@ -40,4 +40,9 @@
     .jl-nav-link {
         @apply text-sm text-slate-200 hover:text-white;
     }
+
+    /* 섹션 제목 공통 스타일 */
+    .jl-section-title {
+        @apply mb-3 text-lg font-semibold text-white;
+    }
 }
