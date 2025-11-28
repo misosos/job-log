@@ -1,12 +1,6 @@
-import 'styles/globals.css'
+// src/App.tsx
+import { Button } from "flowbite-react";
 
-function App() {
-
-  return (
-    <>
-
-    </>
-  )
+export default function App() {
+    return <Button>Click me</Button>;
 }
-
-export default App
