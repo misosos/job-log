@@ -10,6 +10,7 @@ import {
     NavbarToggle,
 } from "flowbite-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import {GoogleSignInButton} from "../auth/GoogleSignInButton.tsx";
 
 export function Header() {
     const location = useLocation();
@@ -33,6 +34,7 @@ export function Header() {
             </NavbarBrand>
 
             <div className="jl-header-right">
+                <GoogleSignInButton />
                 <Dropdown
                     arrowIcon={false}
                     inline
