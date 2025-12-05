@@ -7,14 +7,21 @@ import {
     Navbar,
     NavbarBrand,
     NavbarCollapse,
-    NavbarLink,
     NavbarToggle,
 } from "flowbite-react";
+import { Link, useLocation } from "react-router-dom";
 
 export function Header() {
+    const location = useLocation();
+    const isActive = (path: string) => location.pathname === path;
+    const navLinkClass = (path: string) =>
+        isActive(path)
+            ? "jl-nav-link jl-nav-link--active"
+            : "jl-nav-link";
+
     return (
         <Navbar fluid rounded className="jl-header">
-            <NavbarBrand href="/">
+            <NavbarBrand as={Link} to="/">
                 <span className="jl-logo">준로그</span>
             </NavbarBrand>
 
@@ -46,21 +53,21 @@ export function Header() {
             </div>
 
             <NavbarCollapse className="jl-nav">
-                <NavbarLink href="/" active className="jl-nav-link">
+                <Link to="/" className={navLinkClass("/")}>
                     대시보드
-                </NavbarLink>
-                <NavbarLink href="/applications" className="jl-nav-link">
+                </Link>
+                <Link to="/applications" className={navLinkClass("/applications")}>
                     지원 현황
-                </NavbarLink>
-                <NavbarLink href="/planner" className="jl-nav-link">
+                </Link>
+                <Link to="/planner" className={navLinkClass("/planner")}>
                     플래너
-                </NavbarLink>
-                <NavbarLink href="/resumes" className="jl-nav-link">
+                </Link>
+                <Link to="/resumes" className={navLinkClass("/resumes")}>
                     이력서
-                </NavbarLink>
-                <NavbarLink href="/interviews" className="jl-nav-link">
+                </Link>
+                <Link to="/interviews" className={navLinkClass("/interviews")}>
                     면접 기록
-                </NavbarLink>
+                </Link>
             </NavbarCollapse>
         </Navbar>
     );
