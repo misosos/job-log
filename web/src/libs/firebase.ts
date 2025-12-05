@@ -14,6 +14,7 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 const app = initializeApp(firebaseConfig);
+export const firebaseApp = app;
 
 // Auth
 export const auth = getAuth(app);
@@ -24,6 +25,6 @@ export const db = getFirestore(app);
 
 // Analytics (지원되는 환경에서만, SSR/테스트 환경 보호)
 export const analyticsPromise =
-    typeof window !== "undefined"
+    typeof window !== "undefined" && firebaseConfig.measurementId
         ? isSupported().then((yes) => (yes ? getAnalytics(app) : null))
         : Promise.resolve(null);
