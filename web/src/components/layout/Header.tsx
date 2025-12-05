@@ -34,7 +34,7 @@ export function Header() {
             </NavbarBrand>
 
             <div className="jl-header-right">
-                <GoogleSignInButton />
+                <GoogleSignInButton hideWhenLoggedOut />
                 <Dropdown
                     arrowIcon={false}
                     inline
@@ -52,7 +52,6 @@ export function Header() {
               name@flowbite.com
             </span>
                     </DropdownHeader>
-                    <DropdownItem>Dashboard</DropdownItem>
                     <DropdownItem>Settings</DropdownItem>
                     <DropdownItem>Earnings</DropdownItem>
                     <DropdownDivider />
@@ -62,9 +61,6 @@ export function Header() {
             </div>
 
             <NavbarCollapse className="jl-nav">
-                <Link to="/" className={navLinkClass("/")}>
-                    대시보드
-                </Link>
                 <Link to="/applications" className={navLinkClass("/applications")}>
                     지원 현황
                 </Link>
