@@ -9,10 +9,11 @@ import {
     NavbarCollapse,
     NavbarToggle,
 } from "flowbite-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export function Header() {
     const location = useLocation();
+    const navigate = useNavigate();
     const isActive = (path: string) => location.pathname === path;
     const navLinkClass = (path: string) =>
         isActive(path)
@@ -21,7 +22,13 @@ export function Header() {
 
     return (
         <Navbar fluid rounded className="jl-header">
-            <NavbarBrand as={Link} to="/">
+            <NavbarBrand
+                href="/"
+                onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/");
+                }}
+            >
                 <span className="jl-logo">준로그</span>
             </NavbarBrand>
 
