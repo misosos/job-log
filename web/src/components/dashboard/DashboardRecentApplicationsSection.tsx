@@ -1,35 +1,86 @@
-import { SectionCard } from "../common/SectionCard"
-import { DashboardApplicationItem } from "./DashboardApplicationItem";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  Timestamp,
+} from "firebase/firestore";
 
-const recentApplications = [
-    {
-        company: "카카오페이",
-        role: "데이터 산출 인턴",
-        status: "서류 제출" as const,
-        dateLabel: "11.27 지원",
-    },
-    {
-        company: "IBK기업은행",
-        role: "디지털 인턴",
-        status: "서류 통과" as const,
-        dateLabel: "11.20 결과",
-    },
-    {
-        company: "AXA손보",
-        role: "데이터 직무",
-        status: "지원 예정" as const,
-        dateLabel: "11.30 마감",
-    },
-];
+import { SectionCard } from "../common/SectionCard";
+import { auth, db } from "../../libs/firebase";
+import {
+  ApplicationList,
+  type ApplicationRow,
+} from "../applications/ApplicationList";
+import type { ApplicationStatus } from "../../features/applications/types.ts";
+
+type ApplicationDoc = {
+  company?: string;
+  position?: string;
+  role?: string;
+  status?: ApplicationStatus;
+  appliedAt?: Timestamp | null;
+  createdAt?: Timestamp | null;
+  deadline?: Timestamp | null;
+};
+
+function formatDeadlineLabel(deadline?: Timestamp | null): string {
+  if (!deadline) {
+    return "마감일 없음";
+  }
+  const date = deadline.toDate();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${month}.${day} 마감`;
+}
 
 export function DashboardRecentApplicationsSection() {
-    return (
-        <SectionCard title="최근 지원 내역">
-            <div className="space-y-2">
-                {recentApplications.map((app) => (
-                    <DashboardApplicationItem key={app.company + app.role} {...app} />
-                ))}
-            </div>
-        </SectionCard>
-    );
+  const [items, setItems] = useState<ApplicationRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          setItems([]);
+          return;
+        }
+
+        const colRef = collection(db, "users", user.uid, "applications");
+        const q = query(colRef, orderBy("createdAt", "desc"), limit(5));
+        const snap = await getDocs(q);
+
+        const rows: ApplicationRow[] = snap.docs.map((docSnap) => {
+          const data = docSnap.data() as ApplicationDoc;
+          return {
+            id: docSnap.id,
+            company: data.company ?? "",
+            role: data.position ?? data.role ?? "",
+            status: (data.status ?? "지원 예정") as ApplicationStatus,
+            appliedAtLabel: formatDeadlineLabel(data.deadline ?? null),
+            deadline: data.deadline ?? null,
+          };
+        });
+
+        setItems(rows);
+      } catch (error) {
+        console.error("대시보드 최근 지원 내역 로드 실패:", error);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, []);
+
+  return (
+    <SectionCard title="최근 지원 내역">
+      <ApplicationList loading={loading} applications={items} />
+    </SectionCard>
+  );
 }

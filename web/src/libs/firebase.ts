@@ -1,9 +1,9 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -14,6 +14,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+export const firebaseApp = app;
 
 // Auth
 export const auth = getAuth(app);
@@ -22,7 +23,8 @@ export const googleProvider = new GoogleAuthProvider();
 // Firestore
 export const db = getFirestore(app);
 
-// Analytics (지원되는 환경에서만)
-export const analyticsPromise = isSupported().then((yes) =>
-    yes ? getAnalytics(app) : null,
-);
+// Analytics (지원되는 환경에서만, SSR/테스트 환경 보호)
+export const analyticsPromise =
+    typeof window !== "undefined" && firebaseConfig.measurementId
+        ? isSupported().then((yes) => (yes ? getAnalytics(app) : null))
+        : Promise.resolve(null);

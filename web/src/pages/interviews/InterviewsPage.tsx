@@ -1,28 +1,105 @@
-// src/pages/interviews/InterviewsPage.tsx
+import {useState} from "react";
 import { SectionCard } from "../../components/common/SectionCard";
+import { auth } from "../../libs/firebase";
+import { UpcomingInterviewsSection } from "../../components/interviews/UpcomingInterviewsSection";
+import { InterviewReviewSection } from "../../components/interviews/InterviewReviewSection";
+import type { InterviewItem } from "../../features/interviews/interviews";
+import { createInterview } from "../../features/interviews/api";
+import { InterviewCreateForm } from "../../components/interviews/InterviewCreateForm";
+import { useInterviews } from "../../features/interviews/useInterviews";
+
+function splitUpcomingAndPast(items: InterviewItem[]) {
+    const now = new Date();
+    const upcoming: InterviewItem[] = [];
+    const past: InterviewItem[] = [];
+
+    items.forEach((item) => {
+        const target = item.scheduledAt ? item.scheduledAt.toDate() : null;
+
+        if (target && target >= now) {
+            upcoming.push(item);
+        } else {
+            past.push(item);
+        }
+    });
+
+    return {
+        upcoming,
+        past,
+    };
+}
 
 export function InterviewsPage() {
+    // 현재 로그인 유저 기준으로 훅 사용
+    const currentUser = auth.currentUser;
+    const userId = currentUser?.uid ?? null;
+
+    const {
+        interviews,
+        loading,
+        error: listError,
+        reload,
+    } = useInterviews(userId);
+
+    const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
+
+    const handleCreate = async (values: {
+        company: string;
+        role: string;
+        date: string;
+        time: string;
+        type: string;
+        note: string;
+    }) => {
+        const user = auth.currentUser;
+        if (!user) {
+            setFormError("로그인이 필요합니다.");
+            return;
+        }
+
+        setSaving(true);
+        setFormError(null);
+
+        try {
+            await createInterview({
+                userId: user.uid,
+                company: values.company,
+                role: values.role,
+                date: values.date,
+                time: values.time,
+                type: values.type,
+                note: values.note,
+            });
+
+            // 저장 후 목록 새로고침
+            await reload();
+        } catch (err) {
+            console.error("면접 기록 저장 실패:", err);
+            setFormError("면접을 저장하는 중 문제가 발생했습니다.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const { upcoming, past } = splitUpcomingAndPast(interviews);
+
     return (
         <div className="space-y-6">
-            <SectionCard title="다가오는 면접">
-                <p className="text-sm text-slate-300">
-                    일정이 잡힌 면접들을 한눈에 볼 수 있어요.
-                </p>
+            <SectionCard title="새 면접 기록 추가">
+                <InterviewCreateForm
+                    saving={saving}
+                    error={formError}
+                    onSubmit={handleCreate}
+                />
             </SectionCard>
 
-            <SectionCard title="면접 회고">
-                <div className="space-y-2">
-                    <div className="rounded-md bg-slate-800/60 px-3 py-2">
-                        <p className="text-sm font-medium text-white">
-                            IBK기업은행 디지털 인턴 1차 면접
-                        </p>
-                        <p className="text-xs text-slate-400">진행일: 11.20</p>
-                        <p className="mt-1 text-xs text-slate-300">
-                            예상 질문과 실제 질문이 어떻게 달랐는지, 다음에 보완할 점 등을 간단히 정리합니다.
-                        </p>
-                    </div>
-                </div>
-            </SectionCard>
+            {listError && (
+                <p className="text-xs text-red-400">{listError}</p>
+            )}
+
+            <UpcomingInterviewsSection items={upcoming} loading={loading} />
+            <InterviewReviewSection items={past} loading={loading} />
         </div>
     );
 }

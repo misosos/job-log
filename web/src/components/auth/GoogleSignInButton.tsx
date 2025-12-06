@@ -4,7 +4,12 @@ import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../../libs/firebase";
 import { Button } from "flowbite-react";
 
-export function GoogleSignInButton() {
+type GoogleSignInButtonProps = {
+    /** 헤더처럼 로그인 전에는 아무 것도 안 보이게 하고 싶을 때 true */
+    hideWhenLoggedOut?: boolean;
+};
+
+export function GoogleSignInButton({ hideWhenLoggedOut = false }: GoogleSignInButtonProps) {
     const [userEmail, setUserEmail] = useState<string | null>(null);
 
     useEffect(() => {
@@ -39,6 +44,11 @@ export function GoogleSignInButton() {
                 </Button>
             </div>
         );
+    }
+
+    if (!userEmail && hideWhenLoggedOut) {
+        // 예: 헤더에서는 로그인 전 버튼을 숨기고 싶을 때
+        return null;
     }
 
     return (
