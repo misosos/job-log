@@ -1,4 +1,7 @@
-import { ApplicationStatusBadge, type ApplicationStatus } from "../common/ApplicationStatusBadge";
+// src/components/dashboard/DashboardApplicationItem.tsx
+
+import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
+import type { ApplicationStatus } from "../applications/types";
 
 type ApplicationItemProps = {
     company: string;
