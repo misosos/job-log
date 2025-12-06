@@ -10,25 +10,26 @@ type Props = {
 };
 
 export function InterviewReviewSection({ items, loading }: Props) {
+    // Firestore Timestamp-like & Date를 모두 처리하기 위한 보조 타입
+    type SchedLike = Date | { toDate: () => Date } | null | undefined;
+
     // 현재 시각 기준으로, 이미 지난 면접만 회고 대상으로 분리
     const now = new Date();
     const completedItems = items.filter((item) => {
-        const scheduledAt: unknown = (item as any).scheduledAt;
+        const scheduledAt = (item as { scheduledAt?: SchedLike }).scheduledAt;
 
         if (!scheduledAt) {
             return false;
         }
 
-        let date: Date | null = null;
+        let date: Date;
 
         // Firestore Timestamp 또는 Date 모두 대응
         if (scheduledAt instanceof Date) {
             date = scheduledAt;
-        } else if (typeof (scheduledAt as any).toDate === "function") {
-            date = (scheduledAt as any).toDate();
-        }
-
-        if (!date) {
+        } else if ("toDate" in scheduledAt && typeof scheduledAt.toDate === "function") {
+            date = scheduledAt.toDate();
+        } else {
             return false;
         }
 
