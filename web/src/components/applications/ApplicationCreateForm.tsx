@@ -1,24 +1,29 @@
 import type { FormEvent } from "react";
-import { Button, Label, TextInput } from "flowbite-react";
+import { Button, Label, TextInput, Select } from "flowbite-react";
 import { SectionCard } from "../common/SectionCard";
+import type { ApplicationStatus } from "../common/ApplicationStatusBadge";
 
 type Props = {
     company: string;
     role: string;
+    status: ApplicationStatus;
     saving: boolean;
     error: string | null;
     onCompanyChange: (value: string) => void;
     onRoleChange: (value: string) => void;
+    onStatusChange: (value: ApplicationStatus) => void;
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
 
 export function ApplicationCreateForm({
                                           company,
                                           role,
+                                          status,
                                           saving,
                                           error,
                                           onCompanyChange,
                                           onRoleChange,
+                                          onStatusChange,
                                           onSubmit,
                                       }: Props) {
     return (
@@ -56,6 +61,26 @@ export function ApplicationCreateForm({
                         onChange={(e) => onRoleChange(e.target.value)}
                         required
                     />
+                </div>
+                <div className="flex-1">
+                    <Label
+                        htmlFor="status"
+                        className="mb-1 block text-xs md:text-sm"
+                    >
+                        상태
+                    </Label>
+                    <Select
+                        id="status"
+                        value={status}
+                        onChange={(e) => onStatusChange(e.target.value as ApplicationStatus)}
+                    >
+                        <option value="지원 예정">지원 예정</option>
+                        <option value="서류 제출">서류 제출</option>
+                        <option value="서류 통과">서류 통과</option>
+                        <option value="면접 진행">면접 진행</option>
+                        <option value="최종 합격">최종 합격</option>
+                        <option value="불합격">불합격</option>
+                    </Select>
                 </div>
                 <div className="flex-none">
                     <Button type="submit" disabled={saving}>

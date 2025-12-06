@@ -3,7 +3,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { collection, getDocs, orderBy, query, Timestamp } from "firebase/firestore";
 
 import { auth, db } from "../../libs/firebase";
-import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
 import {
   ApplicationList,
   type ApplicationRow,
@@ -11,6 +10,7 @@ import {
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
 import { createApplication } from "../../features/applications/api";
+import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
 
 // Firestore 문서 원본 타입
 type ApplicationDoc = {
@@ -21,6 +21,8 @@ type ApplicationDoc = {
   appliedAt?: Timestamp | null;
   deadline?: Timestamp | null;
 };
+
+const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
 
 function formatAppliedLabel(appliedAt?: Timestamp | null): string {
   if (!appliedAt) return "";
@@ -46,6 +48,7 @@ export function ApplicationsPage() {
   // 새 지원 추가용 상태
   const [newCompany, setNewCompany] = useState("");
   const [newRole, setNewRole] = useState("");
+  const [newStatus, setNewStatus] = useState<ApplicationStatus>(DEFAULT_STATUS);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -66,11 +69,13 @@ export function ApplicationsPage() {
 
       const rows: ApplicationRow[] = snap.docs.map((docSnap) => {
         const data = docSnap.data() as ApplicationDoc;
+        const status: ApplicationStatus = data.status ?? DEFAULT_STATUS;
+
         return {
           id: docSnap.id,
           company: data.company ?? "",
           role: data.position ?? data.role ?? "",
-          status: (data.status ?? "지원 예정") as ApplicationStatus,
+          status,
           appliedAtLabel: formatAppliedLabel(data.appliedAt ?? null),
           deadline: data.deadline ?? null,
         };
@@ -103,10 +108,12 @@ export function ApplicationsPage() {
       await createApplication({
         company: newCompany.trim(),
         position: newRole.trim(),
+        status: newStatus as Parameters<typeof createApplication>[0]["status"],
       });
 
       setNewCompany("");
       setNewRole("");
+      setNewStatus(DEFAULT_STATUS);
 
       await load(); // 저장 후 리스트 새로고침
     } catch (error) {
@@ -131,10 +138,12 @@ export function ApplicationsPage() {
       <ApplicationCreateForm
         company={newCompany}
         role={newRole}
+        status={newStatus}
         saving={saving}
         error={saveError}
         onCompanyChange={setNewCompany}
         onRoleChange={setNewRole}
+        onStatusChange={setNewStatus}
         onSubmit={handleCreate}
       />
 

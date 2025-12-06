@@ -11,9 +11,8 @@ export type ApplicationRow = {
     role: string;
     status: ApplicationStatus;
     appliedAtLabel: string;
-    deadline?: Timestamp | null;
+    deadline: Timestamp | null;
 };
-
 type Props = {
     loading: boolean;
     applications: ApplicationRow[];
