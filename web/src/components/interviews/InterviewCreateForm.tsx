@@ -131,7 +131,12 @@ export function InterviewCreateForm({ saving, error, onSubmit }: Props) {
             {error && <p className="text-xs text-red-400">{error}</p>}
 
             <div className="flex justify-end">
-                <Button type="submit" color="purple" disabled={saving}>
+                <Button
+                    type="submit"
+                    disabled={saving}
+                    color="gray"
+                    className="!bg-emerald-500 hover:!bg-emerald-400 !text-slate-900 border-0 text-sm font-medium px-4 py-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
                     {saving ? "저장 중..." : "면접 기록 저장"}
                 </Button>
             </div>

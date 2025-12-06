@@ -51,6 +51,7 @@ export function ApplicationCreateForm({
                         required
                     />
                 </div>
+
                 <div className="flex-1">
                     <Label
                         htmlFor="role"
@@ -66,6 +67,7 @@ export function ApplicationCreateForm({
                         required
                     />
                 </div>
+
                 <div className="flex-1">
                     <Label
                         htmlFor="status"
@@ -76,7 +78,9 @@ export function ApplicationCreateForm({
                     <Select
                         id="status"
                         value={status}
-                        onChange={(e) => onStatusChange(e.target.value as ApplicationStatus)}
+                        onChange={(e) =>
+                            onStatusChange(e.target.value as ApplicationStatus)
+                        }
                     >
                         <option value="지원 예정">지원 예정</option>
                         <option value="서류 제출">서류 제출</option>
@@ -86,6 +90,7 @@ export function ApplicationCreateForm({
                         <option value="불합격">불합격</option>
                     </Select>
                 </div>
+
                 <div className="flex-1">
                     <Label
                         htmlFor="deadline"
@@ -100,12 +105,25 @@ export function ApplicationCreateForm({
                         onChange={(e) => onDeadlineChange(e.target.value)}
                     />
                 </div>
+
                 <div className="flex-none">
-                    <Button type="submit" disabled={saving}>
+                    <Button
+                        type="submit"
+                        disabled={saving}
+                        color="gray"
+                        className="
+                        !bg-emerald-500
+                        hover:!bg-emerald-400
+                        !border-0
+                        !text-slate-900
+                        disabled:opacity-60
+                      "
+                    >
                         {saving ? "저장 중..." : "지원 기록 추가"}
                     </Button>
                 </div>
             </form>
+
             {error && (
                 <p className="mt-2 text-xs text-red-400">
                     {error}
