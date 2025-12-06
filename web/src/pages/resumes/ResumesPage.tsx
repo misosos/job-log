@@ -1,40 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
-import {
-    collection,
-    addDoc,
-    getDocs,
-    orderBy,
-    query,
-    serverTimestamp,
-    Timestamp,
-    writeBatch,
-} from "firebase/firestore";
 import { SectionCard } from "../../components/common/SectionCard";
-import { auth, db } from "../../libs/firebase";
+import { auth } from "../../libs/firebase";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
+import { ResumeList } from "../../components/resumes/ResumeList";
+import type { ResumeVersion } from "../../features/resumes/types";
 import {
-    ResumeList,
-    type ResumeVersion,
-} from "../../components/resumes/ResumeList";
-
-type ResumeDoc = {
-    title?: string;
-    target?: string;
-    note?: string;
-    link?: string | null;
-    updatedAt?: Timestamp | null;
-    createdAt?: Timestamp | null;
-    isDefault?: boolean | null;
-};
-
-function formatDate(ts?: Timestamp | null): string {
-    if (!ts) return "";
-    const date = ts.toDate();
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    return `${yyyy}.${mm}.${dd}`;
-}
+    createResume,
+    fetchResumes,
+    setDefaultResume,
+} from "../../features/resumes/api";
 
 export function ResumesPage() {
     const [resumes, setResumes] = useState<ResumeVersion[]>([]);
@@ -58,23 +32,7 @@ export function ResumesPage() {
                 return;
             }
 
-            const colRef = collection(db, "users", user.uid, "resumes");
-            const q = query(colRef, orderBy("updatedAt", "desc"));
-            const snap = await getDocs(q);
-
-            const rows: ResumeVersion[] = snap.docs.map((docSnap) => {
-                const data = docSnap.data() as ResumeDoc;
-                return {
-                    id: docSnap.id,
-                    title: data.title ?? "",
-                    target: data.target ?? "",
-                    note: data.note ?? undefined,
-                    link: data.link ?? undefined,
-                    updatedAt: formatDate(data.updatedAt ?? data.createdAt ?? null),
-                    isDefault: data.isDefault ?? false,
-                };
-            });
-
+            const rows = await fetchResumes(user.uid);
             setResumes(rows);
         } catch (err) {
             console.error("이력서 버전 불러오기 실패:", err);
@@ -99,14 +57,11 @@ export function ResumesPage() {
                 return;
             }
 
-            await addDoc(collection(db, "users", user.uid, "resumes"), {
+            await createResume(user.uid, {
                 title: title.trim(),
                 target: target.trim(),
-                note: note.trim() ? note.trim() : null,
-                link: link.trim() ? link.trim() : null,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                isDefault: false,
+                note: note.trim() ? note.trim() : undefined,
+                link: link.trim() ? link.trim() : undefined,
             });
 
             setTitle("");
@@ -129,19 +84,7 @@ export function ResumesPage() {
                 return;
             }
 
-            const colRef = collection(db, "users", user.uid, "resumes");
-            const snap = await getDocs(colRef);
-            const batch = writeBatch(db);
-
-            snap.docs.forEach((docSnap) => {
-                const isTarget = docSnap.id === resumeId;
-                batch.update(docSnap.ref, {
-                    isDefault: isTarget,
-                    updatedAt: serverTimestamp(),
-                });
-            });
-
-            await batch.commit();
+            await setDefaultResume(user.uid, resumeId);
             await loadResumes();
         } catch (err) {
             console.error("기본 이력서 설정 실패:", err);
@@ -169,11 +112,7 @@ export function ResumesPage() {
                     onChangeNote={setNote}
                 />
 
-                {error && (
-                    <p className="mb-2 text-xs text-red-400">
-                        {error}
-                    </p>
-                )}
+                {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
                 <ResumeList
                     resumes={resumes}
