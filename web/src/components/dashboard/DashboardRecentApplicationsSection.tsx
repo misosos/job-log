@@ -11,7 +11,7 @@ import {
 import { SectionCard } from "../common/SectionCard";
 import { DashboardApplicationItem } from "./DashboardApplicationItem";
 import { auth, db } from "../../libs/firebase";
-import type { ApplicationStatus } from "../applications/types";
+import type { ApplicationStatus } from "../../features/applications/types.ts";
 
 type ApplicationDoc = {
   company?: string;

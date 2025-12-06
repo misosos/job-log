@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardApplicationItem.tsx
 
 import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
-import type { ApplicationStatus } from "../applications/types";
+import type { ApplicationStatus } from "../../features/applications/types.ts";
 
 type ApplicationItemProps = {
     company: string;

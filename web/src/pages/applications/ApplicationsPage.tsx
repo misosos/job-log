@@ -14,7 +14,7 @@ import {
   createApplication,
   updateApplication,
   deleteApplication,
-} from "../../components/applications/api";
+} from "../../features/applications/api.ts";
 import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
 
 // Firestore 문서 원본 타입
