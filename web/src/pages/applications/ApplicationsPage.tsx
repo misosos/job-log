@@ -9,7 +9,12 @@ import {
 } from "../../components/applications/ApplicationList";
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
-import { createApplication } from "../../features/applications/api";
+import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
+import {
+  createApplication,
+  updateApplication,
+  deleteApplication,
+} from "../../components/applications/api";
 import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
 
 // Firestore 문서 원본 타입
@@ -48,10 +53,18 @@ export function ApplicationsPage() {
   // 새 지원 추가용 상태
   const [newCompany, setNewCompany] = useState("");
   const [newRole, setNewRole] = useState("");
-  const [newStatus, setNewStatus] = useState<ApplicationStatus>(DEFAULT_STATUS);
+  const [newStatus, setNewStatus] =
+    useState<ApplicationStatus>(DEFAULT_STATUS);
   const [newDeadline, setNewDeadline] = useState(""); // YYYY-MM-DD 문자열
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // 수정/삭제용 상태
+  const [editingTarget, setEditingTarget] = useState<ApplicationRow | null>(
+    null,
+  );
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Firestore에서 지원 리스트 로드
   const load = async () => {
@@ -117,8 +130,8 @@ export function ApplicationsPage() {
       await createApplication({
         company: newCompany.trim(),
         position: newRole.trim(),
-        status: newStatus as Parameters<typeof createApplication>[0]["status"],
-        deadline: deadlineTimestamp as Parameters<typeof createApplication>[0]["deadline"],
+        status: newStatus,
+        deadline: deadlineTimestamp ?? undefined,
       });
 
       setNewCompany("");
@@ -132,6 +145,44 @@ export function ApplicationsPage() {
       setSaveError("지원 내역을 저장하는 중 문제가 발생했습니다.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // 수정 모달 열기/닫기
+  const handleOpenEdit = (row: ApplicationRow) => {
+    setEditingTarget(row);
+    setEditError(null);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingTarget(null);
+  };
+
+  // 상태 수정 저장
+  const handleSaveEdit = async (id: string, status: ApplicationStatus) => {
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      await updateApplication(id, { status });
+      setEditingTarget(null);
+      await load();
+    } catch (error) {
+      console.error("지원 내역 수정 실패:", error);
+      setEditError("지원 내역을 수정하는 중 문제가 발생했습니다.");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // 삭제 처리
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("이 지원 내역을 삭제할까요?")) return;
+
+    try {
+      await deleteApplication(id);
+      await load();
+    } catch (error) {
+      console.error("지원 내역 삭제 실패:", error);
     }
   };
 
@@ -167,7 +218,21 @@ export function ApplicationsPage() {
         dueThisWeek={dueThisWeekCount}
       />
 
-      <ApplicationList loading={loading} applications={applications} />
+      <ApplicationList
+        loading={loading}
+        applications={applications}
+        onEdit={handleOpenEdit}
+        onDelete={handleDelete}
+      />
+
+      <ApplicationEditModal
+        open={!!editingTarget}
+        target={editingTarget}
+        saving={editSaving}
+        error={editError}
+        onClose={handleCloseEdit}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }

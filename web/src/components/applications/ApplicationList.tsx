@@ -17,6 +17,8 @@ export type ApplicationRow = {
 type Props = {
   loading: boolean;
   applications: ApplicationRow[];
+  onEdit?: (row: ApplicationRow) => void;
+  onDelete?: (id: string) => void;
 };
 
 function formatDeadline(deadline: Timestamp | null): string {
@@ -43,7 +45,7 @@ function formatDday(deadline: Timestamp | null): string {
   return `D+${Math.abs(diffDays)}`;
 }
 
-export function ApplicationList({ loading, applications }: Props) {
+export function ApplicationList({ loading, applications, onEdit, onDelete }: Props) {
   if (loading) {
     return (
       <SectionCard title="지원 목록">
@@ -94,6 +96,7 @@ export function ApplicationList({ loading, applications }: Props) {
                 <span className="text-xs text-slate-400">
                   {app.appliedAtLabel || "-"}
                 </span>
+
                 {app.deadline && (
                   <div className="flex items-center gap-2 text-[11px] text-slate-400">
                     <span>마감 {deadlineLabel}</span>
@@ -101,6 +104,29 @@ export function ApplicationList({ loading, applications }: Props) {
                       <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[11px] font-medium text-rose-400">
                         {dday}
                       </span>
+                    )}
+                  </div>
+                )}
+
+                {(onEdit || onDelete) && (
+                  <div className="mt-1 flex gap-3 text-[11px] text-slate-400">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(app)}
+                        className="hover:text-rose-300"
+                      >
+                        수정
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(app.id)}
+                        className="hover:text-rose-300"
+                      >
+                        삭제
+                      </button>
                     )}
                   </div>
                 )}
