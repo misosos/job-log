@@ -2,99 +2,105 @@ import {
     addDoc,
     collection,
     doc,
+    getDoc,
     getDocs,
     orderBy,
     query,
     serverTimestamp,
     updateDoc,
+    type QueryDocumentSnapshot,
 } from "firebase/firestore";
-
 import { auth, db } from "../../libs/firebase";
-import type { PlannerScope, PlannerTask } from "./types";
+import type { PlannerTask, PlannerScope } from "./types";
 
-// Firestore에 저장된 문서 타입
-type PlannerTaskDoc = {
-    title?: string;
-    ddayLabel?: string;
-    done?: boolean;
-    scope?: PlannerScope;
-    createdAt?: unknown;
-};
-
-// 현재 로그인 유저의 모든 플래너 태스크 불러오기
-export async function fetchPlannerTasks(): Promise<PlannerTask[]> {
+// 로그인 유저 UID
+function getUserIdOrThrow(): string {
     const user = auth.currentUser;
     if (!user) {
-        console.warn("fetchPlannerTasks: 로그인 필요");
-        return [];
+        throw new Error("로그인이 필요합니다.");
     }
+    return user.uid;
+}
 
-    const colRef = collection(db, "users", user.uid, "tasks");
+// 컬렉션 레퍼런스
+function plannerTasksCollection(userId: string) {
+    return collection(db, "users", userId, "tasks");
+}
+
+// 문서 → PlannerTask 매핑
+function mapPlannerTaskDoc(docSnap: QueryDocumentSnapshot): PlannerTask {
+    const data = docSnap.data() as Partial<PlannerTask> & {
+        ddayLabel?: string;
+        scope?: PlannerScope;
+        done?: boolean;
+    };
+
+    return {
+        id: docSnap.id,
+        title: data.title ?? "",
+        ddayLabel: data.ddayLabel ?? "",
+        done: data.done ?? false,
+        scope: data.scope ?? "today",
+    };
+}
+
+// 전체 태스크 불러오기
+export async function fetchPlannerTasks(): Promise<PlannerTask[]> {
+    const userId = getUserIdOrThrow();
+    const colRef = plannerTasksCollection(userId);
     const q = query(colRef, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
 
-    const all: PlannerTask[] = snap.docs.map((docSnap) => {
-        const data = docSnap.data() as PlannerTaskDoc;
-        return {
-            id: docSnap.id,
-            title: data.title ?? "",
-            ddayLabel: data.ddayLabel ?? "",
-            done: data.done ?? false,
-            scope: data.scope ?? "today",
-        };
-    });
-
-    return all;
+    return snap.docs.map((docSnap) => mapPlannerTaskDoc(docSnap));
 }
 
 // 새 태스크 생성
 export type CreatePlannerTaskInput = {
     title: string;
-    scope: PlannerScope;
     ddayLabel: string;
+    scope: PlannerScope;
 };
 
 export async function createPlannerTask(
     input: CreatePlannerTaskInput,
 ): Promise<PlannerTask> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error("로그인이 필요합니다.");
-    }
+    const userId = getUserIdOrThrow();
+    const colRef = plannerTasksCollection(userId);
+    const now = serverTimestamp();
 
-    const colRef = collection(db, "users", user.uid, "tasks");
+    const docRef = await addDoc(colRef, {
+        userId,
+        title: input.title,
+        ddayLabel: input.ddayLabel,
+        scope: input.scope,
+        done: false,
+        createdAt: now,
+        updatedAt: now,
+    });
 
-    const payload = {
+    return {
+        id: docRef.id,
         title: input.title,
         ddayLabel: input.ddayLabel,
         done: false,
         scope: input.scope,
-        createdAt: serverTimestamp(),
     };
-
-    const docRef = await addDoc(colRef, payload);
-
-    const newTask: PlannerTask = {
-        id: docRef.id,
-        title: payload.title,
-        ddayLabel: payload.ddayLabel,
-        done: false,
-        scope: input.scope,
-    };
-
-    return newTask;
 }
 
-// 완료 여부 토글(또는 지정) – Firestore에 반영만 담당
-export async function updatePlannerTaskDone(
-    taskId: string,
-    done: boolean,
-): Promise<void> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error("로그인이 필요합니다.");
-    }
+// 완료 여부 토글
+export async function togglePlannerTaskDone(id: string): Promise<void> {
+    const userId = getUserIdOrThrow();
+    const taskRef = doc(db, "users", userId, "tasks", id);
 
-    const taskRef = doc(db, "users", user.uid, "tasks", taskId);
-    await updateDoc(taskRef, { done });
+    const snap = await getDoc(taskRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data() as { done?: boolean };
+    const currentDone = data.done ?? false;
+    const nextDone = !currentDone;
+
+    await updateDoc(taskRef, {
+        done: nextDone,
+        updatedAt: serverTimestamp(),
+    });
 }

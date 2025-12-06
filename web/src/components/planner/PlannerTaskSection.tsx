@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { SectionCard } from "../common/SectionCard";
 import { PlannerTaskItem } from "./PlannerTaskItem";
 import type { PlannerTask } from "../../features/planner/types";
@@ -7,16 +8,16 @@ type PlannerTaskSectionProps = {
     loading: boolean;
     tasks: PlannerTask[];
     emptyMessage: string;
-    onToggle: (id: string) => void;
+    onToggle?: (id: string) => void | Promise<void>;
 };
 
-export function PlannerTaskSection({
-                                       title,
-                                       loading,
-                                       tasks,
-                                       emptyMessage,
-                                       onToggle,
-                                   }: PlannerTaskSectionProps) {
+function PlannerTaskSectionBase({
+                                    title,
+                                    loading,
+                                    tasks,
+                                    emptyMessage,
+                                    onToggle,
+                                }: PlannerTaskSectionProps) {
     return (
         <SectionCard title={title}>
             {loading ? (
@@ -32,17 +33,24 @@ export function PlannerTaskSection({
                 <p className="text-sm text-slate-400">{emptyMessage}</p>
             ) : (
                 <div className="space-y-2">
-                    {tasks.map((task) => (
-                        <PlannerTaskItem
-                            key={task.id}
-                            task={task}
-                            onToggle={() => {
-                                onToggle(task.id);
-                            }}
-                        />
-                    ))}
+                    {tasks.map((task) => {
+                        const handleToggle = () => {
+                            if (!onToggle) return;
+                            void onToggle(task.id);
+                        };
+
+                        return (
+                            <PlannerTaskItem
+                                key={task.id}
+                                task={task}
+                                onToggle={handleToggle}
+                            />
+                        );
+                    })}
                 </div>
             )}
         </SectionCard>
     );
 }
+
+export const PlannerTaskSection = memo(PlannerTaskSectionBase);

@@ -6,31 +6,32 @@ type PlannerTaskItemProps = {
 };
 
 export function PlannerTaskItem({ task, onToggle }: PlannerTaskItemProps) {
+    const isDone = task.done ?? false;
+
     return (
         <button
             type="button"
             onClick={onToggle}
-            className="flex w-full items-center justify-between rounded-md bg-slate-900/60 px-3 py-2 text-left hover:bg-slate-800 transition-colors"
+            className="flex w-full items-center justify-between rounded-md bg-slate-900/60 px-3 py-2 text-left transition-colors hover:bg-slate-800"
+            aria-pressed={isDone}
         >
             <div className="flex items-center gap-2">
                 {/* 체크박스 모양 */}
                 <span
-                    className={[
-                        "inline-flex h-4 w-4 items-center justify-center rounded border",
-                        task.done
+                    className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
+                        isDone
                             ? "border-emerald-400 bg-emerald-500/20"
-                            : "border-slate-500",
-                    ].join(" ")}
+                            : "border-slate-500"
+                    }`}
+                    aria-hidden="true"
                 >
-          {task.done && (
-              <span className="h-2 w-2 rounded-sm bg-emerald-400" />
-          )}
+          {isDone && <span className="h-2 w-2 rounded-sm bg-emerald-400" />}
         </span>
 
                 {/* 할 일 제목 */}
                 <span
                     className={
-                        task.done
+                        isDone
                             ? "text-sm text-slate-400 line-through"
                             : "text-sm text-slate-100"
                     }
