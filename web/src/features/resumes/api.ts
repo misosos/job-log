@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../../libs/firebase";
-import type { ResumeVersion } from "../../components/resumes/ResumeList";
+import type { ResumeVersion } from "./types";
 
 // Firestore 문서 타입
 type ResumeDoc = {
@@ -38,7 +38,7 @@ export async function fetchResumes(userId: string): Promise<ResumeVersion[]> {
     const q = query(colRef, orderBy("updatedAt", "desc"));
     const snap = await getDocs(q);
 
-    const rows: ResumeVersion[] = snap.docs.map((docSnap) => {
+    return snap.docs.map((docSnap) => {
         const data = docSnap.data() as ResumeDoc;
         return {
             id: docSnap.id,
@@ -50,8 +50,6 @@ export async function fetchResumes(userId: string): Promise<ResumeVersion[]> {
             isDefault: data.isDefault ?? false,
         };
     });
-
-    return rows;
 }
 
 // 새 이력서 생성용 payload 타입
