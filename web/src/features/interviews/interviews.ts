@@ -1,4 +1,3 @@
-// src/types/interviews.ts
 import type { Timestamp } from "firebase/firestore";
 
 export type InterviewStatus = "예정" | "완료";

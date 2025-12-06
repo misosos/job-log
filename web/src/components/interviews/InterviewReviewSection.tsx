@@ -1,4 +1,3 @@
-// src/components/interviews/InterviewReviewSection.tsx
 import { Badge } from "flowbite-react";
 
 import { SectionCard } from "../common/SectionCard";
