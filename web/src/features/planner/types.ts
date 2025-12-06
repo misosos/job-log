@@ -1,4 +1,3 @@
-// src/features/planner/types.ts
 export type PlannerScope = "today" | "week";
 
 export type PlannerTask = {
