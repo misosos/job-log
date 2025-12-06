@@ -3,10 +3,12 @@ import { DashboardRecentApplicationsSection } from "../../components/dashboard/D
 import {DashboardTodayTasksSection} from "../../components/dashboard/DashboardTodayTasksSection.tsx";
 import { DashboardDefaultResumeSection } from "../../components/dashboard/DashboardDefaultResumeSection";
 import {DashboardUpcomingSection} from "../../components/dashboard/DashboardUpcomingSection.tsx";
+import {DashboardSummarySection} from "../../components/dashboard/DashboardSummarySection.tsx";
 
 export function DashboardPage() {
     return (
         <div className="space-y-6">
+            <DashboardSummarySection/>
             <DashboardUpcomingSection/>
             <DashboardRecentApplicationsSection />
             <DashboardTodayTasksSection/>
