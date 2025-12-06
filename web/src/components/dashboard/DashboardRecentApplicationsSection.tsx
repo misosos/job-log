@@ -9,8 +9,11 @@ import {
 } from "firebase/firestore";
 
 import { SectionCard } from "../common/SectionCard";
-import { DashboardApplicationItem } from "./DashboardApplicationItem";
 import { auth, db } from "../../libs/firebase";
+import {
+  ApplicationList,
+  type ApplicationRow,
+} from "../applications/ApplicationList";
 import type { ApplicationStatus } from "../../features/applications/types.ts";
 
 type ApplicationDoc = {
@@ -21,14 +24,6 @@ type ApplicationDoc = {
   appliedAt?: Timestamp | null;
   createdAt?: Timestamp | null;
   deadline?: Timestamp | null;
-};
-
-type RecentApplicationItem = {
-  id: string;
-  company: string;
-  role: string;
-  status: ApplicationStatus;
-  dateLabel: string;
 };
 
 function formatDeadlineLabel(deadline?: Timestamp | null): string {
@@ -42,7 +37,7 @@ function formatDeadlineLabel(deadline?: Timestamp | null): string {
 }
 
 export function DashboardRecentApplicationsSection() {
-  const [items, setItems] = useState<RecentApplicationItem[]>([]);
+  const [items, setItems] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,14 +54,15 @@ export function DashboardRecentApplicationsSection() {
         const q = query(colRef, orderBy("createdAt", "desc"), limit(5));
         const snap = await getDocs(q);
 
-        const rows: RecentApplicationItem[] = snap.docs.map((docSnap) => {
+        const rows: ApplicationRow[] = snap.docs.map((docSnap) => {
           const data = docSnap.data() as ApplicationDoc;
           return {
             id: docSnap.id,
             company: data.company ?? "",
             role: data.position ?? data.role ?? "",
             status: (data.status ?? "지원 예정") as ApplicationStatus,
-            dateLabel: formatDeadlineLabel(data.deadline ?? null),
+            appliedAtLabel: formatDeadlineLabel(data.deadline ?? null),
+            deadline: data.deadline ?? null,
           };
         });
 
@@ -84,26 +80,7 @@ export function DashboardRecentApplicationsSection() {
 
   return (
     <SectionCard title="최근 지원 내역">
-      {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-10 rounded-md bg-slate-800/60 animate-pulse"
-            />
-          ))}
-        </div>
-      ) : items.length === 0 ? (
-        <p className="text-xs text-slate-400">
-          아직 기록한 지원 내역이 없어요.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {items.map((app) => (
-            <DashboardApplicationItem key={app.id} {...app} />
-          ))}
-        </div>
-      )}
+      <ApplicationList loading={loading} applications={items} />
     </SectionCard>
   );
 }
