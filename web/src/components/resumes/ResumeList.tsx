@@ -4,8 +4,9 @@ export type ResumeVersion = {
     id: string;
     title: string;
     target: string;      // 예: "금융/데이터 공통", "카카오페이 데이터 인턴"
-    updatedAt: string;   // YYYY.MM.DD 형식 문자열
+    updatedAt: string;   // YYYY.MM.DD
     note?: string;
+    link?: string;       // 실제 파일 / 노션 / 구글 드라이브 URL
 };
 
 type ResumeItemProps = {
@@ -19,6 +20,21 @@ function ResumeItem({ resume }: ResumeItemProps) {
                 <p className="text-sm font-medium text-white">{resume.title}</p>
                 <p className="text-xs text-slate-400">타겟: {resume.target}</p>
                 <p className="text-xs text-slate-500">마지막 수정: {resume.updatedAt}</p>
+
+                {resume.link && (
+                    <p className="mt-1 text-xs text-slate-400">
+                        링크:
+                        <a
+                            href={resume.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ml-1 underline decoration-emerald-400/80 decoration-dotted hover:text-emerald-300"
+                        >
+                            열기
+                        </a>
+                    </p>
+                )}
+
                 {resume.note && (
                     <p className="mt-1 text-xs text-slate-400">메모: {resume.note}</p>
                 )}

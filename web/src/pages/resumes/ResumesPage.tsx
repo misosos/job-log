@@ -1,4 +1,3 @@
-// src/pages/resumes/ResumesPage.tsx
 import { useEffect, useState, type FormEvent } from "react";
 import {
     collection,
@@ -21,6 +20,7 @@ type ResumeDoc = {
     title?: string;
     target?: string;
     note?: string;
+    link?: string | null;
     updatedAt?: Timestamp | null;
     createdAt?: Timestamp | null;
 };
@@ -39,6 +39,7 @@ export function ResumesPage() {
     const [title, setTitle] = useState("");
     const [target, setTarget] = useState("");
     const [note, setNote] = useState("");
+    const [link, setLink] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +67,7 @@ export function ResumesPage() {
                     title: data.title ?? "",
                     target: data.target ?? "",
                     note: data.note ?? undefined,
+                    link: data.link ?? undefined,
                     updatedAt: formatDate(data.updatedAt ?? data.createdAt ?? null),
                 };
             });
@@ -98,6 +100,7 @@ export function ResumesPage() {
                 title: title.trim(),
                 target: target.trim(),
                 note: note.trim() ? note.trim() : null,
+                link: link.trim() ? link.trim() : null,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
@@ -105,6 +108,7 @@ export function ResumesPage() {
             setTitle("");
             setTarget("");
             setNote("");
+            setLink("");
 
             await loadResumes();
         } catch (err) {
@@ -117,18 +121,19 @@ export function ResumesPage() {
         <div className="space-y-6">
             <SectionCard title="이력서 버전 관리">
                 <p className="mb-4 text-sm text-slate-300">
-                    회사/직무별로 다른 이력서 버전을 만들어 두고, 공고에 맞게 골라 쓸 수
-                    있어요.
+                    회사/직무별로 다른 이력서 버전을 만들고, 공고에 맞게 골라 쓸 수 있어요.
                 </p>
 
                 <ResumeForm
                     title={title}
                     target={target}
+                    link={link}
                     note={note}
                     isValid={isValid}
                     onSubmit={handleCreate}
                     onChangeTitle={setTitle}
                     onChangeTarget={setTarget}
+                    onChangeLink={setLink}
                     onChangeNote={setNote}
                 />
 
