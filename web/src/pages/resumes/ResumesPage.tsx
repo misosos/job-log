@@ -7,6 +7,7 @@ import {
     query,
     serverTimestamp,
     Timestamp,
+    writeBatch,
 } from "firebase/firestore";
 import { SectionCard } from "../../components/common/SectionCard";
 import { auth, db } from "../../libs/firebase";
@@ -23,6 +24,7 @@ type ResumeDoc = {
     link?: string | null;
     updatedAt?: Timestamp | null;
     createdAt?: Timestamp | null;
+    isDefault?: boolean | null;
 };
 
 function formatDate(ts?: Timestamp | null): string {
@@ -69,6 +71,7 @@ export function ResumesPage() {
                     note: data.note ?? undefined,
                     link: data.link ?? undefined,
                     updatedAt: formatDate(data.updatedAt ?? data.createdAt ?? null),
+                    isDefault: data.isDefault ?? false,
                 };
             });
 
@@ -103,6 +106,7 @@ export function ResumesPage() {
                 link: link.trim() ? link.trim() : null,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
+                isDefault: false,
             });
 
             setTitle("");
@@ -114,6 +118,34 @@ export function ResumesPage() {
         } catch (err) {
             console.error("이력서 버전 저장 실패:", err);
             setError("이력서 버전을 저장하는 중 문제가 발생했습니다.");
+        }
+    };
+
+    const handleSetDefault = async (resumeId: string) => {
+        try {
+            const user = auth.currentUser;
+            if (!user) {
+                setError("로그인이 필요합니다.");
+                return;
+            }
+
+            const colRef = collection(db, "users", user.uid, "resumes");
+            const snap = await getDocs(colRef);
+            const batch = writeBatch(db);
+
+            snap.docs.forEach((docSnap) => {
+                const isTarget = docSnap.id === resumeId;
+                batch.update(docSnap.ref, {
+                    isDefault: isTarget,
+                    updatedAt: serverTimestamp(),
+                });
+            });
+
+            await batch.commit();
+            await loadResumes();
+        } catch (err) {
+            console.error("기본 이력서 설정 실패:", err);
+            setError("기본 이력서를 설정하는 중 문제가 발생했습니다.");
         }
     };
 
@@ -143,15 +175,11 @@ export function ResumesPage() {
                     </p>
                 )}
 
-                <ResumeList resumes={resumes} loading={loading} />
-            </SectionCard>
-
-            <SectionCard title="자기소개서/문항 관리">
-                <p className="text-sm text-slate-300">
-                    자주 쓰는 문항/답변을 카드처럼 모아서 관리할 수 있어요.
-                    <br />
-                    나중에 Firestore 연동해서 실제 문항/답변도 저장해보면 좋아요.
-                </p>
+                <ResumeList
+                    resumes={resumes}
+                    loading={loading}
+                    onSetDefault={handleSetDefault}
+                />
             </SectionCard>
         </div>
     );
