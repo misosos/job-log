@@ -7,6 +7,7 @@ import {
     createPlannerTask,
     fetchPlannerTasks,
     togglePlannerTaskDone,
+    deletePlannerTask,
 } from "../../features/planner/api";
 
 export function PlannerPage() {
@@ -76,6 +77,15 @@ export function PlannerPage() {
         }
     };
 
+    const handleDeleteTask = async (id: string): Promise<void> => {
+        try {
+            await deletePlannerTask(id);
+            await loadTasks();
+        } catch (error) {
+            console.error("[PlannerPage] 할 일 삭제 실패:", error);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <PlannerNewTaskForm
@@ -95,6 +105,7 @@ export function PlannerPage() {
                 tasks={todayTasks}
                 emptyMessage="오늘은 아직 등록된 할 일이 없어요."
                 onToggle={handleToggleTask}
+                onDelete={handleDeleteTask}
             />
 
             <PlannerTaskSection
@@ -103,6 +114,7 @@ export function PlannerPage() {
                 tasks={weekTasks}
                 emptyMessage="한 주 단위의 공부/지원 계획을 여기에 정리할 수 있어요."
                 onToggle={handleToggleTask}
+                onDelete={handleDeleteTask}
             />
         </div>
     );

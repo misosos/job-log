@@ -8,7 +8,14 @@ type PlannerTaskSectionProps = {
     loading: boolean;
     tasks: PlannerTask[];
     emptyMessage: string;
+    /**
+     * 체크 토글 핸들러 (옵션)
+     */
     onToggle?: (id: string) => void | Promise<void>;
+    /**
+     * 삭제 핸들러 (옵션)
+     */
+    onDelete?: (id: string) => void | Promise<void>;
 };
 
 function PlannerTaskSectionBase({
@@ -17,6 +24,7 @@ function PlannerTaskSectionBase({
                                     tasks,
                                     emptyMessage,
                                     onToggle,
+                                    onDelete,
                                 }: PlannerTaskSectionProps) {
     return (
         <SectionCard title={title}>
@@ -39,11 +47,17 @@ function PlannerTaskSectionBase({
                             void onToggle(task.id);
                         };
 
+                        const handleDelete = () => {
+                            if (!onDelete) return;
+                            void onDelete(task.id);
+                        };
+
                         return (
                             <PlannerTaskItem
                                 key={task.id}
                                 task={task}
                                 onToggle={handleToggle}
+                                onDelete={handleDelete}
                             />
                         );
                     })}

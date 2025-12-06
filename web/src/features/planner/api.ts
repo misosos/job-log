@@ -1,6 +1,7 @@
 import {
     addDoc,
     collection,
+    deleteDoc,
     doc,
     getDoc,
     getDocs,
@@ -103,4 +104,11 @@ export async function togglePlannerTaskDone(id: string): Promise<void> {
         done: nextDone,
         updatedAt: serverTimestamp(),
     });
+
+}
+
+export async function deletePlannerTask(id: string): Promise<void> {
+    const userId = getUserIdOrThrow();
+    const taskRef = doc(db, "users", userId, "tasks", id);
+    await deleteDoc(taskRef);
 }
