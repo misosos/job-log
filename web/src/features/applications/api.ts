@@ -11,13 +11,14 @@ import {
     orderBy,
     limit as fsLimit,
     serverTimestamp,
+    Timestamp,
     updateDoc,
     type DocumentSnapshot,
     type QueryDocumentSnapshot,
     type QueryConstraint,
 } from "firebase/firestore";
 
-import { db, auth } from "../../libs/firebase"; // 🔧 경로는 네 프로젝트 구조에 맞게 수정
+import { db, auth } from "../../libs/firebase";
 import type { ApplicationStatus, JobApplication } from "./types";
 
 // 로그인 유저 UID 가져오기
@@ -50,8 +51,8 @@ export type CreateApplicationInput = {
     company: string;
     position: string;
     status?: ApplicationStatus;
-    appliedAt?: Date | null;
-    deadline?: Date | null;
+    appliedAt?: Timestamp | null;
+    deadline?: Timestamp | null;
     memo?: string;
 };
 
@@ -67,9 +68,10 @@ export async function createApplication(
         userId,
         company: input.company,
         position: input.position,
-        status: input.status ?? "submitted",
-        appliedAt: input.appliedAt ? input.appliedAt : null,
-        deadline: input.deadline ? input.deadline : null,
+        // 기본 상태를 한국어 레이블로 통일
+        status: input.status ?? "지원 예정",
+        appliedAt: input.appliedAt ?? null,
+        deadline: input.deadline ?? null,
         memo: input.memo ?? "",
         createdAt: nowServer,
         updatedAt: nowServer,
@@ -134,8 +136,8 @@ export type UpdateApplicationInput = {
     company?: string;
     position?: string;
     status?: ApplicationStatus;
-    appliedAt?: Date | null;
-    deadline?: Date | null;
+    appliedAt?: Timestamp | null;
+    deadline?: Timestamp | null;
     memo?: string;
 };
 

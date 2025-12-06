@@ -7,11 +7,13 @@ type Props = {
     company: string;
     role: string;
     status: ApplicationStatus;
+    deadline: string;
     saving: boolean;
     error: string | null;
     onCompanyChange: (value: string) => void;
     onRoleChange: (value: string) => void;
     onStatusChange: (value: ApplicationStatus) => void;
+    onDeadlineChange: (value: string) => void;
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
 
@@ -19,11 +21,13 @@ export function ApplicationCreateForm({
                                           company,
                                           role,
                                           status,
+                                          deadline,
                                           saving,
                                           error,
                                           onCompanyChange,
                                           onRoleChange,
                                           onStatusChange,
+                                          onDeadlineChange,
                                           onSubmit,
                                       }: Props) {
     return (
@@ -81,6 +85,20 @@ export function ApplicationCreateForm({
                         <option value="최종 합격">최종 합격</option>
                         <option value="불합격">불합격</option>
                     </Select>
+                </div>
+                <div className="flex-1">
+                    <Label
+                        htmlFor="deadline"
+                        className="mb-1 block text-xs md:text-sm"
+                    >
+                        마감일
+                    </Label>
+                    <TextInput
+                        id="deadline"
+                        type="date"
+                        value={deadline}
+                        onChange={(e) => onDeadlineChange(e.target.value)}
+                    />
                 </div>
                 <div className="flex-none">
                     <Button type="submit" disabled={saving}>

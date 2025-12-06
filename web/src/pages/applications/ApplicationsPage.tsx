@@ -49,6 +49,7 @@ export function ApplicationsPage() {
   const [newCompany, setNewCompany] = useState("");
   const [newRole, setNewRole] = useState("");
   const [newStatus, setNewStatus] = useState<ApplicationStatus>(DEFAULT_STATUS);
+  const [newDeadline, setNewDeadline] = useState(""); // YYYY-MM-DD 문자열
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -105,15 +106,25 @@ export function ApplicationsPage() {
     setSaveError(null);
 
     try {
+      // YYYY-MM-DD 문자열을 Firestore Timestamp로 변환
+      let deadlineTimestamp: Timestamp | null = null;
+      if (newDeadline.trim()) {
+        const [year, month, day] = newDeadline.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        deadlineTimestamp = Timestamp.fromDate(date);
+      }
+
       await createApplication({
         company: newCompany.trim(),
         position: newRole.trim(),
         status: newStatus as Parameters<typeof createApplication>[0]["status"],
+        deadline: deadlineTimestamp as Parameters<typeof createApplication>[0]["deadline"],
       });
 
       setNewCompany("");
       setNewRole("");
       setNewStatus(DEFAULT_STATUS);
+      setNewDeadline("");
 
       await load(); // 저장 후 리스트 새로고침
     } catch (error) {
@@ -139,11 +150,13 @@ export function ApplicationsPage() {
         company={newCompany}
         role={newRole}
         status={newStatus}
+        deadline={newDeadline}
         saving={saving}
         error={saveError}
         onCompanyChange={setNewCompany}
         onRoleChange={setNewRole}
         onStatusChange={setNewStatus}
+        onDeadlineChange={setNewDeadline}
         onSubmit={handleCreate}
       />
 
