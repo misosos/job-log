@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 import { SectionCard } from "../common/SectionCard.tsx";
 import { auth, db } from "../../libs/firebase";
-import { PlannerTaskItem } from "../planner/PlannerTaskItem.tsx";
 import type { PlannerTask } from "../../features/planner/types";
 
 // Firestore에 저장된 플래너 태스크 원본 타입
@@ -17,26 +16,6 @@ type PlannerTaskDoc = {
 export function DashboardTodayTasksSection() {
   const [tasks, setTasks] = useState<PlannerTask[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // 오늘 할 일 토글 (완료/미완료)
-  const handleToggle = async (taskId: string, currentDone: boolean) => {
-    try {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const taskRef = doc(db, "users", user.uid, "tasks", taskId);
-      await updateDoc(taskRef, { done: !currentDone });
-
-      // 로컬 상태도 함께 갱신
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, done: !currentDone } : t,
-        ),
-      );
-    } catch (error) {
-      console.error("대시보드 오늘 할 일 토글 실패:", error);
-    }
-  };
 
   useEffect(() => {
     const loadTodayTasks = async () => {
@@ -94,13 +73,25 @@ export function DashboardTodayTasksSection() {
       ) : (
         <div className="space-y-2">
           {tasks.map((task) => (
-            <PlannerTaskItem
+            <div
               key={task.id}
-              task={task}
-              onToggle={() => {
-                void handleToggle(task.id, task.done);
-              }}
-            />
+              className="flex items-center justify-between rounded-md bg-slate-900/60 px-3 py-2"
+            >
+              <span
+                className={
+                  task.done
+                    ? "text-sm text-slate-400 line-through"
+                    : "text-sm text-slate-100"
+                }
+              >
+                {task.title}
+              </span>
+              {task.ddayLabel && (
+                <span className="text-xs text-slate-400">
+                  {task.ddayLabel}
+                </span>
+              )}
+            </div>
           ))}
         </div>
       )}
