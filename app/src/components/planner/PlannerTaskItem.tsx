@@ -1,10 +1,8 @@
-// app/components/planner/PlannerTaskItem.tsx (예시 경로)
-
 import React from "react";
 import {
     View,
     Text,
-    TouchableOpacity,
+    Pressable,
     StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,23 +21,23 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
     return (
         <View style={styles.container}>
             {/* 왼쪽: 체크 토글 영역 */}
-            <TouchableOpacity
-                activeOpacity={0.8}
+            <Pressable
                 onPress={onToggle}
-                style={styles.leftButton}
+                android_ripple={{ color: "rgba(148,163,184,0.3)" }}
+                style={({ pressed }) => [
+                    styles.leftButton,
+                    pressed && styles.leftButtonPressed,
+                ]}
             >
-                <Ionicons name={iconName} size={18} color={iconColor} />
+                <Ionicons name={iconName} size={20} color={iconColor} />
 
                 <Text
-                    style={[
-                        styles.title,
-                        task.done && styles.titleDone,
-                    ]}
+                    style={[styles.title, task.done && styles.titleDone]}
                     numberOfLines={2}
                 >
                     {task.title}
                 </Text>
-            </TouchableOpacity>
+            </Pressable>
 
             {/* 오른쪽: D-day + 삭제 버튼 */}
             <View style={styles.rightArea}>
@@ -50,13 +48,17 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
                 ) : null}
 
                 {onDelete && (
-                    <TouchableOpacity
+                    <Pressable
                         onPress={onDelete}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        style={styles.deleteButton}
+                        android_ripple={{ color: "rgba(148,163,184,0.3)", borderless: true }}
+                        style={({ pressed }) => [
+                            styles.deleteButton,
+                            pressed && styles.deleteButtonPressed,
+                        ]}
                     >
                         <Ionicons name="trash-outline" size={18} color="#9ca3af" />
-                    </TouchableOpacity>
+                    </Pressable>
                 )}
             </View>
         </View>
@@ -69,20 +71,26 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "rgba(15,23,42,0.8)", // slate-900/80
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginBottom: 4,
+        backgroundColor: "rgba(15,23,42,0.9)", // slate-900/90
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        marginBottom: 8,
     },
     leftButton: {
         flex: 1,
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        paddingVertical: 4,
+    },
+    leftButtonPressed: {
+        opacity: 0.8,
     },
     title: {
+        flexShrink: 1,
+        marginLeft: 8,
         fontSize: 14,
+        lineHeight: 18,
         color: "#f9fafb", // slate-50
     },
     titleDone: {
@@ -92,22 +100,25 @@ const styles = StyleSheet.create({
     rightArea: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
-        marginLeft: 8,
+        marginLeft: 12,
     },
     ddayBadge: {
         borderRadius: 999,
         borderWidth: 1,
         borderColor: "rgba(52,211,153,0.5)", // emerald-400/50
-        paddingHorizontal: 6,
-        paddingVertical: 2,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        marginRight: 6,
     },
     ddayText: {
-        fontSize: 10,
+        fontSize: 11,
         color: "#6ee7b7", // emerald-300
     },
     deleteButton: {
         borderRadius: 999,
-        padding: 4,
+        padding: 6,
+    },
+    deleteButtonPressed: {
+        opacity: 0.8,
     },
 });
