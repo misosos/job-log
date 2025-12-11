@@ -17,7 +17,7 @@ import { ResumesScreen } from "./src/screens/resumes/ResumesScreen";
 import { InterviewsScreen } from "./src/screens/interviews/InterviewsScreen";
 
 // ✅ 헤더 컴포넌트 임포트
-import { AppHeader } from "./src/components/layout/AppHeader";
+import { PageLayout } from "./src/components/layout/PageLayout";
 
 export type RootStackParamList = {
     Login: undefined;
@@ -60,36 +60,59 @@ function AppInner() {
                 <Stack.Navigator
                     initialRouteName="Dashboard"
                     screenOptions={{
-                        // ✅ 기본 헤더를 우리 AppHeader로 교체
-                        header: (props) => <AppHeader {...props} />,
                         contentStyle: { backgroundColor: "#020617" },
                     }}
                 >
                     <Stack.Screen
                         name="Dashboard"
-                        component={DashboardScreen}
-                        options={{ title: "대시보드" }}
-                    />
+                        options={{ title: "대시보드", headerShown: false }}
+                    >
+                        {() => (
+                            <PageLayout>
+                                <DashboardScreen />
+                            </PageLayout>
+                        )}
+                    </Stack.Screen>
                     <Stack.Screen
                         name="Applications"
-                        component={ApplicationsScreen}
-                        options={{ title: "지원 현황" }}
-                    />
+                        options={{ title: "지원 현황", headerShown: false }}
+                    >
+                        {() => (
+                            <PageLayout>
+                                <ApplicationsScreen />
+                            </PageLayout>
+                        )}
+                    </Stack.Screen>
                     <Stack.Screen
                         name="Planner"
-                        component={PlannerScreen}
-                        options={{ title: "플래너" }}
-                    />
+                        options={{ title: "플래너", headerShown: false }}
+                    >
+                        {() => (
+                            <PageLayout>
+                                <PlannerScreen />
+                            </PageLayout>
+                        )}
+                    </Stack.Screen>
                     <Stack.Screen
                         name="Resumes"
-                        component={ResumesScreen}
-                        options={{ title: "이력서 관리" }}
-                    />
+                        options={{ title: "이력서 관리", headerShown: false }}
+                    >
+                        {() => (
+                            <PageLayout>
+                                <ResumesScreen />
+                            </PageLayout>
+                        )}
+                    </Stack.Screen>
                     <Stack.Screen
                         name="Interviews"
-                        component={InterviewsScreen}
-                        options={{ title: "면접 기록" }}
-                    />
+                        options={{ title: "면접 기록", headerShown: false }}
+                    >
+                        {() => (
+                            <PageLayout>
+                                <InterviewsScreen />
+                            </PageLayout>
+                        )}
+                    </Stack.Screen>
                 </Stack.Navigator>
             ) : (
                 <Stack.Navigator
