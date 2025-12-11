@@ -60,8 +60,14 @@ export function DashboardTodayTasksSection() {
     <SectionCard title="오늘 할 일">
       {loading ? (
         <View style={styles.skeletonContainer}>
-          {[1, 2, 3].map((i) => (
-            <View key={i} style={styles.skeletonItem} />
+          {[1, 2, 3].map((i, index) => (
+            <View
+              key={i}
+              style={[
+                styles.skeletonItem,
+                index > 0 && styles.skeletonItemSpacing,
+              ]}
+            />
           ))}
         </View>
       ) : tasks.length === 0 ? (
@@ -70,16 +76,22 @@ export function DashboardTodayTasksSection() {
         </Text>
       ) : (
         <View style={styles.list}>
-          {tasks.map((task) => (
-            <View key={task.id} style={styles.taskRow}>
-              <Text style={task.done ? styles.taskTextDone : styles.taskText}>
-                {task.title}
-              </Text>
-              {!!task.ddayLabel && (
-                <Text style={styles.ddayText}>{task.ddayLabel}</Text>
-              )}
-            </View>
-          ))}
+          {tasks.map((task, index) => {
+            const isLast = index === tasks.length - 1;
+            return (
+              <View
+                key={task.id}
+                style={[styles.taskRow, !isLast && styles.taskRowSpacing]}
+              >
+                <Text style={task.done ? styles.taskTextDone : styles.taskText}>
+                  {task.title}
+                </Text>
+                {!!task.ddayLabel && (
+                  <Text style={styles.ddayText}>{task.ddayLabel}</Text>
+                )}
+              </View>
+            );
+          })}
         </View>
       )}
     </SectionCard>
@@ -88,7 +100,7 @@ export function DashboardTodayTasksSection() {
 
 const styles = StyleSheet.create({
   skeletonContainer: {
-    gap: 6,
+    width: "100%",
   },
   skeletonItem: {
     height: 36,
@@ -96,12 +108,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(30,41,59,0.6)", // slate-800/60 느낌
   },
+  skeletonItemSpacing: {
+    marginTop: 6,
+  },
   emptyText: {
     fontSize: 14,
     color: "#9ca3af", // slate-400
   },
   list: {
-    gap: 8,
+    width: "100%",
   },
   taskRow: {
     flexDirection: "row",
@@ -111,6 +126,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     backgroundColor: "rgba(15,23,42,0.6)", // slate-900/60
+  },
+  taskRowSpacing: {
+    marginBottom: 8,
   },
   taskText: {
     fontSize: 14,
