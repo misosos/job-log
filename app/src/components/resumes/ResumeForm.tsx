@@ -41,28 +41,28 @@ export function ResumeForm({
     return (
         <View style={styles.container}>
             {/* 이력서 제목 + 타겟 */}
-            <View style={styles.row}>
-                <View style={styles.field}>
-                    <Text style={styles.label}>이력서 제목</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="예: 금융/데이터 분석 공통 이력서 v4"
-                        placeholderTextColor="#6b7280" // slate-500
-                        value={title}
-                        onChangeText={onChangeTitle}
-                    />
-                </View>
+            <View style={styles.field}>
+                <Text style={styles.label}>이력서 제목</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="예: 금융/데이터 분석 공통 이력서 v4"
+                    placeholderTextColor="#6b7280" // slate-500
+                    value={title}
+                    onChangeText={onChangeTitle}
+                    returnKeyType="next"
+                />
+            </View>
 
-                <View style={styles.field}>
-                    <Text style={styles.label}>타겟 회사/직무</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="예: 저축은행 데이터/리스크, 증권사 운용 등"
-                        placeholderTextColor="#6b7280"
-                        value={target}
-                        onChangeText={onChangeTarget}
-                    />
-                </View>
+            <View style={styles.field}>
+                <Text style={styles.label}>타겟 회사/직무</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="예: 저축은행 데이터/리스크, 증권사 운용 등"
+                    placeholderTextColor="#6b7280"
+                    value={target}
+                    onChangeText={onChangeTarget}
+                    returnKeyType="next"
+                />
             </View>
 
             {/* 링크 */}
@@ -77,6 +77,8 @@ export function ResumeForm({
                     value={link}
                     onChangeText={onChangeLink}
                     autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
                 />
             </View>
 
@@ -90,6 +92,7 @@ export function ResumeForm({
                     value={note}
                     onChangeText={onChangeNote}
                     multiline
+                    blurOnSubmit={true}
                 />
             </View>
 
@@ -113,17 +116,14 @@ export function ResumeForm({
 const styles = StyleSheet.create({
     container: {
         marginBottom: 16,
-        padding: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 14,
         borderRadius: 12,
         backgroundColor: "rgba(15,23,42,0.4)", // slate-900/40
     },
-    row: {
-        flexDirection: "row",
-        gap: 12,
-    },
     field: {
-        flex: 1,
-        marginBottom: 10,
+        width: "100%",
+        marginBottom: 12,
     },
     label: {
         fontSize: 11,
@@ -135,9 +135,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#374151", // slate-700
         borderRadius: 8,
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        fontSize: 13,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        fontSize: 14,
+        minHeight: 40,
         color: "#f9fafb", // slate-50
         backgroundColor: "#020617", // slate-900
     },
@@ -152,19 +153,20 @@ const styles = StyleSheet.create({
     },
     button: {
         borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
         backgroundColor: "#10b981", // emerald-500
         shadowColor: "#000",
         shadowOpacity: 0.2,
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
+        alignSelf: "flex-end",
     },
     buttonDisabled: {
         backgroundColor: "#4b5563", // slate-600
     },
     buttonText: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: "600",
         color: "#020617", // slate-900
     },
