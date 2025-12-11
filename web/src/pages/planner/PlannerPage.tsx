@@ -1,89 +1,46 @@
-import { useEffect, useState, type FormEvent } from "react";
+// src/pages/planner/PlannerPage.tsx
+import { useState, type FormEvent } from "react";
 
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
-import type { PlannerScope, PlannerTask } from "../../features/planner/types";
-import {
-    createPlannerTask,
-    fetchPlannerTasks,
-    togglePlannerTaskDone,
-    deletePlannerTask,
-} from "../../features/planner/api";
+import type { PlannerScope } from "../../features/planner/types";
+import { usePlannerController } from "../../features/planner/usePlannerController";
 
 export function PlannerPage() {
-    const [todayTasks, setTodayTasks] = useState<PlannerTask[]>([]);
-    const [weekTasks, setWeekTasks] = useState<PlannerTask[]>([]);
-    const [loading, setLoading] = useState(true);
+    const {
+        todayTasks,
+        weekTasks,
+        loading,
+        saving,
+        createTask,
+        toggleTask,
+        deleteTaskById,
+    } = usePlannerController();
 
     const [newTitle, setNewTitle] = useState("");
     const [newScope, setNewScope] = useState<PlannerScope>("today");
     const [newDdayLabel, setNewDdayLabel] = useState("오늘");
-    const [saving, setSaving] = useState(false);
-
-    const loadTasks = async () => {
-        setLoading(true);
-        try {
-            const all = await fetchPlannerTasks();
-            setTodayTasks(all.filter((t) => t.scope === "today"));
-            setWeekTasks(all.filter((t) => t.scope === "week"));
-        } catch (error) {
-            console.error("[PlannerPage] 플래너 태스크 불러오기 실패:", error);
-            setTodayTasks([]);
-            setWeekTasks([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        void loadTasks();
-    }, []);
 
     const handleAddTask = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const trimmedTitle = newTitle.trim();
-        if (!trimmedTitle) return;
+        if (!newTitle.trim()) return;
 
-        setSaving(true);
-        try {
-            const newTask = await createPlannerTask({
-                title: trimmedTitle,
-                ddayLabel: newDdayLabel.trim() || "오늘",
-                scope: newScope,
-            });
+        await createTask({
+            title: newTitle,
+            scope: newScope,
+            ddayLabel: newDdayLabel,
+        });
 
-            if (newTask.scope === "today") {
-                setTodayTasks((prev) => [newTask, ...prev]);
-            } else {
-                setWeekTasks((prev) => [newTask, ...prev]);
-            }
-
-            setNewTitle("");
-        } catch (error) {
-            console.error("[PlannerPage] 할 일 추가 실패:", error);
-        } finally {
-            setSaving(false);
-        }
+        setNewTitle("");
     };
 
-    // ✅ 토글: 서버에서 done 반전시키고 다시 불러오기 (group 인자 제거)
-    const handleToggleTask = async (id: string): Promise<void> => {
-        try {
-            await togglePlannerTaskDone(id);
-            await loadTasks();
-        } catch (error) {
-            console.error("[PlannerPage] 할 일 완료 상태 변경 실패:", error);
-        }
+    const handleToggleTask = (id: string) => {
+        void toggleTask(id);
     };
 
-    const handleDeleteTask = async (id: string): Promise<void> => {
-        try {
-            await deletePlannerTask(id);
-            await loadTasks();
-        } catch (error) {
-            console.error("[PlannerPage] 할 일 삭제 실패:", error);
-        }
+    const handleDeleteTask = (id: string) => {
+        void deleteTaskById(id);
     };
 
     return (

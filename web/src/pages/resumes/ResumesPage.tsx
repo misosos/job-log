@@ -1,95 +1,46 @@
-import { useEffect, useState, type FormEvent } from "react";
+// src/pages/resumes/ResumesPage.tsx
+import { useState, type FormEvent } from "react";
 import { SectionCard } from "../../components/common/SectionCard";
-import { auth } from "../../libs/firebase";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import type { ResumeVersion } from "../../features/resumes/types";
-import {
-    createResume,
-    fetchResumes,
-    setDefaultResume,
-} from "../../features/resumes/api";
+import { useResumesController } from "../../features/resumes/useResumesController";
 
 export function ResumesPage() {
-    const [resumes, setResumes] = useState<ResumeVersion[]>([]);
     const [title, setTitle] = useState("");
     const [target, setTarget] = useState("");
     const [note, setNote] = useState("");
     const [link, setLink] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    const {
+        resumes,
+        loading,
+        saving,
+        error,
+        createResumeVersion,
+        setDefaultResumeVersion,
+    } = useResumesController();
 
     const isValid = title.trim().length > 0 && target.trim().length > 0;
-
-    const loadResumes = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setResumes([]);
-                return;
-            }
-
-            const rows = await fetchResumes(user.uid);
-            setResumes(rows);
-        } catch (err) {
-            console.error("이력서 버전 불러오기 실패:", err);
-            setError("이력서 정보를 불러오는 중 문제가 발생했습니다.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        void loadResumes();
-    }, []);
 
     const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!isValid) return;
 
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setError("로그인이 필요합니다.");
-                return;
-            }
+        await createResumeVersion({
+            title,
+            target,
+            note,
+            link,
+        });
 
-            await createResume(user.uid, {
-                title: title.trim(),
-                target: target.trim(),
-                note: note.trim() ? note.trim() : undefined,
-                link: link.trim() ? link.trim() : undefined,
-            });
-
-            setTitle("");
-            setTarget("");
-            setNote("");
-            setLink("");
-
-            await loadResumes();
-        } catch (err) {
-            console.error("이력서 버전 저장 실패:", err);
-            setError("이력서 버전을 저장하는 중 문제가 발생했습니다.");
-        }
+        setTitle("");
+        setTarget("");
+        setNote("");
+        setLink("");
     };
 
-    const handleSetDefault = async (resumeId: string) => {
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setError("로그인이 필요합니다.");
-                return;
-            }
-
-            await setDefaultResume(user.uid, resumeId);
-            await loadResumes();
-        } catch (err) {
-            console.error("기본 이력서 설정 실패:", err);
-            setError("기본 이력서를 설정하는 중 문제가 발생했습니다.");
-        }
+    const handleSetDefault = (resumeId: string) => {
+        void setDefaultResumeVersion(resumeId);
     };
 
     return (
@@ -116,7 +67,7 @@ export function ResumesPage() {
 
                 <ResumeList
                     resumes={resumes}
-                    loading={loading}
+                    loading={loading || saving}
                     onSetDefault={handleSetDefault}
                 />
             </SectionCard>
