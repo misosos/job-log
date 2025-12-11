@@ -5,6 +5,7 @@ import {
     View,
     Text,
     StyleSheet,
+    Platform,
     type StyleProp,
     type ViewStyle,
 } from "react-native";
@@ -26,7 +27,7 @@ export function SectionCard({ title, children, style, actions }: SectionCardProp
                 {actions ? <View style={styles.actions}>{actions}</View> : null}
             </View>
 
-            <View>{children}</View>
+            <View style={styles.body}>{children}</View>
         </View>
     );
 }
@@ -36,10 +37,23 @@ const styles = StyleSheet.create({
         backgroundColor: "#020617", // slate-950 비슷
         borderWidth: 1,
         borderColor: "#1e293b", // slate-800
-        borderRadius: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        marginBottom: 12,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginBottom: 16,
+        width: "100%",
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 4 },
+            },
+            android: {
+                elevation: 3,
+            },
+            default: {},
+        }),
     },
     header: {
         marginBottom: 8,
@@ -54,5 +68,8 @@ const styles = StyleSheet.create({
     },
     actions: {
         marginLeft: 8,
+    },
+    body: {
+        marginTop: 4,
     },
 });
