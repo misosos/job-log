@@ -7,6 +7,8 @@ import {
     StyleSheet,
     Platform,
     ScrollView,
+    Modal,
+    TouchableWithoutFeedback,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -42,19 +44,32 @@ export function AppHeader() {
     const navigation = useNavigation<NavProp>();
     const route = useRoute();
     const [user, setUser] = useState<User | null>(null);
+    const [menuVisible, setMenuVisible] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             setUser(firebaseUser);
+            if (!firebaseUser) {
+                setMenuVisible(false);
+            }
         });
         return unsubscribe;
     }, []);
 
     const currentRouteName = route.name as keyof RootStackParamList;
 
+    const toggleMenu = () => {
+        setMenuVisible((prev) => !prev);
+    };
+
+    const closeMenu = () => {
+        setMenuVisible(false);
+    };
+
     const handleSignOut = async () => {
         try {
             await signOut(auth);
+            setMenuVisible(false);
             navigation.reset({
                 index: 0,
                 routes: [{ name: "Login" }],
@@ -95,17 +110,10 @@ export function AppHeader() {
 
                 {user && (
                     <View style={styles.rightContainer}>
-                        <View style={styles.userInfo}>
-                            <Text style={styles.userName} numberOfLines={1}>
-                                {user.displayName ?? "로그인 계정"}
-                            </Text>
-                            <Text style={styles.userEmail} numberOfLines={1}>
-                                {user.email}
-                            </Text>
-                        </View>
                         <TouchableOpacity
-                            onPress={handleSignOut}
+                            onPress={toggleMenu}
                             style={styles.profileButton}
+                            activeOpacity={0.8}
                         >
                             <Ionicons name="person" size={18} color="#e5e7eb" />
                         </TouchableOpacity>
@@ -121,6 +129,39 @@ export function AppHeader() {
             >
                 {NAV_ITEMS.map(renderNavItem)}
             </ScrollView>
+
+            {user && (
+                <Modal
+                    visible={menuVisible}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={closeMenu}
+                >
+                    <TouchableWithoutFeedback onPress={closeMenu}>
+                        <View style={styles.menuOverlay}>
+                            <TouchableWithoutFeedback>
+                                <View style={styles.menuContainer}>
+                                    <View style={styles.menuHeader}>
+                                        <Text style={styles.menuName} numberOfLines={1}>
+                                            {user.displayName ?? "로그인 계정"}
+                                        </Text>
+                                        <Text style={styles.menuEmail} numberOfLines={1}>
+                                            {user.email}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.menuDivider} />
+                                    <TouchableOpacity
+                                        onPress={handleSignOut}
+                                        style={styles.menuItem}
+                                    >
+                                        <Text style={styles.menuItemText}>로그아웃</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </TouchableWithoutFeedback>
+                        </View>
+                    </TouchableWithoutFeedback>
+                </Modal>
+            )}
         </View>
     );
 }
@@ -130,7 +171,8 @@ const styles = StyleSheet.create({
         paddingTop: Platform.select({ ios: 32, android: 16 }),
         paddingBottom: 6,
         paddingHorizontal: 16,
-        backgroundColor: "#020617", // slate-950 느낌
+        backgroundColor: "#020617",
+        zIndex: 20,
     },
     topRow: {
         flexDirection: "row",
@@ -140,23 +182,11 @@ const styles = StyleSheet.create({
     logoText: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#a5b4fc", // 포인트 색
+        color: "#a5b4fc",
     },
     rightContainer: {
         flexDirection: "row",
         alignItems: "center",
-    },
-    userInfo: {
-        marginRight: 8,
-        maxWidth: 150,
-    },
-    userName: {
-        fontSize: 12,
-        color: "#e5e7eb",
-    },
-    userEmail: {
-        fontSize: 10,
-        color: "#9ca3af",
     },
     profileButton: {
         width: 32,
@@ -167,6 +197,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         borderWidth: 1,
         borderColor: "#1f2937",
+        marginTop: Platform.select({ ios: 4, android: 8, default: 4 }),
     },
     navScroll: {
         marginTop: 8,
@@ -191,5 +222,52 @@ const styles = StyleSheet.create({
         width: "100%",
         backgroundColor: "#22c55e",
         borderRadius: 999,
+    },
+    menuOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(15, 23, 42, 0.3)",
+        alignItems: "flex-end",
+        justifyContent: "flex-start",
+        paddingTop: Platform.select({ ios: 72, android: 56, default: 56 }),
+        paddingRight: 16,
+    },
+    menuContainer: {
+        width: 220,
+        borderRadius: 12,
+        backgroundColor: "#1f2937",
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginRight: 4,
+        marginTop: 4,
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 6,
+    },
+    menuHeader: {
+        paddingVertical: 4,
+    },
+    menuName: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#f9fafb",
+    },
+    menuEmail: {
+        marginTop: 2,
+        fontSize: 11,
+        color: "#e5e7eb",
+    },
+    menuDivider: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: "#4b5563",
+        marginVertical: 8,
+    },
+    menuItem: {
+        paddingVertical: 6,
+    },
+    menuItemText: {
+        fontSize: 13,
+        color: "#e5e7eb",
     },
 });
