@@ -1,5 +1,5 @@
 // app/src/components/applications/ApplicationStatusBadge.tsx
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -22,70 +22,64 @@ type StatusConfig = {
     iconName: keyof typeof MaterialIcons.glyphMap;
 };
 
+const FALLBACK_STATUS: ApplicationStatus = "지원 예정";
+
 const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
     "지원 예정": {
         label: "지원 예정",
-        bgColor: "#1f2937", // slate-800
-        textColor: "#e5e7eb", // slate-200
+        bgColor: "#111827", // slate-900 쪽으로 좀 더 진하게
+        textColor: "#E5E7EB",
         iconName: "assignment",
     },
     "서류 제출": {
         label: "서류 제출",
-        bgColor: "#0ea5e9", // sky-500 비슷
-        textColor: "#0b1120", // slate-950
+        bgColor: "#0EA5E9", // sky-500
+        textColor: "#0B1120",
         iconName: "check-circle-outline",
     },
     "서류 통과": {
         label: "서류 통과",
-        bgColor: "#8b5cf6", // violet-500 비슷
-        textColor: "#f9fafb", // zinc-50
+        bgColor: "#8B5CF6", // violet-500
+        textColor: "#F9FAFB",
         iconName: "verified",
     },
     "면접 진행": {
         label: "면접 진행",
-        bgColor: "#f59e0b", // amber-500
-        textColor: "#0b1120",
+        bgColor: "#F59E0B", // amber-500
+        textColor: "#0B1120",
         iconName: "event-available",
     },
     "최종 합격": {
         label: "최종 합격",
-        bgColor: "#22c55e", // emerald-500
-        textColor: "#022c22",
+        bgColor: "#22C55E", // emerald-500
+        textColor: "#022C22",
         iconName: "sentiment-satisfied-alt",
     },
     "불합격": {
         label: "불합격",
-        bgColor: "#ef4444", // red-500
-        textColor: "#0b1120",
+        bgColor: "#EF4444", // red-500
+        textColor: "#0B1120",
         iconName: "sentiment-dissatisfied",
     },
 };
 
-const FALLBACK_STATUS: ApplicationStatus = "지원 예정";
+function getStatusConfig(status?: ApplicationStatus): StatusConfig {
+    const safeStatus = status ?? FALLBACK_STATUS;
+    return STATUS_CONFIG[safeStatus] ?? STATUS_CONFIG[FALLBACK_STATUS];
+}
 
-export function ApplicationStatusBadge({ status }: Props) {
-    const currentStatus: ApplicationStatus = status ?? FALLBACK_STATUS;
-    const config = STATUS_CONFIG[currentStatus];
-
-    if (!config) {
-        // 혹시 모르는 이상값 방어
-        return (
-            <View style={[styles.badge, { backgroundColor: "#1f2937" }]}>
-                <Text style={[styles.label, { color: "#e5e7eb" }]}>
-                    {currentStatus}
-                </Text>
-            </View>
-        );
-    }
+function ApplicationStatusBadgeBase({ status }: Props) {
+    const config = getStatusConfig(status);
 
     return (
         <View
             style={[
                 styles.badge,
-                {
-                    backgroundColor: config.bgColor,
-                },
+                { backgroundColor: config.bgColor },
             ]}
+            accessibilityRole="text"
+            accessibilityLabel={`지원 상태: ${config.label}`}
+            testID={`application-status-${config.label}`}
         >
             <MaterialIcons
                 name={config.iconName}
@@ -93,26 +87,35 @@ export function ApplicationStatusBadge({ status }: Props) {
                 color={config.textColor}
                 style={styles.icon}
             />
-            <Text style={[styles.label, { color: config.textColor }]}>
+            <Text
+                style={[styles.label, { color: config.textColor }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+            >
                 {config.label}
             </Text>
         </View>
     );
 }
 
+export const ApplicationStatusBadge = memo(ApplicationStatusBadgeBase);
+
 const styles = StyleSheet.create({
     badge: {
         flexDirection: "row",
         alignItems: "center",
+        alignSelf: "flex-start", // 리스트에서 줄 안 깨지고 좌측 정렬
         borderRadius: 999,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingHorizontal: 10,
+        paddingVertical: 4, // 살짝 키움 (터치/가독성)
+        maxWidth: "100%",
     },
     icon: {
         marginRight: 4,
     },
     label: {
-        fontSize: 11,
+        fontSize: 12, // 11 → 12로 약간 키움
         fontWeight: "500",
+        flexShrink: 1, // 긴 텍스트에서 줄 안 넘치게
     },
 });
