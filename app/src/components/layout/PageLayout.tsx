@@ -1,7 +1,6 @@
 // src/components/layout/PageLayout.tsx
 import React, { type ReactNode } from "react";
 import {
-    SafeAreaView,
     View,
     ScrollView,
     StyleSheet,
@@ -9,6 +8,7 @@ import {
     KeyboardAvoidingView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context"; // ✅ 여기로 변경
 
 import { AppHeader } from "./AppHeader";
 
@@ -19,7 +19,6 @@ type Props = {
 export function PageLayout({ children }: Props) {
     return (
         <SafeAreaView style={styles.safeArea}>
-            {/* 상단 상태바 스타일 */}
             <StatusBar style="light" />
 
             <View style={styles.container}>
@@ -46,7 +45,7 @@ export function PageLayout({ children }: Props) {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#020617",
     },
     container: {
         flex: 1,
@@ -59,10 +58,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     content: {
-        paddingHorizontal: 16, // 모바일 기준 여백
+        paddingHorizontal: 16,
         paddingTop: 16,
         paddingBottom: 24,
-        // 웹에서 너무 넓어지지 않게
         width: "100%",
         maxWidth: 960,
         alignSelf: "center",

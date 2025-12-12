@@ -1,60 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { collection, getDocs } from "firebase/firestore";
 
 import { SectionCard } from "../common/SectionCard";
-import { auth, db } from "../../libs/firebase";
-import type { PlannerTask } from "../../features/planner/types";
-
-// Firestore에 저장된 플래너 태스크 원본 타입
-type PlannerTaskDoc = {
-  title?: string;
-  ddayLabel?: string;
-  done?: boolean;
-  scope?: "today" | "week";
-};
+import { usePlannerController } from "../../features/planner/usePlannerController";
 
 export function DashboardTodayTasksSection() {
-  const [tasks, setTasks] = useState<PlannerTask[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { todayTasks, loading } = usePlannerController();
 
-  useEffect(() => {
-    const loadTodayTasks = async () => {
-      setLoading(true);
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          setTasks([]);
-          return;
-        }
-
-        const colRef = collection(db, "users", user.uid, "tasks");
-        const snap = await getDocs(colRef);
-
-        const all: PlannerTask[] = snap.docs.map((docSnap) => {
-          const data = docSnap.data() as PlannerTaskDoc;
-          return {
-            id: docSnap.id,
-            title: data.title ?? "",
-            ddayLabel: data.ddayLabel ?? "",
-            done: data.done ?? false,
-            scope: data.scope ?? "today",
-          };
-        });
-
-        // 오늘(scope === "today")인 태스크만, 최대 3개 정도만 보여주기
-        const todayTasks = all.filter((task) => task.scope === "today");
-        setTasks(todayTasks.slice(0, 3));
-      } catch (error) {
-        console.error("대시보드 오늘 할 일 불러오기 실패:", error);
-        setTasks([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadTodayTasks();
-  }, []);
+  const tasks = useMemo(
+    () => todayTasks.slice(0, 3),
+    [todayTasks],
+  );
 
   return (
     <SectionCard title="오늘 할 일">

@@ -1,38 +1,10 @@
-// app/screens/LoginScreen.tsx (예시 경로)
+// app/screens/auth/LoginScreen.tsx
 
-import React, { useEffect } from "react";
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
-import { auth } from "../../libs/firebase";
-
-// 네비게이션 스택 타입 (네이밍은 프로젝트에 맞게 수정 가능)
-type RootStackParamList = {
-    Login: undefined;
-    Dashboard: undefined;
-};
-
-type Navigation = NativeStackNavigationProp<RootStackParamList, "Login">;
 
 export function LoginScreen() {
-    const navigation = useNavigation<Navigation>();
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                // 로그인 성공 시 대시보드로 이동 (스택 리셋해서 뒤로가기 막기)
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: "Dashboard" }],
-                });
-            }
-        });
-
-        return unsubscribe;
-    }, [navigation]);
-
     return (
         <View style={styles.container}>
             <View style={styles.card}>
@@ -50,7 +22,7 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#020617", // 대략 tailwind slate-900
+        backgroundColor: "#020617", // tailwind slate-900 느낌
         alignItems: "center",
         justifyContent: "center",
         paddingHorizontal: 24,

@@ -1,130 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 
-import { auth, db } from "../../libs/firebase";
 import { SectionCard } from "../common/SectionCard";
-
-type SummaryCounts = {
-  totalApplications: number;
-  inProgressApplications: number;
-  todayTasks: number;
-  upcomingInterviews: number;
-};
-
-type ApplicationDoc = {
-  status?: string | null;
-};
-
-type TaskDoc = {
-  done?: boolean;
-  scope?: string | null;
-  ddayLabel?: string | null;
-};
-
-type InterviewDoc = {
-  scheduledAt?: Timestamp | null;
-};
+import { useApplications } from "../../features/applications/useApplications";
+import { usePlannerController } from "../../features/planner/usePlannerController";
+import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 
 export function DashboardSummarySection() {
-  const [counts, setCounts] = useState<SummaryCounts>({
-    totalApplications: 0,
-    inProgressApplications: 0,
-    todayTasks: 0,
-    upcomingInterviews: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  // 지원 현황: 공통 useApplications 훅 재사용
+  const {
+    loading: applicationsLoading,
+    totalCount,
+    inProgressCount,
+  } = useApplications();
 
-  const loadSummary = async () => {
-    setLoading(true);
+  // 플래너: 오늘 할 일 / 이번 주 계획 훅 재사용
+  const {
+    todayTasks,
+    loading: plannerLoading,
+  } = usePlannerController();
 
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        setCounts({
-          totalApplications: 0,
-          inProgressApplications: 0,
-          todayTasks: 0,
-          upcomingInterviews: 0,
-        });
-        return;
-      }
+  // 면접: 다가오는 면접 목록 훅 재사용
+  const {
+    upcoming,
+    loading: interviewsLoading,
+  } = useInterviewPageController();
 
-      const uid = user.uid;
-      const now = new Date();
+  // 로딩 상태 통합
+  const loading = applicationsLoading || plannerLoading || interviewsLoading;
 
-      // 1) 지원 현황 요약
-      const applicationsCol = collection(db, "users", uid, "applications");
-      const applicationsSnap = await getDocs(applicationsCol);
-
-      let totalApplications = 0;
-      let inProgressApplications = 0;
-
-      applicationsSnap.forEach((docSnap) => {
-        totalApplications += 1;
-        const data = docSnap.data() as ApplicationDoc;
-        const status = data.status ?? "";
-
-        if (status !== "최종 합격" && status !== "불합격") {
-          inProgressApplications += 1;
-        }
-      });
-
-      // 2) 오늘 할 일 개수 (플래너 today 범위 + 미완료)
-      const tasksCol = collection(db, "users", uid, "tasks");
-      const tasksSnap = await getDocs(tasksCol);
-
-      let todayTasks = 0;
-
-      tasksSnap.forEach((docSnap) => {
-        const data = docSnap.data() as TaskDoc;
-        const done = data.done ?? false;
-        const scope = data.scope ?? "today";
-
-        if (!done && scope === "today") {
-          todayTasks += 1;
-        }
-      });
-
-      // 3) 앞으로 다가오는 면접 개수 (현재 시각 이후)
-      const interviewsCol = collection(db, "users", uid, "interviews");
-      const nowTs = Timestamp.fromDate(now);
-      const interviewsQuery = query(
-        interviewsCol,
-        where("scheduledAt", ">=", nowTs),
-      );
-      const interviewsSnap = await getDocs(interviewsQuery);
-
-      let upcomingInterviews = 0;
-      interviewsSnap.forEach((docSnap) => {
-        const data = docSnap.data() as InterviewDoc;
-        if (data.scheduledAt) {
-          upcomingInterviews += 1;
-        }
-      });
-
-      setCounts({
-        totalApplications,
-        inProgressApplications,
-        todayTasks,
-        upcomingInterviews,
-      });
-    } catch (error) {
-      console.error("대시보드 요약 정보 불러오기 실패:", error);
-      setCounts({
-        totalApplications: 0,
-        inProgressApplications: 0,
-        todayTasks: 0,
-        upcomingInterviews: 0,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadSummary();
-  }, []);
+  // 요약 데이터 메모이즈
+  const summary = useMemo(
+    () => ({
+      totalApplications: totalCount,
+      inProgressApplications: inProgressCount,
+      todayTasks: todayTasks.length,
+      upcomingInterviews: upcoming.length,
+    }),
+    [totalCount, inProgressCount, todayTasks.length, upcoming.length],
+  );
 
   return (
     <SectionCard title="오늘의 취준 요약">
@@ -140,22 +54,22 @@ export function DashboardSummarySection() {
         <View style={styles.grid}>
           <View style={styles.card}>
             <Text style={styles.label}>전체 지원</Text>
-            <Text style={styles.value}>{counts.totalApplications}</Text>
+            <Text style={styles.value}>{summary.totalApplications}</Text>
           </View>
 
           <View style={styles.card}>
             <Text style={styles.label}>진행 중 공고</Text>
-            <Text style={styles.value}>{counts.inProgressApplications}</Text>
+            <Text style={styles.value}>{summary.inProgressApplications}</Text>
           </View>
 
           <View style={styles.card}>
             <Text style={styles.label}>오늘 할 일</Text>
-            <Text style={styles.value}>{counts.todayTasks}</Text>
+            <Text style={styles.value}>{summary.todayTasks}</Text>
           </View>
 
           <View style={styles.card}>
             <Text style={styles.label}>다가오는 면접</Text>
-            <Text style={styles.value}>{counts.upcomingInterviews}</Text>
+            <Text style={styles.value}>{summary.upcomingInterviews}</Text>
           </View>
         </View>
       )}

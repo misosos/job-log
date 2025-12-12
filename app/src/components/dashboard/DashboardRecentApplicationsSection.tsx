@@ -1,5 +1,5 @@
 // app/src/components/dashboard/DashboardRecentApplicationsSection.tsx
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,38 +7,13 @@ import {
   ActivityIndicator,
   Pressable,
 } from "react-native";
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  Timestamp,
-} from "firebase/firestore";
+import type { Timestamp } from "firebase/firestore";
 
 import { SectionCard } from "../common/SectionCard";
-import { auth, db } from "../../libs/firebase";
-import type { ApplicationStatus } from "../../features/applications/types";
+import { useApplications } from "../../features/applications/useApplications";
+import type { ApplicationRow, ApplicationStatus } from "../../features/applications/types";
 
-type ApplicationDoc = {
-  company?: string;
-  position?: string;
-  role?: string;
-  status?: ApplicationStatus;
-  appliedAt?: Timestamp | null;
-  createdAt?: Timestamp | null;
-  deadline?: Timestamp | null;
-};
-
-type ApplicationRow = {
-  id: string;
-  company: string;
-  role: string;
-  status: ApplicationStatus;
-  appliedAtLabel: string;
-  deadline: Timestamp | null;
-};
-
+// 마감일 라벨 포맷
 function formatDeadlineLabel(deadline?: Timestamp | null): string {
   if (!deadline) {
     return "마감일 없음";
@@ -49,6 +24,7 @@ function formatDeadlineLabel(deadline?: Timestamp | null): string {
   return `${month}.${day} 마감`;
 }
 
+// 상태별 색상
 function getStatusColor(status: ApplicationStatus): string {
   switch (status) {
     case "지원 예정":
@@ -69,48 +45,13 @@ function getStatusColor(status: ApplicationStatus): string {
 }
 
 export function DashboardRecentApplicationsSection() {
-  const [items, setItems] = useState<ApplicationRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { applications, loading } = useApplications();
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          setItems([]);
-          return;
-        }
-
-        const colRef = collection(db, "users", user.uid, "applications");
-        const q = query(colRef, orderBy("createdAt", "desc"), limit(5));
-        const snap = await getDocs(q);
-
-        const rows: ApplicationRow[] = snap.docs.map((docSnap) => {
-          const data = docSnap.data() as ApplicationDoc;
-          const status = (data.status ?? "지원 예정") as ApplicationStatus;
-
-          return {
-            id: docSnap.id,
-            company: data.company ?? "",
-            role: data.position ?? data.role ?? "",
-            status,
-            appliedAtLabel: formatDeadlineLabel(data.deadline ?? null),
-            deadline: data.deadline ?? null,
-          };
-        });
-
-        setItems(rows);
-      } catch (error) {
-        console.error("대시보드 최근 지원 내역 로드 실패:", error);
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
+  // 최근 5건만 추려서 사용
+  const items: ApplicationRow[] = useMemo(
+    () => applications.slice(0, 5),
+    [applications],
+  );
 
   return (
     <SectionCard title="최근 지원 내역">
@@ -124,43 +65,52 @@ export function DashboardRecentApplicationsSection() {
         </Text>
       ) : (
         <View style={styles.listContainer}>
-          {items.map((item) => (
-            <Pressable
-              key={item.id}
-              style={({ pressed }) => [
-                styles.itemRow,
-                pressed && styles.itemRowPressed,
-              ]}
-            >
-              <View style={styles.itemMain}>
-                <Text
-                  style={styles.companyText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {item.company || "회사명 미입력"}
-                </Text>
-                <Text
-                  style={styles.roleText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {item.role || "직무 미입력"}
-                </Text>
-                <Text
-                  style={[styles.statusText, { color: getStatusColor(item.status) }]}
-                  numberOfLines={1}
-                >
-                  {item.status}
-                </Text>
-              </View>
-              <View style={styles.deadlineBox}>
-                <Text style={styles.deadlineText} numberOfLines={1}>
-                  {item.appliedAtLabel}
-                </Text>
-              </View>
-            </Pressable>
-          ))}
+          {items.map((item) => {
+            const deadlineTs =
+              (item.deadline as Timestamp | null | undefined) ?? null;
+            const deadlineLabel = formatDeadlineLabel(deadlineTs);
+
+            return (
+              <Pressable
+                key={item.id}
+                style={({ pressed }) => [
+                  styles.itemRow,
+                  pressed && styles.itemRowPressed,
+                ]}
+              >
+                <View style={styles.itemMain}>
+                  <Text
+                    style={styles.companyText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.company || "회사명 미입력"}
+                  </Text>
+                  <Text
+                    style={styles.roleText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.role || "직무 미입력"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(item.status) },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.status}
+                  </Text>
+                </View>
+                <View style={styles.deadlineBox}>
+                  <Text style={styles.deadlineText} numberOfLines={1}>
+                    {deadlineLabel}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
       )}
     </SectionCard>

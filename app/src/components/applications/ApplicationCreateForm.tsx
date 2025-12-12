@@ -9,15 +9,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-// 웹에서 쓰던 타입을 공유한다면 그 경로로 바꿔 줘도 돼
-// import type { ApplicationStatus } from "../../features/applications/types";
-export type ApplicationStatus =
-  | "지원 예정"
-  | "서류 제출"
-  | "서류 통과"
-  | "면접 진행"
-  | "최종 합격"
-  | "불합격";
+import type { ApplicationStatus } from "../../features/applications/types";
 
 type Props = {
   company: string;

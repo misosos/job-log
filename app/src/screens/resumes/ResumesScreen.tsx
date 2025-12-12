@@ -1,99 +1,53 @@
-// app/screens/resumes/ResumesScreen.tsx (예시 경로)
+// app/screens/resumes/ResumesScreen.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, Text, StyleSheet, View } from "react-native";
 
 import { SectionCard } from "../../components/common/SectionCard";
-import { auth } from "../../libs/firebase";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import type { ResumeVersion } from "../../features/resumes/types";
-import {
-    createResume,
-    fetchResumes,
-    setDefaultResume,
-} from "../../features/resumes/api";
+import { useResumesController } from "../../features/resumes/useResumesController";
 
 export function ResumesScreen() {
-    const [resumes, setResumes] = useState<ResumeVersion[]>([]);
+    // 🔹 폼 입력용 로컬 상태
     const [title, setTitle] = useState("");
     const [target, setTarget] = useState("");
     const [note, setNote] = useState("");
     const [link, setLink] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     const isValid = title.trim().length > 0 && target.trim().length > 0;
 
-    const loadResumes = async () => {
-        setLoading(true);
-        setError(null);
+    // 🔹 데이터 로딩/저장/에러는 전부 훅에서 관리
+    const {
+        resumes,
+        loading,
+        saving,
+        error,
+        createResumeVersion,
+        setDefaultResumeVersion,
+    } = useResumesController();
 
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setResumes([]);
-                return;
-            }
-
-            const rows = await fetchResumes(user.uid);
-            setResumes(rows);
-        } catch (err) {
-            console.error("이력서 버전 불러오기 실패:", err);
-            setError("이력서 정보를 불러오는 중 문제가 발생했습니다.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        void loadResumes();
-    }, []);
-
-    // ✅ RN에서는 FormEvent 사용 X, 그냥 콜백으로 처리
     const handleCreate = async () => {
-        if (!isValid) return;
+        if (!isValid || saving) return;
 
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setError("로그인이 필요합니다.");
-                return;
-            }
+        await createResumeVersion({
+            title,
+            target,
+            note,
+            link,
+        });
 
-            await createResume(user.uid, {
-                title: title.trim(),
-                target: target.trim(),
-                note: note.trim() ? note.trim() : undefined,
-                link: link.trim() ? link.trim() : undefined,
-            });
-
-            setTitle("");
-            setTarget("");
-            setNote("");
-            setLink("");
-
-            await loadResumes();
-        } catch (err) {
-            console.error("이력서 버전 저장 실패:", err);
-            setError("이력서 버전을 저장하는 중 문제가 발생했습니다.");
-        }
+        // 성공/실패 여부는 훅에서 error로 노출
+        // 일단 입력은 초기화해 두자
+        setTitle("");
+        setTarget("");
+        setNote("");
+        setLink("");
     };
 
     const handleSetDefault = async (resumeId: string) => {
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setError("로그인이 필요합니다.");
-                return;
-            }
-
-            await setDefaultResume(user.uid, resumeId);
-            await loadResumes();
-        } catch (err) {
-            console.error("기본 이력서 설정 실패:", err);
-            setError("기본 이력서를 설정하는 중 문제가 발생했습니다.");
-        }
+        if (saving) return;
+        await setDefaultResumeVersion(resumeId);
     };
 
     return (
@@ -111,7 +65,7 @@ export function ResumesScreen() {
                     target={target}
                     link={link}
                     note={note}
-                    isValid={isValid}
+                    isValid={isValid && !saving}
                     onSubmit={handleCreate}
                     onChangeTitle={setTitle}
                     onChangeTarget={setTarget}
@@ -155,5 +109,3 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
 });
-
-export default ResumesScreen;

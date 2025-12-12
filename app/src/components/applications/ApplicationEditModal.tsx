@@ -11,26 +11,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-// 웹에서 공통 타입을 쓰고 있으면 아래 타입 대신 import 해도 돼
-// import type { ApplicationStatus } from "../../features/applications/types";
-
-export type ApplicationStatus =
-  | "지원 예정"
-  | "서류 제출"
-  | "서류 통과"
-  | "면접 진행"
-  | "최종 합격"
-  | "불합격";
-
-// 웹에서 쓰던 ApplicationRow 타입도 앱 쪽에서 공유하고 있으면 경로 맞춰서 import 해줘
-export type ApplicationRow = {
-  id: string;
-  company: string;
-  role: string;
-  status: ApplicationStatus;
-  appliedAtLabel?: string;
-  deadline?: unknown;
-};
+import type { ApplicationStatus,ApplicationRow } from "../../features/applications/types";
 
 type Props = {
   open: boolean;

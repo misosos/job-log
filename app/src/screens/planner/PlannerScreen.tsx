@@ -1,90 +1,46 @@
-// app/screens/planner/PlannerScreen.tsx (예시 경로)
-
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, View, StyleSheet } from "react-native";
 
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
-import type { PlannerScope, PlannerTask } from "../../features/planner/types";
-import {
-    createPlannerTask,
-    fetchPlannerTasks,
-    togglePlannerTaskDone,
-    deletePlannerTask,
-} from "../../features/planner/api";
+import type { PlannerScope } from "../../features/planner/types";
+import { usePlannerController } from "../../features/planner/usePlannerController";
 
 export function PlannerScreen() {
-    const [todayTasks, setTodayTasks] = useState<PlannerTask[]>([]);
-    const [weekTasks, setWeekTasks] = useState<PlannerTask[]>([]);
-    const [loading, setLoading] = useState(true);
-
+    // 폼 입력용 로컬 상태
     const [newTitle, setNewTitle] = useState("");
     const [newScope, setNewScope] = useState<PlannerScope>("today");
     const [newDdayLabel, setNewDdayLabel] = useState("오늘");
-    const [saving, setSaving] = useState(false);
 
-    const loadTasks = async () => {
-        setLoading(true);
-        try {
-            const all = await fetchPlannerTasks();
-            setTodayTasks(all.filter((t) => t.scope === "today"));
-            setWeekTasks(all.filter((t) => t.scope === "week"));
-        } catch (error) {
-            console.error("[PlannerScreen] 플래너 태스크 불러오기 실패:", error);
-            setTodayTasks([]);
-            setWeekTasks([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // 비즈니스 로직/데이터는 훅에서 관리
+    const {
+        todayTasks,
+        weekTasks,
+        loading,
+        saving,
+        createTask,
+        toggleTask,
+        deleteTaskById,
+    } = usePlannerController();
 
-    useEffect(() => {
-        void loadTasks();
-    }, []);
-
-    // ✅ RN에서는 FormEvent 안 쓰고 그냥 콜백으로 처리
+    // RN에서는 이벤트 객체 안 쓰고 콜백만
     const handleAddTask = async (): Promise<void> => {
-        const trimmedTitle = newTitle.trim();
-        if (!trimmedTitle) return;
+        await createTask({
+            title: newTitle,
+            scope: newScope,
+            ddayLabel: newDdayLabel,
+        });
 
-        setSaving(true);
-        try {
-            const newTask = await createPlannerTask({
-                title: trimmedTitle,
-                ddayLabel: newDdayLabel.trim() || "오늘",
-                scope: newScope,
-            });
-
-            if (newTask.scope === "today") {
-                setTodayTasks((prev) => [newTask, ...prev]);
-            } else {
-                setWeekTasks((prev) => [newTask, ...prev]);
-            }
-
-            setNewTitle("");
-        } catch (error) {
-            console.error("[PlannerScreen] 할 일 추가 실패:", error);
-        } finally {
-            setSaving(false);
-        }
+        // 훅 쪽에서 빈 제목은 무시하니까 여기선 그냥 초기화해도 안전
+        setNewTitle("");
     };
 
     const handleToggleTask = async (id: string): Promise<void> => {
-        try {
-            await togglePlannerTaskDone(id);
-            await loadTasks();
-        } catch (error) {
-            console.error("[PlannerScreen] 할 일 완료 상태 변경 실패:", error);
-        }
+        await toggleTask(id);
     };
 
     const handleDeleteTask = async (id: string): Promise<void> => {
-        try {
-            await deletePlannerTask(id);
-            await loadTasks();
-        } catch (error) {
-            console.error("[PlannerScreen] 할 일 삭제 실패:", error);
-        }
+        await deleteTaskById(id);
     };
 
     return (
@@ -143,5 +99,3 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
 });
-
-export default PlannerScreen;

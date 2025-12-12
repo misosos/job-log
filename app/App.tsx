@@ -1,13 +1,10 @@
 // App.tsx
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { ActivityIndicator, View, Text, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import type { User } from "firebase/auth";
 import * as AuthSession from "expo-auth-session";
-
-import { auth } from "./src/libs/firebase";
 
 import { LoginScreen } from "./src/screens/auth/LoginScreen";
 import { DashboardScreen } from "./src/screens/dashboard/DashboardScreen";
@@ -15,9 +12,8 @@ import { ApplicationsScreen } from "./src/screens/applications/ApplicationsScree
 import { PlannerScreen } from "./src/screens/planner/PlannerScreen";
 import { ResumesScreen } from "./src/screens/resumes/ResumesScreen";
 import { InterviewsScreen } from "./src/screens/interviews/InterviewsScreen";
-
-// ✅ 헤더 컴포넌트 임포트
 import { PageLayout } from "./src/components/layout/PageLayout";
+import { AuthProvider, useAuth } from "./src/libs/auth-context";
 
 export type RootStackParamList = {
     Login: undefined;
@@ -33,19 +29,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const redirectUri = AuthSession.makeRedirectUri();
 console.log("redirectUri >>>", redirectUri);
 
-function AppInner() {
-    const [user, setUser] = useState<User | null>(null);
-    const [checkingAuth, setCheckingAuth] = useState(true);
+//  로그인 상태에 따라 네비게이션 분기하는 컴포넌트
+function RootNavigator() {
+    const { user, loading } = useAuth();
 
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-            setUser(firebaseUser);
-            setCheckingAuth(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    if (checkingAuth) {
+    if (loading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color="#22C55E" />
@@ -73,6 +61,7 @@ function AppInner() {
                             </PageLayout>
                         )}
                     </Stack.Screen>
+
                     <Stack.Screen
                         name="Applications"
                         options={{ title: "지원 현황", headerShown: false }}
@@ -83,6 +72,7 @@ function AppInner() {
                             </PageLayout>
                         )}
                     </Stack.Screen>
+
                     <Stack.Screen
                         name="Planner"
                         options={{ title: "플래너", headerShown: false }}
@@ -93,6 +83,7 @@ function AppInner() {
                             </PageLayout>
                         )}
                     </Stack.Screen>
+
                     <Stack.Screen
                         name="Resumes"
                         options={{ title: "이력서 관리", headerShown: false }}
@@ -103,6 +94,7 @@ function AppInner() {
                             </PageLayout>
                         )}
                     </Stack.Screen>
+
                     <Stack.Screen
                         name="Interviews"
                         options={{ title: "면접 기록", headerShown: false }}
@@ -129,7 +121,11 @@ function AppInner() {
 }
 
 export default function App() {
-    return <AppInner />;
+    return (
+        <AuthProvider>
+            <RootNavigator />
+        </AuthProvider>
+    );
 }
 
 const styles = StyleSheet.create({

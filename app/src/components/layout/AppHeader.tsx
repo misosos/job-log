@@ -12,9 +12,11 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { signOut, onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "../../libs/firebase";
+import { signOut } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
+
+import { auth } from "../../libs/firebase";
+import { useAuth } from "../../libs/auth-context";
 
 // App.tsx 에서 쓰는 스택 이름과 맞춰야 함
 type RootStackParamList = {
@@ -43,18 +45,15 @@ const NAV_ITEMS: NavItem[] = [
 export function AppHeader() {
     const navigation = useNavigation<NavProp>();
     const route = useRoute();
-    const [user, setUser] = useState<User | null>(null);
+    const { user } = useAuth(); // ✅ 컨텍스트에서 로그인 유저 읽기
     const [menuVisible, setMenuVisible] = useState(false);
 
+    // 유저가 없어지면(로그아웃) 메뉴 자동 닫기
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-            setUser(firebaseUser);
-            if (!firebaseUser) {
-                setMenuVisible(false);
-            }
-        });
-        return unsubscribe;
-    }, []);
+        if (!user) {
+            setMenuVisible(false);
+        }
+    }, [user]);
 
     const currentRouteName = route.name as keyof RootStackParamList;
 
@@ -70,6 +69,9 @@ export function AppHeader() {
         try {
             await signOut(auth);
             setMenuVisible(false);
+            // 보통은 AuthProvider + App.tsx에서 user null로 바뀌면서
+            // 스택이 Login 쪽으로 바뀌기 때문에 이 reset은 없어도 되지만,
+            // 혹시 모를 경우를 위해 남겨둘 수 있음
             navigation.reset({
                 index: 0,
                 routes: [{ name: "Login" }],
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
         color: "#e5e7eb",
     },
     menuDivider: {
-        height: StyleSheet.hairlineWidth,
+        height: 1,
         backgroundColor: "#4b5563",
         marginVertical: 8,
     },

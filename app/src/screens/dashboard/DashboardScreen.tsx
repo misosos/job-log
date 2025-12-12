@@ -57,5 +57,3 @@ const styles = StyleSheet.create({
         marginBottom: 16, // space-y-6 비슷한 여백
     },
 });
-
-export default DashboardScreen;
