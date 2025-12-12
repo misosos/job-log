@@ -1,13 +1,16 @@
 // src/pages/auth/LoginPage.tsx
-import { useEffect } from "react";
+import { useEffect, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
-import { auth } from "../../libs/firebase";
+import { auth, applyWebAuthPersistence } from "../../libs/firebase";
+import { useAuth } from "../../libs/auth-context";
 import { useEmailAuthForm } from "../../features/auth/useEmailAuthForm";
 
 export function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
+
+    const { rememberMe, setRememberMe } = useAuth();
 
     const state = location.state as { from?: { pathname?: string } } | null;
     const fromPath = state?.from?.pathname ?? "/";
@@ -31,15 +34,18 @@ export function LoginPage() {
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                navigate(fromPath, { replace: true });
-            }
+            if (user) navigate(fromPath, { replace: true });
         });
-
         return () => unsubscribe();
     }, [navigate, fromPath]);
 
     const isSignup = mode === "signup";
+
+    // ✅ 이메일 로그인/회원가입 전에 persistence 적용 (local/session)
+    const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        await applyWebAuthPersistence(rememberMe);
+        await handleSubmit(e);
+    };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
@@ -50,7 +56,7 @@ export function LoginPage() {
                 </p>
 
                 {/* 이메일 로그인 / 회원가입 폼 */}
-                <form onSubmit={handleSubmit} className="mb-6 space-y-3">
+                <form onSubmit={onSubmit} className="mb-6 space-y-3">
                     {isSignup && (
                         <div>
                             <label className="mb-1 block text-xs text-slate-300">
@@ -104,22 +110,30 @@ export function LoginPage() {
                         </div>
                     )}
 
-                    {error && (
-                        <p className="text-xs text-red-400">
-                            {error}
-                        </p>
-                    )}
+                    {error && <p className="text-xs text-red-400">{error}</p>}
+
+                    {/* ✅ 로그인 유지 */}
+                    <label className="mt-1 flex cursor-pointer items-start gap-2 rounded-md border border-slate-600 bg-slate-900 px-3 py-2">
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => void setRememberMe(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 accent-emerald-400"
+                        />
+                        <span className="text-xs text-slate-200">
+              로그인 유지
+              <span className="mt-0.5 block text-[11px] text-slate-400">
+                체크하지 않으면 브라우저를 닫을 때 자동 로그아웃돼요.
+              </span>
+            </span>
+                    </label>
 
                     <button
                         type="submit"
                         disabled={loading || !isFormValid}
                         className="mt-2 flex w-full items-center justify-center rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
                     >
-                        {loading
-                            ? "처리 중..."
-                            : isSignup
-                                ? "회원가입"
-                                : "이메일로 로그인"}
+                        {loading ? "처리 중..." : isSignup ? "회원가입" : "이메일로 로그인"}
                     </button>
                 </form>
 
@@ -155,7 +169,8 @@ export function LoginPage() {
                     <div className="h-px flex-1 bg-slate-600" />
                 </div>
 
-                <GoogleSignInButton />
+                {/* ✅ 구글 로그인도 rememberMe 전달 */}
+                <GoogleSignInButton rememberMe={rememberMe} />
             </div>
         </div>
     );

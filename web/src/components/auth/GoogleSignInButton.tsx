@@ -1,15 +1,20 @@
 // src/components/auth/GoogleSignInButton.tsx
 import { useEffect, useState } from "react";
 import { signInWithPopup, signOut } from "firebase/auth";
-import { auth, googleProvider } from "../../libs/firebase";
+import { auth, googleProvider, applyWebAuthPersistence } from "../../libs/firebase";
 import { Button } from "flowbite-react";
 
 type GoogleSignInButtonProps = {
     /** 헤더처럼 로그인 전에는 아무 것도 안 보이게 하고 싶을 때 true */
     hideWhenLoggedOut?: boolean;
+    /** 로그인 유지 체크값 (web persistence 적용용) */
+    rememberMe?: boolean;
 };
 
-export function GoogleSignInButton({ hideWhenLoggedOut = false }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({
+                                       hideWhenLoggedOut = false,
+                                       rememberMe = false,
+                                   }: GoogleSignInButtonProps) {
     const [userEmail, setUserEmail] = useState<string | null>(null);
 
     useEffect(() => {
@@ -21,6 +26,8 @@ export function GoogleSignInButton({ hideWhenLoggedOut = false }: GoogleSignInBu
 
     const handleSignIn = async () => {
         try {
+            // ✅ Google OAuth 시작 전에 persistence 적용 (local/session)
+            await applyWebAuthPersistence(rememberMe);
             await signInWithPopup(auth, googleProvider);
         } catch (e) {
             console.error("로그인 실패", e);

@@ -1,5 +1,11 @@
 import { initializeApp, type FirebaseOptions } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import {
+    getAuth,
+    GoogleAuthProvider,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -19,6 +25,16 @@ export const firebaseApp = app;
 // Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// ✅ Web 로그인 유지 설정
+// rememberMe=true  -> 브라우저를 닫아도 유지(local)
+// rememberMe=false -> 브라우저/탭을 닫으면 해제(session)
+export async function applyWebAuthPersistence(rememberMe: boolean) {
+    await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence,
+    );
+}
 
 // Firestore
 export const db = getFirestore(app);

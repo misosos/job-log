@@ -1,8 +1,15 @@
 // src/features/auth/useEmailAuthForm.ts
 import { useCallback, useState } from "react";
-import { signInWithEmail, signUpWithEmail } from "../../../../shared/features/auth/emailAuthApi";
+import { auth } from "../../libs/firebase";
+import {
+    initEmailAuthApi,
+    signInWithEmail,
+    signUpWithEmail,
+} from "../../../../shared/features/auth/emailAuthApi";
 
 type Mode = "login" | "signup";
+
+initEmailAuthApi(auth);
 
 /** 웹 form onSubmit 이벤트와 호환되게 최소한으로 정의 */
 type SubmitEventLike = {
@@ -23,6 +30,7 @@ export function useEmailAuthForm(onSuccess?: () => void) {
         setError(null);
         setPassword("");
         setPasswordConfirm("");
+        setDisplayName("");
     };
 
     const isValidEmail = (value: string) => /\S+@\S+\.\S+/.test(value.trim());
@@ -51,15 +59,18 @@ export function useEmailAuthForm(onSuccess?: () => void) {
             setError(null);
 
             try {
+                const normalizedEmail = email.trim().toLowerCase();
+                const normalizedPassword = password.trim();
+
                 if (mode === "login") {
                     await signInWithEmail({
-                        email: email.trim(),
-                        password: password.trim(),
+                        email: normalizedEmail,
+                        password: normalizedPassword,
                     });
                 } else {
                     await signUpWithEmail({
-                        email: email.trim(),
-                        password: password.trim(),
+                        email: normalizedEmail,
+                        password: normalizedPassword,
                         displayName: displayName.trim(),
                     });
                 }
@@ -79,6 +90,8 @@ export function useEmailAuthForm(onSuccess?: () => void) {
                     setError("이미 사용 중인 이메일입니다.");
                 } else if (code === "auth/invalid-email") {
                     setError("올바른 이메일 형식이 아닙니다.");
+                } else if (code === "auth/invalid-credential") {
+                    setError("이메일 또는 비밀번호가 올바르지 않습니다.");
                 } else if (code === "auth/wrong-password") {
                     setError("비밀번호가 올바르지 않습니다.");
                 } else if (code === "auth/user-not-found") {
