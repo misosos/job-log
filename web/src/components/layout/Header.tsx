@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
     Dropdown,
     DropdownDivider,
@@ -11,23 +10,17 @@ import {
 } from "flowbite-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import type { User } from "firebase/auth";
-import { auth } from "../../libs/firebase";
 import { HiUser } from "react-icons/hi";
+
+import { auth } from "../../libs/firebase";
+import { useAuth } from "../../libs/auth-context"; // ✅ 공통 Auth 훅 사용
 
 export function Header() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [user, setUser] = useState<User | null>(null);
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-            setUser(firebaseUser);
-        });
-
-        return () => unsubscribe();
-    }, []);
+    // ✅ 더 이상 로컬 useState/useEffect 필요 없음
+    const { user } = useAuth();
 
     const isActive = (path: string) => location.pathname === path;
     const navLinkClass = (path: string) =>
@@ -73,10 +66,10 @@ export function Header() {
                     >
                         <DropdownHeader>
                             <span className="block text-sm">
-                                {user?.displayName ?? "로그인 계정"}
+                                {user.displayName ?? "로그인 계정"}
                             </span>
                             <span className="block truncate text-sm font-medium">
-                                {user?.email}
+                                {user.email}
                             </span>
                         </DropdownHeader>
                         <DropdownDivider />
