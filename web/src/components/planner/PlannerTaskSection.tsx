@@ -1,12 +1,11 @@
 import { memo } from "react";
 import { SectionCard } from "../common/SectionCard";
-import { PlannerTaskItem } from "./PlannerTaskItem";
-import type { PlannerTask } from "../../../../shared/features/planner/types";
+import { PlannerTaskItem, type PlannerTaskWithLabel } from "./PlannerTaskItem";
 
 type PlannerTaskSectionProps = {
     title: string;
     loading: boolean;
-    tasks: PlannerTask[];
+    tasks: PlannerTaskWithLabel[];
     emptyMessage: string;
     /**
      * 체크 토글 핸들러 (옵션)
@@ -19,7 +18,7 @@ type PlannerTaskSectionProps = {
 };
 
 type PlannerTaskRowProps = {
-    task: PlannerTask;
+    task: PlannerTaskWithLabel;
     onToggle?: (id: string) => void | Promise<void>;
     onDelete?: (id: string) => void | Promise<void>;
 };
@@ -37,7 +36,6 @@ function PlannerTaskRow({ task, onToggle, onDelete }: PlannerTaskRowProps) {
 
     return (
         <PlannerTaskItem
-            key={task.id}
             task={task}
             onToggle={handleToggle}
             onDelete={handleDelete}
@@ -46,13 +44,13 @@ function PlannerTaskRow({ task, onToggle, onDelete }: PlannerTaskRowProps) {
 }
 
 function PlannerTaskSectionBase({
-                                    title,
-                                    loading,
-                                    tasks,
-                                    emptyMessage,
-                                    onToggle,
-                                    onDelete,
-                                }: PlannerTaskSectionProps) {
+    title,
+    loading,
+    tasks,
+    emptyMessage,
+    onToggle,
+    onDelete,
+}: PlannerTaskSectionProps) {
     return (
         <SectionCard title={title}>
             {loading ? (

@@ -2,12 +2,16 @@ import {
     HiCheckCircle,
     HiOutlineCheckCircle,
     HiTrash,
-    HiLink, // ✅ 추가
 } from "react-icons/hi";
-import type { PlannerTask } from "../../../../shared/features/planner/types";
+import type { PlannerTask as BasePlannerTask } from "../../../../shared/features/planner/types";
+
+// 앱처럼: shared PlannerTask에 표시용 라벨만 확장
+export type PlannerTaskWithLabel = BasePlannerTask & {
+    applicationLabel?: string | null;
+};
 
 type Props = {
-    task: PlannerTask;
+    task: PlannerTaskWithLabel;
     onToggle?: () => void;
     onDelete?: () => void;
 };
@@ -16,12 +20,12 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
     const Icon = task.done ? HiCheckCircle : HiOutlineCheckCircle;
 
     return (
-        <div className="flex w-full items-center justify-between rounded-md bg-slate-900/60 px-3 py-2">
+        <div className="flex w-full items-center justify-between rounded-lg bg-slate-900/80 px-3 py-2.5">
             {/* 왼쪽: 체크 토글 영역 */}
             <button
                 type="button"
                 onClick={onToggle}
-                className="flex flex-1 items-center gap-2 text-left hover:opacity-80"
+                className="flex flex-1 items-center gap-2 text-left hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
             >
                 <Icon
                     className={
@@ -32,23 +36,25 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
                 />
 
                 <div className="flex flex-1 flex-col">
-          <span
-              className={
-                  task.done
-                      ? "text-sm text-slate-400 line-through"
-                      : "text-sm text-slate-100"
-              }
-          >
-            {task.title}
-          </span>
+                    <span
+                        className={
+                            task.done
+                                ? "text-sm leading-5 text-slate-400 line-through"
+                                : "text-sm leading-5 text-slate-100"
+                        }
+                    >
+                        {task.title}
+                    </span>
 
-                    {/* ✅ 관련 공고 연결 표시 (applicationId가 있을 때만) */}
-                    {task.applicationId && (
-                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-emerald-300">
-              <HiLink className="h-3 w-3" />
-              관련 공고와 연결됨
-            </span>
-                    )}
+                    {task.applicationLabel ? (
+                        <span
+                            className="mt-1 block max-w-full text-[11px] leading-4 text-slate-400"
+                            title={task.applicationLabel}
+                        >
+                            <span className="text-slate-500">관련 공고: </span>
+                            {task.applicationLabel}
+                        </span>
+                    ) : null}
                 </div>
             </button>
 

@@ -4,7 +4,9 @@ import type { PlannerScope } from "../../../../shared/features/planner/types";
 
 // 💡 플래너에서 사용할 "관련 공고" 옵션 타입
 type RelatedApplicationOption = {
-    id: string;
+    /** 선택 값(applicationId). 기존 코드와 호환을 위해 id도 허용 */
+    value?: string;
+    id?: string;
     label: string; // 회사명 + 직무 등 표시용
 };
 
@@ -44,7 +46,7 @@ export function PlannerNewTaskForm({
     const handleApplicationChange = (value: string) => {
         if (!onApplicationChange) return;
         // 빈 값이면 "연결 안 함"
-        onApplicationChange(value || null);
+        onApplicationChange(value ? value : null);
     };
 
     return (
@@ -103,11 +105,14 @@ export function PlannerNewTaskForm({
                                 aria-label="관련 공고 선택"
                             >
                                 <option value="">연결 안 함</option>
-                                {applicationOptions.map((opt) => (
-                                    <option key={opt.id} value={opt.id}>
-                                        {opt.label}
-                                    </option>
-                                ))}
+                                {applicationOptions.map((opt) => {
+                                    const optionValue = opt.value ?? opt.id ?? "";
+                                    return (
+                                        <option key={optionValue} value={optionValue}>
+                                            {opt.label}
+                                        </option>
+                                    );
+                                })}
                             </select>
                         </div>
                     )}
