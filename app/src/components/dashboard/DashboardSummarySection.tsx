@@ -2,9 +2,9 @@ import React, { useMemo } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 
 import { SectionCard } from "../common/SectionCard";
-import { useApplications } from "../../../../shared/features/applications/useApplications";
-import { usePlanner } from "../../../../shared/features/planner/usePlanner";
-import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
+import { useApplications } from "../../features/applications/useApplications";
+import { usePlanner } from "../../features/planner/usePlanner";
+import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 import { useAuth } from "../../libs/auth-context";
 
 export function DashboardSummarySection() {

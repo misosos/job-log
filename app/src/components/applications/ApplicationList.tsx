@@ -1,20 +1,18 @@
 // app/src/components/applications/ApplicationList.tsx
-import React, { memo, useCallback } from "react";
+import React, { memo } from "react";
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
-    FlatList,
-    ListRenderItem,
 } from "react-native";
 import type { Timestamp } from "firebase/firestore";
 
 import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
 
 // 타입은 features 쪽에서 가져오기
-import type {ApplicationRow} from "../../../../shared/features/applications/types";
+import type { ApplicationRow } from "../../../../shared/features/applications/types";
 
 export type ApplicationListProps = {
     loading: boolean;
@@ -150,18 +148,6 @@ export function ApplicationList({
         );
     }
 
-    const renderItem: ListRenderItem<ApplicationRow> = useCallback(
-        ({ item, index }) => (
-            <ApplicationRowItem
-                app={item}
-                isLast={index === applications.length - 1}
-                onEdit={onEdit}
-                onDelete={onDelete}
-            />
-        ),
-        [applications.length, onEdit, onDelete],
-    );
-
     return (
         <View style={styles.card}>
             <View style={styles.headerRow}>
@@ -170,14 +156,18 @@ export function ApplicationList({
                 </Text>
             </View>
 
-            <FlatList
-                data={applications}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                scrollEnabled={applications.length > 4}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContent}
-            />
+            <View style={styles.listContent}>
+                {applications.map((item, index) => (
+                    <React.Fragment key={item.id}>
+                        <ApplicationRowItem
+                            app={item}
+                            isLast={index === applications.length - 1}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                        />
+                    </React.Fragment>
+                ))}
+            </View>
         </View>
     );
 }

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 // ✅ 컨트롤러 훅에서 타입 재사용
-import type { CreateInterviewFormValues } from "../../../../shared/features/interviews/useInterviewPageController";
+import type { CreateInterviewFormValues } from "../../features/interviews/useInterviewPageController";
 
 type Props = {
     saving: boolean;

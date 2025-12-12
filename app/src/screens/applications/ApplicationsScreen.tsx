@@ -10,7 +10,7 @@ import { ApplicationEditModal } from "../../components/applications/ApplicationE
 
 import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
-import { useApplicationsPageController } from "../../../../shared/features/applications/useApplicationsPageController";
+import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
 
 export function ApplicationsScreen() {
     const {

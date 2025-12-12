@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     ActivityIndicator,
-    FlatList,
 } from "react-native";
 // 🔹 여기서 타입까지 같이 import
 import {
@@ -31,7 +30,7 @@ function PlannerTaskSectionBase({
                                     onToggle,
                                     onDelete,
                                 }: PlannerTaskSectionProps) {
-    const renderItem = ({ item }: { item: PlannerTaskWithLabel }) => {
+    const renderItem = (item: PlannerTaskWithLabel) => {
         const handleToggle = () => {
             if (!onToggle) return;
             void onToggle(item.id);
@@ -69,13 +68,11 @@ function PlannerTaskSectionBase({
             ) : tasks.length === 0 ? (
                 <Text style={styles.emptyText}>{emptyMessage}</Text>
             ) : (
-                <FlatList
-                    data={tasks}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                />
+                <View style={styles.listContent}>
+                    {tasks.map((task) => (
+                        <React.Fragment key={task.id}>{renderItem(task)}</React.Fragment>
+                    ))}
+                </View>
             )}
         </View>
     );

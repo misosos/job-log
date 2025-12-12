@@ -3,7 +3,6 @@
 import React, { useMemo } from "react";
 import {
     ActivityIndicator,
-    FlatList,
     StyleSheet,
     Text,
     View,
@@ -11,17 +10,16 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 
 import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
-import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
+import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 import { useAuth } from "../../libs/auth-context";
 
 export function DashboardUpcomingSection() {
     // 현재 로그인 유저
     const { user } = useAuth();
+    const userId = user?.uid ?? "web";
 
     // ✅ 공용 컨트롤러 훅 사용 (이미 Firestore + API 재활용 중)
-    const { upcoming, loading, listError } = useInterviewPageController(
-        user ? user.uid : null,
-    );
+    const { upcoming, loading, listError } = useInterviewPageController(userId);
 
     // 대시보드에서는 상위 3개까지만 보여주기
     const items: InterviewItem[] = useMemo(
@@ -29,7 +27,7 @@ export function DashboardUpcomingSection() {
         [upcoming],
     );
 
-    const renderItem = ({ item }: { item: InterviewItem }) => (
+    const renderItem = (item: InterviewItem) => (
         <View style={styles.itemRow}>
             <View style={styles.iconWrapper}>
                 <MaterialIcons name="event" size={18} color="#22c55e" />
@@ -70,13 +68,16 @@ export function DashboardUpcomingSection() {
                     인터뷰 페이지에서 새로운 면접 일정을 추가해보세요.
                 </Text>
             ) : (
-                <FlatList
-                    data={items}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    ItemSeparatorComponent={() => <View style={styles.separator} />}
-                    showsVerticalScrollIndicator={false}
-                />
+                <View>
+                    {items.map((item, idx) => (
+                        <React.Fragment key={item.id}>
+                            {renderItem(item)}
+                            {idx !== items.length - 1 ? (
+                                <View style={styles.separator} />
+                            ) : null}
+                        </React.Fragment>
+                    ))}
+                </View>
             )}
         </View>
     );

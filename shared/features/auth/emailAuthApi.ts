@@ -1,5 +1,3 @@
-// shared/features/auth/emailAuthApi.ts (경로는 기존 그대로)
-
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,

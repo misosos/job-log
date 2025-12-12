@@ -10,7 +10,8 @@ import {
 import type { Timestamp } from "firebase/firestore";
 
 import { SectionCard } from "../common/SectionCard";
-import { useApplications } from "../../../../shared/features/applications/useApplications";
+import { useAuth } from "../../libs/auth-context";
+import { useApplications } from "../../features/applications/useApplications";
 import type { ApplicationRow, ApplicationStatus } from "../../../../shared/features/applications/types";
 
 // 마감일 라벨 포맷
@@ -45,7 +46,10 @@ function getStatusColor(status: ApplicationStatus): string {
 }
 
 export function DashboardRecentApplicationsSection() {
-  const { applications, loading } = useApplications();
+  const { user } = useAuth();
+  const userId = user?.uid ?? "web";
+
+  const { applications, loading } = useApplications(userId);
 
   // 최근 5건만 추려서 사용
   const items: ApplicationRow[] = useMemo(

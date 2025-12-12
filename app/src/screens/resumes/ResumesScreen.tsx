@@ -6,7 +6,8 @@ import { ScrollView, Text, StyleSheet, View } from "react-native";
 import { SectionCard } from "../../components/common/SectionCard";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import { useResumesController } from "../../../../shared/features/resumes/useResumesController";
+import { useResumesController } from "../../features/resumes/useResumesController";
+import { useAuth } from "../../libs/auth-context";
 
 export function ResumesScreen() {
     // 🔹 폼 입력용 로컬 상태
@@ -17,6 +18,9 @@ export function ResumesScreen() {
 
     const isValid = title.trim().length > 0 && target.trim().length > 0;
 
+    const { user } = useAuth();
+    const userId = user?.uid ?? "app";
+
     // 🔹 데이터 로딩/저장/에러는 전부 훅에서 관리
     const {
         resumes,
@@ -25,7 +29,7 @@ export function ResumesScreen() {
         error,
         createResumeVersion,
         setDefaultResumeVersion,
-    } = useResumesController();
+    } = useResumesController(userId);
 
     const handleCreate = async () => {
         if (!isValid || saving) return;

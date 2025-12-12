@@ -2,7 +2,8 @@ import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Linking } from "react-native";
 
 import { SectionCard } from "../common/SectionCard";
-import { useResumesController } from "../../../../shared/features/resumes/useResumesController";
+import { useAuth } from "../../libs/auth-context";
+import { useResumesController } from "../../features/resumes/useResumesController";
 import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
 /**
@@ -17,7 +18,10 @@ type DashboardResume = {
 };
 
 export function DashboardDefaultResumeSection() {
-    const { resumes, loading, error } = useResumesController();
+    const { user } = useAuth();
+    const userId = user?.uid ?? "web";
+
+    const { resumes, loading, error } = useResumesController(userId);
 
     const defaultResume = useMemo<DashboardResume | null>(() => {
         if (!resumes || resumes.length === 0) return null;

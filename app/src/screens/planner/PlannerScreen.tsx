@@ -10,9 +10,9 @@ import type {
     PlannerScope,
     PlannerTask,
 } from "../../../../shared/features/planner/types";
-import { usePlanner } from "../../../../shared/features/planner/usePlanner";
+import { usePlanner } from "../../features/planner/usePlanner";
 
-import { useApplications } from "../../../../shared/features/applications/useApplications";
+import { useApplications } from "../../features/applications/useApplications";
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
 // 🔹 앱 전용 확장 타입: applicationLabel 포함된 태스크
 import type { PlannerTaskWithLabel } from "../../components/planner/PlannerTaskItem";
