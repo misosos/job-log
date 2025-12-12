@@ -7,8 +7,7 @@ import {
     deleteApplication,
     listApplications,
 } from "./api";
-import type { JobApplication, ApplicationStatus } from "./types";
-import type { ApplicationRow } from "../../components/applications/ApplicationList";
+import type { ApplicationRow,JobApplication, ApplicationStatus } from "./types";
 
 const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
 

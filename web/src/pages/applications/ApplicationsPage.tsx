@@ -1,76 +1,45 @@
 // src/pages/applications/ApplicationsPage.tsx
-import { useState, type FormEvent } from "react";
-
 import {
     ApplicationList,
-    type ApplicationRow,
 } from "../../components/applications/ApplicationList";
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
-import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
-import {
-    useApplications,
-    type CreateApplicationFormInput,
-} from "../../features/applications/useApplications";
-
-const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
+import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
 
 export function ApplicationsPage() {
-    const [newCompany, setNewCompany] = useState("");
-    const [newRole, setNewRole] = useState("");
-    const [newStatus, setNewStatus] =
-        useState<ApplicationStatus>(DEFAULT_STATUS);
-    const [newDeadline, setNewDeadline] = useState("");
-
     const {
-        applications,
-        loading,
-        create,
+        // 폼 상태
+        newCompany,
+        newRole,
+        newStatus,
+        newDeadline,
+        setNewCompany,
+        setNewRole,
+        setNewStatus,
+        setNewDeadline,
+
+        // 생성 관련
         saving,
         saveError,
-        editingTarget,
-        openEdit,
-        closeEdit,
-        saveEdit,
-        editSaving,
-        editError,
-        remove,
+        handleCreate,
+
+        // 목록 관련
+        applications,
+        loading,
         totalCount,
         inProgressCount,
         dueThisWeekCount,
-    } = useApplications();
 
-    const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        const payload: CreateApplicationFormInput = {
-            company: newCompany,
-            role: newRole,
-            status: newStatus,
-            deadline: newDeadline || undefined,
-        };
-
-        await create(payload);
-
-        setNewCompany("");
-        setNewRole("");
-        setNewStatus(DEFAULT_STATUS);
-        setNewDeadline("");
-    };
-
-    const handleOpenEdit = (row: ApplicationRow) => {
-        openEdit(row);
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("이 지원 내역을 삭제할까요?")) return;
-        await remove(id);
-    };
-
-    const handleSaveEdit = async (id: string, status: ApplicationStatus) => {
-        await saveEdit(id, status);
-    };
+        // 수정/삭제 관련
+        editingTarget,
+        editSaving,
+        editError,
+        handleOpenEdit,
+        handleSaveEdit,
+        handleCloseEdit,
+        handleDelete,
+    } = useApplicationsPageController();
 
     return (
         <div className="space-y-6">
@@ -107,7 +76,7 @@ export function ApplicationsPage() {
                 target={editingTarget}
                 saving={editSaving}
                 error={editError}
-                onClose={closeEdit}
+                onClose={handleCloseEdit}
                 onSave={handleSaveEdit}
             />
         </div>

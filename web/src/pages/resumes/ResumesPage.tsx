@@ -1,47 +1,34 @@
 // src/pages/resumes/ResumesPage.tsx
-import { useState, type FormEvent } from "react";
 import { SectionCard } from "../../components/common/SectionCard";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import { useResumesController } from "../../features/resumes/useResumesController";
+import { useResumesPageController } from "../../features/resumes/useResumesPageController";
 
 export function ResumesPage() {
-    const [title, setTitle] = useState("");
-    const [target, setTarget] = useState("");
-    const [note, setNote] = useState("");
-    const [link, setLink] = useState("");
-
     const {
-        resumes,
-        loading,
+        // 폼
+        title,
+        target,
+        note,
+        link,
+        setTitle,
+        setTarget,
+        setNote,
+        setLink,
+        isValid,
+
+        // 생성
+        handleCreate,
         saving,
         error,
-        createResumeVersion,
-        setDefaultResumeVersion,
-    } = useResumesController();
 
-    const isValid = title.trim().length > 0 && target.trim().length > 0;
+        // 목록
+        resumes,
+        loading,
 
-    const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!isValid) return;
-
-        await createResumeVersion({
-            title,
-            target,
-            note,
-            link,
-        });
-
-        setTitle("");
-        setTarget("");
-        setNote("");
-        setLink("");
-    };
-
-    const handleSetDefault = (resumeId: string) => {
-        void setDefaultResumeVersion(resumeId);
-    };
+        // 기본 이력서 설정
+        handleSetDefault,
+    } = useResumesPageController();
 
     return (
         <div className="space-y-6">

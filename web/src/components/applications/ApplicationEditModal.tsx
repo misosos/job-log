@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal, Button, Label, Select } from "flowbite-react";
 
-import type { ApplicationStatus } from "../../features/applications/types.ts";
-import type { ApplicationRow } from "./ApplicationList";
+import type { ApplicationStatus, ApplicationRow } from "../../features/applications/types.ts";
 
 type Props = {
   open: boolean;
@@ -39,8 +38,6 @@ export function ApplicationEditModal({
     } else {
       setStatus("지원 예정");
     }
-    // props → local state 복사용 effect이므로 경고는 무시
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   }, [target]);
 
   const handleSubmit = () => {

@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { Button, Label, TextInput, Select } from "flowbite-react";
 import { SectionCard } from "../common/SectionCard";
-import type { ApplicationStatus } from "../common/ApplicationStatusBadge";
+import type { ApplicationStatus } from "../../features/applications/types";
 
 type Props = {
     company: string;
@@ -112,12 +112,12 @@ export function ApplicationCreateForm({
                         disabled={saving}
                         color="gray"
                         className="
-                        !bg-emerald-500
-                        hover:!bg-emerald-400
-                        !border-0
-                        !text-slate-900
-                        disabled:opacity-60
-                      "
+              !bg-emerald-500
+              hover:!bg-emerald-400
+              !border-0
+              !text-slate-900
+              disabled:opacity-60
+            "
                     >
                         {saving ? "저장 중..." : "지원 기록 추가"}
                     </Button>

@@ -1,47 +1,24 @@
 // src/pages/planner/PlannerPage.tsx
-import { useState, type FormEvent } from "react";
-
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
-import type { PlannerScope } from "../../features/planner/types";
-import { usePlannerController } from "../../features/planner/usePlannerController";
+import { usePlannerPageController } from "../../features/planner/usePlannerPageController";
 
 export function PlannerPage() {
     const {
+        newTitle,
+        newScope,
+        newDdayLabel,
+        setNewTitle,
+        setNewScope,
+        setNewDdayLabel,
         todayTasks,
         weekTasks,
         loading,
         saving,
-        createTask,
-        toggleTask,
-        deleteTaskById,
-    } = usePlannerController();
-
-    const [newTitle, setNewTitle] = useState("");
-    const [newScope, setNewScope] = useState<PlannerScope>("today");
-    const [newDdayLabel, setNewDdayLabel] = useState("오늘");
-
-    const handleAddTask = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        if (!newTitle.trim()) return;
-
-        await createTask({
-            title: newTitle,
-            scope: newScope,
-            ddayLabel: newDdayLabel,
-        });
-
-        setNewTitle("");
-    };
-
-    const handleToggleTask = (id: string) => {
-        void toggleTask(id);
-    };
-
-    const handleDeleteTask = (id: string) => {
-        void deleteTaskById(id);
-    };
+        handleCreate,
+        handleToggleTask,
+        handleDeleteTask,
+    } = usePlannerPageController();
 
     return (
         <div className="space-y-6">
@@ -53,7 +30,7 @@ export function PlannerPage() {
                 onTitleChange={setNewTitle}
                 onScopeChange={setNewScope}
                 onDdayLabelChange={setNewDdayLabel}
-                onSubmit={handleAddTask}
+                onSubmit={handleCreate}
             />
 
             <PlannerTaskSection

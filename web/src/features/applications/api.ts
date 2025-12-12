@@ -18,7 +18,7 @@ import {
     type QueryConstraint,
 } from "firebase/firestore";
 
-import { db, auth } from "../../libs/firebase.ts";
+import { db, auth } from "../../libs/firebase";
 import type { ApplicationStatus, JobApplication } from "./types.ts";
 
 // 로그인 유저 UID 가져오기

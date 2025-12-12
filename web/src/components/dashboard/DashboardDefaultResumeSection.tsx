@@ -1,104 +1,17 @@
 // src/components/dashboard/DashboardDefaultResumeSection.tsx
-import { useEffect, useState } from "react";
-import {
-    collection,
-    getDocs,
-    orderBy,
-    query,
-    Timestamp,
-} from "firebase/firestore";
-import { auth, db } from "../../libs/firebase";
+import { useMemo } from "react";
 import { SectionCard } from "../common/SectionCard";
-
-type DashboardResume = {
-    id: string;
-    title: string;
-    target: string;
-    updatedAt: string;
-    note?: string;
-    link?: string;
-};
-
-type ResumeDoc = {
-    title?: string;
-    target?: string;
-    note?: string;
-    link?: string | null;
-    updatedAt?: Timestamp | null;
-    createdAt?: Timestamp | null;
-    isDefault?: boolean | null;
-};
-
-function formatDate(ts?: Timestamp | null): string {
-    if (!ts) return "";
-    const date = ts.toDate();
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    return `${yyyy}.${mm}.${dd}`;
-}
+import { useResumesController } from "../../features/resumes/useResumesController";
+import type { ResumeVersion } from "../../features/resumes/types";
 
 export function DashboardDefaultResumeSection() {
-    const [defaultResume, setDefaultResume] = useState<DashboardResume | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { resumes, loading, error } = useResumesController();
 
-    const loadDefaultResume = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                setDefaultResume(null);
-                return;
-            }
-
-            const colRef = collection(db, "users", user.uid, "resumes");
-            // updatedAt 기준으로 정렬해서 불러온 뒤, isDefault === true 인 것만 선택
-            const q = query(colRef, orderBy("updatedAt", "desc"));
-            const snap = await getDocs(q);
-
-            if (snap.empty) {
-                setDefaultResume(null);
-                return;
-            }
-
-            const targetDoc = snap.docs
-                .map((docSnap) => {
-                    const data = docSnap.data() as ResumeDoc;
-                    return { id: docSnap.id, data };
-                })
-                .find(({ data }) => data.isDefault === true);
-
-            if (!targetDoc) {
-                setDefaultResume(null);
-                return;
-            }
-
-            const { id, data } = targetDoc;
-
-            setDefaultResume({
-                id,
-                title: data.title ?? "",
-                target: data.target ?? "",
-                note: data.note ?? undefined,
-                link: (data.link as string | undefined) ?? undefined,
-                updatedAt: formatDate(
-                    data.updatedAt ?? data.createdAt ?? null,
-                ),
-            });
-        } catch (err) {
-            console.error("기본 이력서 불러오기 실패:", err);
-            setError("기본 이력서를 불러오는 중 문제가 발생했습니다.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        void loadDefaultResume();
-    }, []);
+    // isDefault === true 인 이력서를 하나 골라서 사용
+    const defaultResume = useMemo<ResumeVersion | null>(
+        () => resumes.find((r) => r.isDefault) ?? null,
+        [resumes],
+    );
 
     return (
         <SectionCard title="기본 이력서">
@@ -121,7 +34,8 @@ export function DashboardDefaultResumeSection() {
                             기본 이력서 • 타겟: {defaultResume.target}
                         </p>
                         <p className="text-[11px] text-slate-400">
-                            마지막 수정: {defaultResume.updatedAt}
+                            {/* useResumesController 쪽에서 updatedAt을 문자열로 포맷해줬다고 가정 */}
+                            마지막 수정: {defaultResume.updatedAt || "-"}
                         </p>
                         {defaultResume.note && (
                             <p className="mt-1 text-xs text-slate-400">
