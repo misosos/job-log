@@ -34,6 +34,7 @@ function mapPlannerTaskDoc(docSnap: QueryDocumentSnapshot): PlannerTask {
         ddayLabel?: string;
         scope?: PlannerScope;
         done?: boolean;
+        applicationId?: string;
     };
 
     return {
@@ -42,6 +43,7 @@ function mapPlannerTaskDoc(docSnap: QueryDocumentSnapshot): PlannerTask {
         ddayLabel: data.ddayLabel ?? "",
         done: data.done ?? false,
         scope: data.scope ?? "today",
+        applicationId: data.applicationId ?? undefined,
     };
 }
 
@@ -60,6 +62,7 @@ export type CreatePlannerTaskInput = {
     title: string;
     ddayLabel: string;
     scope: PlannerScope;
+    applicationId?: string;
 };
 
 export async function createPlannerTask(
@@ -77,6 +80,7 @@ export async function createPlannerTask(
         done: false,
         createdAt: now,
         updatedAt: now,
+        applicationId: input.applicationId ?? null,
     });
 
     return {
@@ -85,6 +89,7 @@ export async function createPlannerTask(
         ddayLabel: input.ddayLabel,
         done: false,
         scope: input.scope,
+        applicationId: input.applicationId,
     };
 }
 

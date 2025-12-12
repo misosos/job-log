@@ -18,6 +18,33 @@ type PlannerTaskSectionProps = {
     onDelete?: (id: string) => void | Promise<void>;
 };
 
+type PlannerTaskRowProps = {
+    task: PlannerTask;
+    onToggle?: (id: string) => void | Promise<void>;
+    onDelete?: (id: string) => void | Promise<void>;
+};
+
+function PlannerTaskRow({ task, onToggle, onDelete }: PlannerTaskRowProps) {
+    const handleToggle = () => {
+        if (!onToggle) return;
+        void onToggle(task.id);
+    };
+
+    const handleDelete = () => {
+        if (!onDelete) return;
+        void onDelete(task.id);
+    };
+
+    return (
+        <PlannerTaskItem
+            key={task.id}
+            task={task}
+            onToggle={handleToggle}
+            onDelete={handleDelete}
+        />
+    );
+}
+
 function PlannerTaskSectionBase({
                                     title,
                                     loading,
@@ -41,26 +68,14 @@ function PlannerTaskSectionBase({
                 <p className="text-sm text-slate-400">{emptyMessage}</p>
             ) : (
                 <div className="space-y-2">
-                    {tasks.map((task) => {
-                        const handleToggle = () => {
-                            if (!onToggle) return;
-                            void onToggle(task.id);
-                        };
-
-                        const handleDelete = () => {
-                            if (!onDelete) return;
-                            void onDelete(task.id);
-                        };
-
-                        return (
-                            <PlannerTaskItem
-                                key={task.id}
-                                task={task}
-                                onToggle={handleToggle}
-                                onDelete={handleDelete}
-                            />
-                        );
-                    })}
+                    {tasks.map((task) => (
+                        <PlannerTaskRow
+                            key={task.id}
+                            task={task}
+                            onToggle={onToggle}
+                            onDelete={onDelete}
+                        />
+                    ))}
                 </div>
             )}
         </SectionCard>

@@ -1,9 +1,13 @@
+import type { Timestamp } from "firebase/firestore";
+
 export type PlannerScope = "today" | "week";
 
 export type PlannerTask = {
     id: string;
     title: string;
-    ddayLabel: string; // 예: "D-3", "오늘", "이번 주"
+    ddayLabel: string;
     done: boolean;
     scope: PlannerScope;
+    applicationId?: string;
+    createdAt?: Timestamp | null;
 };

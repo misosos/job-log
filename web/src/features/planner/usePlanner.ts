@@ -11,6 +11,7 @@ export type CreatePlannerTaskInput = {
     title: string;
     scope: PlannerScope;
     ddayLabel: string;
+    applicationId?: string;
 };
 
 export function usePlanner() {
@@ -39,7 +40,7 @@ export function usePlanner() {
     }, [loadTasks]);
 
     const createTask = useCallback(
-        async ({ title, scope, ddayLabel }: CreatePlannerTaskInput) => {
+        async ({ title, scope, ddayLabel, applicationId }: CreatePlannerTaskInput) => {
             const trimmedTitle = title.trim();
             if (!trimmedTitle) return;
 
@@ -49,6 +50,7 @@ export function usePlanner() {
                     title: trimmedTitle,
                     ddayLabel: ddayLabel.trim() || "오늘",
                     scope,
+                    applicationId,
                 });
 
                 if (newTask.scope === "today") {

@@ -8,9 +8,11 @@ export function PlannerPage() {
         newTitle,
         newScope,
         newDdayLabel,
+        newApplicationId,
         setNewTitle,
         setNewScope,
         setNewDdayLabel,
+        setNewApplicationId,
         todayTasks,
         weekTasks,
         loading,
@@ -18,6 +20,7 @@ export function PlannerPage() {
         handleCreate,
         handleToggleTask,
         handleDeleteTask,
+        applicationOptions,
     } = usePlannerPageController();
 
     return (
@@ -26,10 +29,14 @@ export function PlannerPage() {
                 title={newTitle}
                 scope={newScope}
                 ddayLabel={newDdayLabel}
+                applicationId={newApplicationId}
+                applicationOptions={applicationOptions}
                 saving={saving}
                 onTitleChange={setNewTitle}
                 onScopeChange={setNewScope}
                 onDdayLabelChange={setNewDdayLabel}
+                // 🔥 여기만 래핑해서 null 방어
+                onApplicationChange={(id) => setNewApplicationId(id ?? "")}
                 onSubmit={handleCreate}
             />
 

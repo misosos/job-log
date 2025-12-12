@@ -2,6 +2,7 @@ import {
     HiCheckCircle,
     HiOutlineCheckCircle,
     HiTrash,
+    HiLink, // ✅ 추가
 } from "react-icons/hi";
 import type { PlannerTask } from "../../features/planner/types";
 
@@ -29,15 +30,26 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
                             : "h-4 w-4 text-slate-500"
                     }
                 />
-                <span
-                    className={
-                        task.done
-                            ? "text-sm text-slate-400 line-through"
-                            : "text-sm text-slate-100"
-                    }
-                >
-          {task.title}
-        </span>
+
+                <div className="flex flex-1 flex-col">
+          <span
+              className={
+                  task.done
+                      ? "text-sm text-slate-400 line-through"
+                      : "text-sm text-slate-100"
+              }
+          >
+            {task.title}
+          </span>
+
+                    {/* ✅ 관련 공고 연결 표시 (applicationId가 있을 때만) */}
+                    {task.applicationId && (
+                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-emerald-300">
+              <HiLink className="h-3 w-3" />
+              관련 공고와 연결됨
+            </span>
+                    )}
+                </div>
             </button>
 
             {/* 오른쪽: D-day + 삭제 버튼 */}
