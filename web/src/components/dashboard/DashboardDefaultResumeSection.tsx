@@ -1,11 +1,15 @@
 // src/components/dashboard/DashboardDefaultResumeSection.tsx
 import { useMemo } from "react";
+import { useAuth } from "../../libs/auth-context";
 import { SectionCard } from "../common/SectionCard";
-import { useResumesController } from "../../../../shared/features/resumes/useResumesController";
+import { useResumesController } from "../../features/resumes/useResumesController";
 import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
 export function DashboardDefaultResumeSection() {
-    const { resumes, loading, error } = useResumesController();
+    const { user } = useAuth();
+    const userId = user?.uid ?? "web";
+
+    const { resumes, loading, error } = useResumesController(userId);
 
     // isDefault === true 인 이력서를 하나 골라서 사용
     const defaultResume = useMemo<ResumeVersion | null>(

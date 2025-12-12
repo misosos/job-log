@@ -1,8 +1,11 @@
 // src/features/interviews/useInterviewPageController.ts
 import { useCallback, useMemo, useState } from "react";
 import { useInterviews } from "./useInterviews";
-import { createInterview } from "./api";
-import type { InterviewItem } from "./interviews";
+import { createInterview } from "../../../../shared/features/interviews/api";
+import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
+
+// 🔹 웹 Firebase auth
+import { auth } from "../../libs/firebase";
 
 export type CreateInterviewFormValues = {
     company: string;
@@ -31,6 +34,18 @@ function splitUpcomingAndPast(items: InterviewItem[]) {
     return { upcoming, past };
 }
 
+/** 🔧 전달된 userId + Firebase auth.currentUser를 합쳐서 실제 userId 계산 */
+function getEffectiveUserId(userId: string | null): string | null {
+    const currentUid = auth?.currentUser?.uid ?? null;
+    if (currentUid) return currentUid;
+
+    if (!userId || userId === "web" || userId === "app") {
+        return null;
+    }
+
+    return userId;
+}
+
 /**
  * 웹/앱 공통 인터뷰 페이지 컨트롤러
  * - userId는 외부(AuthContext 등)에서 주입
@@ -48,7 +63,9 @@ export function useInterviewPageController(userId: string | null) {
 
     const handleCreate = useCallback(
         async (values: CreateInterviewFormValues) => {
-            if (!userId) {
+            const effectiveUserId = getEffectiveUserId(userId);
+
+            if (!effectiveUserId) {
                 setFormError("로그인이 필요합니다.");
                 return;
             }
@@ -58,7 +75,7 @@ export function useInterviewPageController(userId: string | null) {
 
             try {
                 await createInterview({
-                    userId,
+                    userId: effectiveUserId,
                     company: values.company,
                     role: values.role,
                     date: values.date,

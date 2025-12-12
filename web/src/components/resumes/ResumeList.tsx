@@ -1,5 +1,44 @@
 import { useMemo } from "react";
-import type { ResumeVersion } from "../../../../shared/features/resumes/types"
+import type { ResumeVersion } from "../../../../shared/features/resumes/types";
+
+// Firestore Timestamp / Date / number / string 등을 모두 안전하게 처리
+function toMillis(value: unknown): number {
+  if (!value) return 0;
+
+  if (typeof value === "number") return value;
+
+  if (typeof value === "string") {
+    const t = Date.parse(value);
+    return Number.isNaN(t) ? 0 : t;
+  }
+
+  if (value instanceof Date) return value.getTime();
+
+  // Firestore Timestamp (toDate) 또는 { seconds, nanoseconds }
+  if (typeof value === "object") {
+    const v = value as any;
+    if (typeof v.toDate === "function") {
+      const d = v.toDate();
+      return d instanceof Date ? d.getTime() : 0;
+    }
+    if (typeof v.seconds === "number") {
+      const nanos = typeof v.nanoseconds === "number" ? v.nanoseconds : 0;
+      return v.seconds * 1000 + Math.floor(nanos / 1_000_000);
+    }
+  }
+
+  return 0;
+}
+
+function formatResumeDate(value: unknown): string {
+  const ms = toMillis(value);
+  if (!ms) return "-";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).format(new Date(ms));
+}
 
 type ResumeItemProps = {
   resume: ResumeVersion;
@@ -18,7 +57,9 @@ function ResumeItem({ resume, onSetDefault }: ResumeItemProps) {
       <div>
         <p className="text-sm font-medium text-white">{resume.title}</p>
         <p className="text-xs text-slate-400">타겟: {resume.target}</p>
-        <p className="text-xs text-slate-500">마지막 수정: {resume.updatedAt}</p>
+        <p className="text-xs text-slate-500">
+          마지막 수정: {formatResumeDate((resume as any).updatedAt)}
+        </p>
 
         {resume.note && (
           <p className="mt-1 text-xs text-slate-400">메모: {resume.note}</p>
@@ -70,7 +111,7 @@ export function ResumeList({ resumes, loading, onSetDefault }: ResumeListProps) 
   const sortedResumes = useMemo(
     () =>
       [...resumes].sort((a, b) =>
-        (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
+        toMillis((b as any).updatedAt) - toMillis((a as any).updatedAt),
       ),
     [resumes],
   );

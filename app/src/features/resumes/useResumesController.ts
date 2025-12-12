@@ -1,7 +1,7 @@
 // src/features/resumes/useResumesController.ts
 import { useCallback, useEffect, useState } from "react";
-import { createResume, fetchResumes, setDefaultResume } from "./api";
-import type { ResumeVersion } from "./types";
+import { createResume, fetchResumes, setDefaultResume } from "../../../../shared/features/resumes/api";
+import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
 type CreateResumeInput = {
     title: string;

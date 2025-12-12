@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import { auth } from "../../libs/firebase";
-import { useEmailAuthForm } from "../../../../shared/features/auth/useEmailAuthForm";
+import { useEmailAuthForm } from "../../features/auth/useEmailAuthForm";
 
 export function LoginPage() {
     const navigate = useNavigate();

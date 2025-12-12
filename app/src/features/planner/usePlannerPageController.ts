@@ -2,12 +2,12 @@
 import { useCallback, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { PlannerScope } from "./types";
+import type { PlannerScope } from "../../../../shared/features/planner/types";
 import { usePlanner} from "./usePlanner";
 
 // 지원 공고 재사용
 import { useApplications } from "../applications/useApplications";
-import type { ApplicationRow } from "../applications/types";
+import type { ApplicationRow } from "../../../../shared/features/applications/types";
 import type { CreatePlannerTaskInput } from "./usePlanner"; // 이미 export 되어 있다면 사용
 
 // PlannerNewTaskForm에서 사용할 옵션 타입

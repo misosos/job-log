@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { SectionCard } from "../common/SectionCard";
-import { usePlanner } from "../../../../shared/features/planner/usePlanner.ts";
+import { usePlanner } from "../../features/planner/usePlanner.ts";
 
 export function DashboardTodayTasksSection() {
     const { todayTasks, loading } = usePlanner();

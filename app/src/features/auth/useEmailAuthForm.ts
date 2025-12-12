@@ -1,6 +1,6 @@
 // src/features/auth/useEmailAuthForm.ts
 import { useCallback, useState } from "react";
-import { signInWithEmail, signUpWithEmail } from "./emailAuthApi";
+import { signInWithEmail, signUpWithEmail } from "../../../../shared/features/auth/emailAuthApi";
 
 type Mode = "login" | "signup";
 

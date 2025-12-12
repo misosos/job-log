@@ -5,7 +5,7 @@ import {
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
-import { useApplicationsPageController } from "../../../../shared/features/applications/useApplicationsPageController";
+import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
 
 export function ApplicationsPage() {
     const {

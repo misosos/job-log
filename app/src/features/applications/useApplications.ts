@@ -6,8 +6,8 @@ import {
     updateApplication,
     deleteApplication,
     listApplications,
-} from "./api";
-import type { ApplicationRow,JobApplication, ApplicationStatus } from "./types";
+} from "../../../../shared/features/applications/api";
+import type { ApplicationRow,JobApplication, ApplicationStatus } from "../../../../shared/features/applications/types";
 
 const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
 

@@ -2,9 +2,13 @@
 import { SectionCard } from "../../components/common/SectionCard";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import { useResumesPageController } from "../../../../shared/features/resumes/useResumesPageController";
+import { useResumesPageController } from "../../features/resumes/useResumesPageController";
+import { useAuth } from "../../libs/auth-context";
 
 export function ResumesPage() {
+    const { user } = useAuth();
+    const userId = user?.uid ?? "web";
+
     const {
         // 폼
         title,
@@ -28,7 +32,7 @@ export function ResumesPage() {
 
         // 기본 이력서 설정
         handleSetDefault,
-    } = useResumesPageController();
+    } = useResumesPageController(userId);
 
     return (
         <div className="space-y-6">

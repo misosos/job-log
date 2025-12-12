@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 
 import { useResumesController } from "./useResumesController";
 
-export function useResumesPageController() {
+export function useResumesPageController(userId: string) {
     // 📝 폼 상태
     const [title, setTitle] = useState("");
     const [target, setTarget] = useState("");
@@ -19,7 +19,7 @@ export function useResumesPageController() {
         error,
         createResumeVersion,
         setDefaultResumeVersion,
-    } = useResumesController();
+    } = useResumesController(userId);
 
     const isValid = title.trim().length > 0 && target.trim().length > 0;
 

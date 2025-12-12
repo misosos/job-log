@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { ApplicationStatus, ApplicationRow } from "./types";
+import type { ApplicationStatus, ApplicationRow } from "../../../../shared/features/applications/types";
 import {
     useApplications,
     type CreateApplicationFormInput,

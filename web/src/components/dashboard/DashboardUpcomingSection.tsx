@@ -1,13 +1,17 @@
 // src/components/dashboard/DashboardUpcomingSection.tsx (웹 버전)
 
 import { useMemo } from "react";
+import { useAuth } from "../../libs/auth-context";
 import { SectionCard } from "../common/SectionCard";
-import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
+import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 import { MdEvent } from "react-icons/md";
 
 export function DashboardUpcomingSection() {
     // 공용 컨트롤러 훅 재사용
-    const { upcoming, loading, listError } = useInterviewPageController();
+    const { user } = useAuth();
+    const userId = user?.uid ?? "web";
+
+    const { upcoming, loading, listError } = useInterviewPageController(userId);
 
     // 대시보드에서는 상위 3개까지만 노출
     const items = useMemo(
