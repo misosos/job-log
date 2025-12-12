@@ -102,12 +102,15 @@ export function ApplicationCreateForm({
             onValueChange={(value) =>
               onStatusChange(value as ApplicationStatus)
             }
+            style={styles.picker}
+            itemStyle={styles.pickerItem}
           >
             {STATUS_OPTIONS.map((opt) => (
               <Picker.Item
                 key={opt.value}
                 label={opt.label}
                 value={opt.value}
+                color="#e5e7eb"
               />
             ))}
           </Picker>
@@ -192,6 +195,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: "hidden",
     backgroundColor: "#020617",
+  },
+  picker: {
+    color: "#e5e7eb", // selected text color (Android)
+    backgroundColor: "#020617",
+  },
+  pickerItem: {
+    color: "#e5e7eb", // iOS item text color
+    fontSize: 14,
   },
   buttonWrapper: {
     marginTop: 4,
