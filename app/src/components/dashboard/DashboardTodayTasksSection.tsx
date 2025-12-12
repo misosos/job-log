@@ -2,10 +2,10 @@ import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 import { SectionCard } from "../common/SectionCard";
-import { usePlannerController } from "../../features/planner/usePlannerController";
+import { usePlanner } from "../../features/planner/usePlanner";
 
 export function DashboardTodayTasksSection() {
-  const { todayTasks, loading } = usePlannerController();
+  const { todayTasks, loading } = usePlanner();
 
   const tasks = useMemo(
     () => todayTasks.slice(0, 3),

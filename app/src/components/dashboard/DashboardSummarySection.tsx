@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 
 import { SectionCard } from "../common/SectionCard";
 import { useApplications } from "../../features/applications/useApplications";
-import { usePlannerController } from "../../features/planner/usePlannerController";
+import { usePlanner } from "../../features/planner/usePlanner";
 import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 
 export function DashboardSummarySection() {
@@ -18,7 +18,7 @@ export function DashboardSummarySection() {
   const {
     todayTasks,
     loading: plannerLoading,
-  } = usePlannerController();
+  } = usePlanner();
 
   // 면접: 다가오는 면접 목록 훅 재사용
   const {

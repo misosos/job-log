@@ -6,7 +6,7 @@ import type { PlannerScope } from "./types";
 import {
     usePlanner,
     type CreatePlannerTaskInput,
-} from "./usePlanner.ts";
+} from "./usePlanner";
 
 export function usePlannerPageController() {
     // 📝 폼 상태

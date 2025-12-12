@@ -38,8 +38,11 @@ export function useApplicationsPageController() {
     } = useApplications();
 
     const handleCreate = useCallback(
-        async (e: FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
+        async (e?: FormEvent<HTMLFormElement>) => {
+            // 웹: form onSubmit 에서 들어오는 이벤트만 preventDefault
+            if (e && typeof e.preventDefault === "function") {
+                e.preventDefault();
+            }
 
             const payload: CreateApplicationFormInput = {
                 company: newCompany,

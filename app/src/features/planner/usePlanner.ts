@@ -13,7 +13,7 @@ export type CreatePlannerTaskInput = {
     ddayLabel: string;
 };
 
-export function usePlannerController() {
+export function usePlanner() {
     const [todayTasks, setTodayTasks] = useState<PlannerTask[]>([]);
     const [weekTasks, setWeekTasks] = useState<PlannerTask[]>([]);
     const [loading, setLoading] = useState(true);

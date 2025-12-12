@@ -4,7 +4,7 @@ import { ScrollView, View, StyleSheet } from "react-native";
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
 import type { PlannerScope } from "../../features/planner/types";
-import { usePlannerController } from "../../features/planner/usePlannerController";
+import { usePlanner } from "../../features/planner/usePlanner";
 
 export function PlannerScreen() {
     // 폼 입력용 로컬 상태
@@ -21,7 +21,7 @@ export function PlannerScreen() {
         createTask,
         toggleTask,
         deleteTaskById,
-    } = usePlannerController();
+    } = usePlanner();
 
     // RN에서는 이벤트 객체 안 쓰고 콜백만
     const handleAddTask = async (): Promise<void> => {
