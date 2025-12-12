@@ -45,7 +45,11 @@ export function Header() {
     };
 
     return (
-        <Navbar fluid rounded className="jl-header">
+        <Navbar
+            fluid
+            rounded
+            className="jl-header bg-slate-900 text-slate-50 shadow-sm dark:bg-slate-950 dark:text-slate-50"
+        >
             <NavbarBrand
                 href="/"
                 onClick={(e) => {
