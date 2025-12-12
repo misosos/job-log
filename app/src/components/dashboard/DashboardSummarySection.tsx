@@ -5,8 +5,10 @@ import { SectionCard } from "../common/SectionCard";
 import { useApplications } from "../../../../shared/features/applications/useApplications";
 import { usePlanner } from "../../../../shared/features/planner/usePlanner";
 import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
+import { useAuth } from "../../libs/auth-context";
 
 export function DashboardSummarySection() {
+  const { user } = useAuth();
   // 지원 현황: 공통 useApplications 훅 재사용
   const {
     loading: applicationsLoading,
@@ -24,7 +26,7 @@ export function DashboardSummarySection() {
   const {
     upcoming,
     loading: interviewsLoading,
-  } = useInterviewPageController();
+  } = useInterviewPageController(user ? user.uid : null);
 
   // 로딩 상태 통합
   const loading = applicationsLoading || plannerLoading || interviewsLoading;

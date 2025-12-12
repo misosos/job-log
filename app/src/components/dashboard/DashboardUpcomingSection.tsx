@@ -12,10 +12,16 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
 import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
+import { useAuth } from "../../libs/auth-context";
 
 export function DashboardUpcomingSection() {
+    // 현재 로그인 유저
+    const { user } = useAuth();
+
     // ✅ 공용 컨트롤러 훅 사용 (이미 Firestore + API 재활용 중)
-    const { upcoming, loading, listError } = useInterviewPageController();
+    const { upcoming, loading, listError } = useInterviewPageController(
+        user ? user.uid : null,
+    );
 
     // 대시보드에서는 상위 3개까지만 보여주기
     const items: InterviewItem[] = useMemo(
