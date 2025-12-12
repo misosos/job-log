@@ -3,8 +3,8 @@ import { useMemo } from "react";
 
 import { SectionCard } from "../common/SectionCard";
 import { ApplicationList } from "../applications/ApplicationList";
-import { useApplications } from "../../features/applications/useApplications";
-import type { ApplicationRow } from "../../features/applications/types";
+import { useApplications } from "../../../../shared/features/applications/useApplications";
+import type { ApplicationRow } from "../../../../shared/features/applications/types";
 
 export function DashboardRecentApplicationsSection() {
     const { applications, loading } = useApplications();

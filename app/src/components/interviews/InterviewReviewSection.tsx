@@ -2,7 +2,7 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import type { InterviewItem } from "../../features/interviews/interviews";
+import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
 
 type Props = {
     /** 이미 '지난 면접'만 들어온다고 가정 (useInterviewPageController의 past) */

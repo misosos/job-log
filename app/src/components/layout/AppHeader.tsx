@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { signOut } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 
+// ✅ 앱 전용 Firebase / AuthContext 사용 (web 폴더 참조 X)
 import { auth } from "../../libs/firebase";
 import { useAuth } from "../../libs/auth-context";
 
@@ -69,9 +70,6 @@ export function AppHeader() {
         try {
             await signOut(auth);
             setMenuVisible(false);
-            // 보통은 AuthProvider + App.tsx에서 user null로 바뀌면서
-            // 스택이 Login 쪽으로 바뀌기 때문에 이 reset은 없어도 되지만,
-            // 혹시 모를 경우를 위해 남겨둘 수 있음
             navigation.reset({
                 index: 0,
                 routes: [{ name: "Login" }],

@@ -15,6 +15,25 @@ import { InterviewsScreen } from "./src/screens/interviews/InterviewsScreen";
 import { PageLayout } from "./src/components/layout/PageLayout";
 import { AuthProvider, useAuth } from "./src/libs/auth-context";
 
+// 앱 쪽 Firebase 인스턴스
+import { db, auth } from "./src/libs/firebase";
+
+// shared features API 초기화
+import { initApplicationsApi } from "../shared/features/applications/api";
+import { initPlannerApi } from "../shared/features/planner/api";
+import { initInterviewsApi } from "../shared/features/interviews/api";
+import { initResumesApi } from "../shared/features/resumes/api";
+// 이메일 로그인/회원가입용 API 초기화 (공통)
+import { initEmailAuthApi } from "../shared/features/auth/emailAuthApi";
+
+// 앱에서도 한 번만 초기화해서 web/app 공용으로 사용
+initApplicationsApi({ db, auth });
+initPlannerApi(db, auth);      // 현재 시그니처가 (db, auth)
+initInterviewsApi(db);
+initResumesApi(db);
+// 🔹 이메일 인증용 Auth도 주입
+initEmailAuthApi(auth);
+
 export type RootStackParamList = {
     Login: undefined;
     Dashboard: undefined;

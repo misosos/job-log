@@ -2,9 +2,9 @@
 import { useMemo } from "react";
 
 import { SectionCard } from "../common/SectionCard";
-import { useApplications } from "../../features/applications/useApplications";
-import { usePlanner } from "../../features/planner/usePlanner.ts";
-import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
+import { useApplications } from "../../../../shared/features/applications/useApplications";
+import { usePlanner } from "../../../../shared/features/planner/usePlanner.ts";
+import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
 
 export function DashboardSummarySection() {
     // ✅ 지원 현황: 공통 useApplications 훅 재사용

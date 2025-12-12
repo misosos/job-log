@@ -1,8 +1,8 @@
 // src/components/dashboard/DashboardDefaultResumeSection.tsx
 import { useMemo } from "react";
 import { SectionCard } from "../common/SectionCard";
-import { useResumesController } from "../../features/resumes/useResumesController";
-import type { ResumeVersion } from "../../features/resumes/types";
+import { useResumesController } from "../../../../shared/features/resumes/useResumesController";
+import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
 export function DashboardDefaultResumeSection() {
     const { resumes, loading, error } = useResumesController();

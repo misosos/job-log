@@ -9,8 +9,8 @@ import { ApplicationCreateForm } from "../../components/applications/Application
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
 
 import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
-import type { ApplicationRow } from "../../features/applications/types";
-import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
+import type { ApplicationRow } from "../../../../shared/features/applications/types";
+import { useApplicationsPageController } from "../../../../shared/features/applications/useApplicationsPageController";
 
 export function ApplicationsScreen() {
     const {

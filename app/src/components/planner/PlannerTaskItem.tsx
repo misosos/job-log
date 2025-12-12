@@ -1,15 +1,18 @@
+// app/src/components/planner/PlannerTaskItem.tsx
+
 import React from "react";
-import {
-    View,
-    Text,
-    Pressable,
-    StyleSheet,
-} from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { PlannerTask } from "../../features/planner/types";
+// 🔹 shared 쪽 기본 PlannerTask 타입
+import type { PlannerTask as BasePlannerTask } from "../../../../shared/features/planner/types";
+
+// 🔹 shared PlannerTask 에서 앱에서만 쓸 표시용 필드 확장
+export type PlannerTaskWithLabel = BasePlannerTask & {
+    applicationLabel?: string | null;
+};
 
 type Props = {
-    task: PlannerTask;
+    task: PlannerTaskWithLabel;
     onToggle?: () => void;
     onDelete?: () => void;
 };
@@ -31,12 +34,20 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
             >
                 <Ionicons name={iconName} size={20} color={iconColor} />
 
-                <Text
-                    style={[styles.title, task.done && styles.titleDone]}
-                    numberOfLines={2}
-                >
-                    {task.title}
-                </Text>
+                <View style={styles.textColumn}>
+                    <Text
+                        style={[styles.title, task.done && styles.titleDone]}
+                        numberOfLines={2}
+                    >
+                        {task.title}
+                    </Text>
+
+                    {task.applicationLabel ? (
+                        <Text style={styles.appLabel} numberOfLines={1}>
+                            {task.applicationLabel}
+                        </Text>
+                    ) : null}
+                </View>
             </Pressable>
 
             {/* 오른쪽: D-day + 삭제 버튼 */}
@@ -51,7 +62,10 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
                     <Pressable
                         onPress={onDelete}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        android_ripple={{ color: "rgba(148,163,184,0.3)", borderless: true }}
+                        android_ripple={{
+                            color: "rgba(148,163,184,0.3)",
+                            borderless: true,
+                        }}
                         style={({ pressed }) => [
                             styles.deleteButton,
                             pressed && styles.deleteButtonPressed,
@@ -86,12 +100,20 @@ const styles = StyleSheet.create({
     leftButtonPressed: {
         opacity: 0.8,
     },
-    title: {
+    textColumn: {
         flexShrink: 1,
         marginLeft: 8,
+    },
+    title: {
+        flexShrink: 1,
         fontSize: 14,
         lineHeight: 18,
         color: "#f9fafb", // slate-50
+    },
+    appLabel: {
+        marginTop: 2,
+        fontSize: 11,
+        color: "#9ca3af", // slate-400
     },
     titleDone: {
         color: "#9ca3af", // slate-400

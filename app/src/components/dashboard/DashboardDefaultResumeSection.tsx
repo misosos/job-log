@@ -2,8 +2,8 @@ import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Linking } from "react-native";
 
 import { SectionCard } from "../common/SectionCard";
-import { useResumesController } from "../../features/resumes/useResumesController";
-import type { ResumeVersion } from "../../features/resumes/types";
+import { useResumesController } from "../../../../shared/features/resumes/useResumesController";
+import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
 /**
  * 대시보드에서 사용할 최소한의 이력서 정보 타입

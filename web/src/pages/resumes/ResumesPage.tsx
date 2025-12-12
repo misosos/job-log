@@ -2,7 +2,7 @@
 import { SectionCard } from "../../components/common/SectionCard";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import { useResumesPageController } from "../../features/resumes/useResumesPageController";
+import { useResumesPageController } from "../../../../shared/features/resumes/useResumesPageController";
 
 export function ResumesPage() {
     const {

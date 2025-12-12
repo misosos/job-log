@@ -1,7 +1,7 @@
 // src/pages/planner/PlannerPage.tsx
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
-import { usePlannerPageController } from "../../features/planner/usePlannerPageController";
+import { usePlannerPageController } from "../../../../shared/features/planner/usePlannerPageController";
 
 export function PlannerPage() {
     const {

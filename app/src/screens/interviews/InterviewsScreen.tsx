@@ -7,7 +7,7 @@ import { SectionCard } from "../../components/common/SectionCard";
 import { UpcomingInterviewsSection } from "../../components/interviews/UpcomingInterviewsSection";
 import { InterviewReviewSection } from "../../components/interviews/InterviewReviewSection";
 import { InterviewCreateForm } from "../../components/interviews/InterviewCreateForm";
-import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
+import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
 
 export function InterviewsScreen() {
     const {

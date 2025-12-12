@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { SectionCard } from "../common/SectionCard";
-import type { PlannerScope } from "../../features/planner/types";
+import type { PlannerScope } from "../../../../shared/features/planner/types";
 
 // 💡 플래너에서 사용할 "관련 공고" 옵션 타입
 type RelatedApplicationOption = {

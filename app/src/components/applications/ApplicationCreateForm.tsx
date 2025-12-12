@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-import type { ApplicationStatus } from "../../features/applications/types";
+import type { ApplicationStatus } from "../../../../shared/features/applications/types";
 
 type Props = {
   company: string;

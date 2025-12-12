@@ -14,7 +14,7 @@ import type { Timestamp } from "firebase/firestore";
 import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
 
 // 타입은 features 쪽에서 가져오기
-import type {ApplicationRow} from "../../features/applications/types";
+import type {ApplicationRow} from "../../../../shared/features/applications/types";
 
 export type ApplicationListProps = {
     loading: boolean;

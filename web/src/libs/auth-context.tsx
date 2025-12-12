@@ -5,7 +5,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import { auth } from "./firebase";
+import { auth } from "./firebase.ts";
 import type { User } from "firebase/auth";
 
 type AuthContextValue = {

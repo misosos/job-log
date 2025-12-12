@@ -6,7 +6,7 @@ import { ScrollView, Text, StyleSheet, View } from "react-native";
 import { SectionCard } from "../../components/common/SectionCard";
 import { ResumeForm } from "../../components/resumes/ResumeForm";
 import { ResumeList } from "../../components/resumes/ResumeList";
-import { useResumesController } from "../../features/resumes/useResumesController";
+import { useResumesController } from "../../../../shared/features/resumes/useResumesController";
 
 export function ResumesScreen() {
     // 🔹 폼 입력용 로컬 상태

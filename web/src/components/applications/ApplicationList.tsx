@@ -7,7 +7,7 @@ import { SectionCard } from "../common/SectionCard";
 import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
 
 // ✅ features 쪽의 공통 타입 재사용
-import type { ApplicationRow } from "../../features/applications/types";
+import type { ApplicationRow } from "../../../../shared/features/applications/types";
 
 // ✅ RN이랑 동일하게 props 타입 분리
 export type ApplicationListProps = {

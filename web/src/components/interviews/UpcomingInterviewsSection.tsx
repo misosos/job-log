@@ -1,4 +1,4 @@
-import type { InterviewItem } from "../../features/interviews/interviews";
+import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
 
 type Props = {
     items: InterviewItem[];

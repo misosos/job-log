@@ -18,6 +18,7 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 
+// ✅ 앱 전용 Firebase 모듈 사용 (web 쪽으로 의존 X)
 import { auth } from "../../libs/firebase";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -62,7 +63,11 @@ export function GoogleSignInButton({
             try {
                 setLoading(true);
 
-                const anyResponse = response as any;
+                const anyResponse = response as unknown as {
+                    authentication?: { idToken?: string };
+                    params?: { id_token?: string };
+                };
+
                 const idToken =
                     anyResponse.authentication?.idToken ??
                     anyResponse.params?.id_token ??
@@ -71,7 +76,7 @@ export function GoogleSignInButton({
                 if (!idToken) {
                     console.log(
                         "[Auth] no id_token in response",
-                        JSON.stringify(response)
+                        JSON.stringify(response),
                     );
                     return;
                 }
@@ -93,7 +98,7 @@ export function GoogleSignInButton({
         try {
             setLoading(true);
 
-            // 🔹 웹: Firebase Web SDK 그대로 사용 (기존 웹 프로젝트와 동일한 방식)
+            // 🔹 웹: Firebase Web SDK 그대로 사용
             if (Platform.OS === "web") {
                 const provider = new GoogleAuthProvider();
                 await signInWithPopup(auth, provider);
@@ -147,7 +152,9 @@ export function GoogleSignInButton({
                     {loading ? (
                         <ActivityIndicator size="small" color="#0f172a" />
                     ) : (
-                        <Text style={[styles.buttonText, styles.logoutText]}>로그아웃</Text>
+                        <Text style={[styles.buttonText, styles.logoutText]}>
+                            로그아웃
+                        </Text>
                     )}
                 </TouchableOpacity>
             </View>

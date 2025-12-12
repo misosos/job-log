@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import { Button, Label, TextInput, Select } from "flowbite-react";
 import { SectionCard } from "../common/SectionCard";
-import type { ApplicationStatus } from "../../features/applications/types";
+import type { ApplicationStatus } from "../../../../shared/features/applications/types";
 
 type Props = {
     company: string;

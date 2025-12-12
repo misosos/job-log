@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { SectionCard } from "../common/SectionCard";
-import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
+import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
 import { MdEvent } from "react-icons/md";
 
 export function DashboardUpcomingSection() {

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 
-import type { ApplicationStatus,ApplicationRow } from "../../features/applications/types";
+import type { ApplicationStatus,ApplicationRow } from "../../../../shared/features/applications/types";
 
 type Props = {
   open: boolean;

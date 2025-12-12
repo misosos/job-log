@@ -8,7 +8,7 @@ import {
     ActivityIndicator,
     StyleSheet,
 } from "react-native";
-import { useEmailAuthForm } from "../../features/auth/useEmailAuthForm";
+import { useEmailAuthForm } from "../../../../shared/features/auth/useEmailAuthForm";
 
 type Props = {
     onSuccess?: () => void;

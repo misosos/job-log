@@ -1,5 +1,3 @@
-// src/libs/auth-context.tsx (또는 원하는 경로)
-
 import {
     createContext,
     useContext,
@@ -7,8 +5,8 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "./firebase"; // 경로: auth-context.tsx 위치에 맞게 ./ or ../libs 로 조정해줘
+import { auth } from "./firebase";
+import type { User } from "firebase/auth";
 
 type AuthContextValue = {
     user: User | null;
@@ -17,22 +15,16 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-type AuthProviderProps = {
-    children: ReactNode;
-};
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // ✅ React Native / Expo에서도 동일하게 동작
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-            setUser(firebaseUser);
+        const unsub = auth.onAuthStateChanged((u) => {
+            setUser(u);
             setLoading(false);
         });
-
-        return unsubscribe;
+        return () => unsub();
     }, []);
 
     return (
@@ -42,10 +34,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
 }
 
-export function useAuth(): AuthContextValue {
+export function useAuth() {
     const ctx = useContext(AuthContext);
-    if (!ctx) {
-        throw new Error("useAuth must be used within AuthProvider");
-    }
+    if (!ctx) throw new Error("useAuth must be used within AuthProvider");
     return ctx;
 }

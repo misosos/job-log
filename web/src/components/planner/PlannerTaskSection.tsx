@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { SectionCard } from "../common/SectionCard";
 import { PlannerTaskItem } from "./PlannerTaskItem";
-import type { PlannerTask } from "../../features/planner/types";
+import type { PlannerTask } from "../../../../shared/features/planner/types";
 
 type PlannerTaskSectionProps = {
     title: string;

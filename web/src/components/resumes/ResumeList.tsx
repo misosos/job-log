@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { ResumeVersion } from "../../features/resumes/types"
+import type { ResumeVersion } from "../../../../shared/features/resumes/types"
 
 type ResumeItemProps = {
   resume: ResumeVersion;

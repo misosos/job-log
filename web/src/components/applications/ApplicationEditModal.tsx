@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal, Button, Label, Select } from "flowbite-react";
 
-import type { ApplicationStatus, ApplicationRow } from "../../features/applications/types.ts";
+import type { ApplicationStatus, ApplicationRow } from "../../../../shared/features/applications/types.ts";
 
 type Props = {
   open: boolean;

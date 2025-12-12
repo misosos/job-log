@@ -4,7 +4,7 @@ import {
     HiTrash,
     HiLink, // ✅ 추가
 } from "react-icons/hi";
-import type { PlannerTask } from "../../features/planner/types";
+import type { PlannerTask } from "../../../../shared/features/planner/types";
 
 type Props = {
     task: PlannerTask;

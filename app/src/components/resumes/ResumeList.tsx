@@ -8,7 +8,7 @@ import {
   Linking,
   Platform,
 } from "react-native";
-import type { ResumeVersion } from "../../features/resumes/types";
+import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
 type ResumeItemProps = {
   resume: ResumeVersion;

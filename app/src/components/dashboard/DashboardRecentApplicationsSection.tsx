@@ -10,8 +10,8 @@ import {
 import type { Timestamp } from "firebase/firestore";
 
 import { SectionCard } from "../common/SectionCard";
-import { useApplications } from "../../features/applications/useApplications";
-import type { ApplicationRow, ApplicationStatus } from "../../features/applications/types";
+import { useApplications } from "../../../../shared/features/applications/useApplications";
+import type { ApplicationRow, ApplicationStatus } from "../../../../shared/features/applications/types";
 
 // 마감일 라벨 포맷
 function formatDeadlineLabel(deadline?: Timestamp | null): string {

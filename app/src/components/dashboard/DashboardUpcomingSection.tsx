@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-import type { InterviewItem } from "../../features/interviews/interviews";
-import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
+import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
+import { useInterviewPageController } from "../../../../shared/features/interviews/useInterviewPageController";
 
 export function DashboardUpcomingSection() {
     // ✅ 공용 컨트롤러 훅 사용 (이미 Firestore + API 재활용 중)

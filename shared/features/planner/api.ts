@@ -1,0 +1,156 @@
+// src/features/planner/api.ts
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    orderBy,
+    query,
+    serverTimestamp,
+    updateDoc,
+    type QueryDocumentSnapshot,
+    type Firestore,
+} from "firebase/firestore";
+import type { Auth } from "firebase/auth";
+
+import type { PlannerTask, PlannerScope } from "./types";
+
+// 🔧 웹/앱 공용으로 쓰기 위해 Firestore, Auth를 외부에서 주입
+let injectedDb: Firestore | null = null;
+let injectedAuth: Auth | null = null;
+
+export function initPlannerApi(db: Firestore, auth: Auth): void {
+    injectedDb = db;
+    injectedAuth = auth;
+}
+
+function getDbOrThrow(): Firestore {
+    if (!injectedDb) {
+        throw new Error(
+            "Planner API가 초기화되지 않았습니다. initPlannerApi(db, auth)를 먼저 호출하세요.",
+        );
+    }
+    return injectedDb;
+}
+
+function getAuthOrThrow(): Auth {
+    if (!injectedAuth) {
+        throw new Error(
+            "Planner API가 초기화되지 않았습니다. initPlannerApi(db, auth)를 먼저 호출하세요.",
+        );
+    }
+    return injectedAuth;
+}
+
+// 로그인 유저 UID
+function getUserIdOrThrow(): string {
+    const auth = getAuthOrThrow();
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error("로그인이 필요합니다.");
+    }
+    return user.uid;
+}
+
+// 컬렉션 레퍼런스
+function plannerTasksCollection(userId: string) {
+    const db = getDbOrThrow();
+    return collection(db, "users", userId, "tasks");
+}
+
+// 문서 → PlannerTask 매핑
+function mapPlannerTaskDoc(docSnap: QueryDocumentSnapshot): PlannerTask {
+    const data = docSnap.data() as Partial<PlannerTask> & {
+        ddayLabel?: string;
+        scope?: PlannerScope;
+        done?: boolean;
+        applicationId?: string | null;
+    };
+
+    return {
+        id: docSnap.id,
+        title: data.title ?? "",
+        ddayLabel: data.ddayLabel ?? "",
+        done: data.done ?? false,
+        scope: data.scope ?? "today",
+        applicationId: data.applicationId ?? undefined,
+    };
+}
+
+// 전체 태스크 불러오기
+export async function fetchPlannerTasks(): Promise<PlannerTask[]> {
+    const userId = getUserIdOrThrow();
+    const colRef = plannerTasksCollection(userId);
+    const q = query(colRef, orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+
+    return snap.docs.map((docSnap: QueryDocumentSnapshot) =>
+        mapPlannerTaskDoc(docSnap),
+    );
+}
+
+// 새 태스크 생성
+export type CreatePlannerTaskInput = {
+    title: string;
+    ddayLabel: string;
+    scope: PlannerScope;
+    applicationId?: string;
+};
+
+export async function createPlannerTask(
+    input: CreatePlannerTaskInput,
+): Promise<PlannerTask> {
+    const db = getDbOrThrow();
+    const userId = getUserIdOrThrow();
+    const colRef = plannerTasksCollection(userId);
+    const now = serverTimestamp();
+
+    const docRef = await addDoc(colRef, {
+        userId,
+        title: input.title,
+        ddayLabel: input.ddayLabel,
+        scope: input.scope,
+        done: false,
+        createdAt: now,
+        updatedAt: now,
+        applicationId: input.applicationId ?? null,
+    });
+
+    return {
+        id: docRef.id,
+        title: input.title,
+        ddayLabel: input.ddayLabel,
+        done: false,
+        scope: input.scope,
+        applicationId: input.applicationId,
+    };
+}
+
+// 완료 여부 토글
+export async function togglePlannerTaskDone(id: string): Promise<void> {
+    const db = getDbOrThrow();
+    const userId = getUserIdOrThrow();
+    const taskRef = doc(db, "users", userId, "tasks", id);
+
+    const snap = await getDoc(taskRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data() as { done?: boolean };
+    const currentDone = data.done ?? false;
+    const nextDone = !currentDone;
+
+    await updateDoc(taskRef, {
+        done: nextDone,
+        updatedAt: serverTimestamp(),
+    });
+}
+
+// 삭제
+export async function deletePlannerTask(id: string): Promise<void> {
+    const db = getDbOrThrow();
+    const userId = getUserIdOrThrow();
+    const taskRef = doc(db, "users", userId, "tasks", id);
+    await deleteDoc(taskRef);
+}
