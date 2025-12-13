@@ -81,80 +81,93 @@ export function InterviewReviewSection({ items, loading }: Props) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: 12,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: "#111827", // slate-900
+        borderColor: "#fecdd3", // rose-200
     },
+
     title: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#e5e7eb", // slate-200
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
         marginBottom: 10,
     },
+
     skeletonContainer: {
         gap: 8,
     } as const,
+
     skeleton: {
         height: 72,
         borderRadius: 8,
-        backgroundColor: "#1f2937", // slate-800
-        opacity: 0.6,
+        backgroundColor: "#ffe4e6", // rose-100
+        opacity: 0.8,
     },
+
     emptyText: {
         fontSize: 13,
-        color: "#d1d5db", // slate-300
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
         lineHeight: 18,
     },
+
     list: {
         marginTop: 4,
     },
+
     itemCard: {
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 10,
         paddingVertical: 8,
         paddingHorizontal: 10,
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: "#1f2937", // slate-800
+        borderColor: "#fecdd3", // rose-200
     },
+
     itemHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
+
     itemTitleBox: {
         flex: 1,
         paddingRight: 8,
     },
+
     companyRoleText: {
         fontSize: 13,
-        fontWeight: "500",
-        color: "#f9fafb", // slate-50
+        fontWeight: "700",
+        color: "#881337", // rose-900
     },
+
     metaText: {
         marginTop: 2,
         fontSize: 11,
-        color: "#9ca3af", // slate-400
+        color: "#fb7185", // rose-400
     },
+
     badge: {
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 999,
-        backgroundColor: "#22c55e", // emerald-500
+        backgroundColor: "#f43f5e", // rose-500
     },
+
     badgeText: {
         fontSize: 10,
-        fontWeight: "600",
-        color: "#022c22", // dark text
+        fontWeight: "800",
+        color: "#fff1f2", // rose-50
     },
+
     noteText: {
         marginTop: 6,
         fontSize: 12,
         lineHeight: 17,
-        color: "#e5e7eb", // slate-200
+        color: "#9f1239", // rose-800
     },
 });

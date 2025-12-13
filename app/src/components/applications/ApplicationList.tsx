@@ -272,121 +272,147 @@ export function ApplicationList({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
     },
+
     listContent: {
         paddingTop: 4,
     },
+
     loadingContainer: {
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 16,
         justifyContent: "center",
     },
+
     loadingText: {
         marginLeft: 8,
         fontSize: 13,
-        color: "#9ca3af",
+        color: "#be123c", // rose-700
+        fontWeight: "700",
     },
+
     emptyText: {
         paddingVertical: 16,
         fontSize: 13,
-        color: "#9ca3af",
+        color: "#be123c", // rose-700
+        fontWeight: "700",
     },
+
     headerRow: {
         marginBottom: 4,
     },
+
     countText: {
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400 (포인트)
+        fontWeight: "800",
     },
+
     row: {
         flexDirection: "row",
         justifyContent: "space-between",
         paddingVertical: 10,
     },
+
     rowDivider: {
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#1f2937",
+        borderBottomColor: "#fecdd3", // rose-200
     },
+
     infoLeft: {
         flex: 1,
         paddingRight: 8,
     },
+
     companyText: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#ffffff",
+        fontWeight: "800",
+        color: "#881337", // rose-900 (필요할 때만 진하게)
     },
+
     roleText: {
         marginTop: 2,
         fontSize: 13,
-        color: "#e5e7eb",
+        color: "#9f1239", // rose-800
+        fontWeight: "700",
     },
+
     infoRight: {
         alignItems: "flex-end",
         marginLeft: 8,
     },
+
     appliedText: {
         marginTop: 4,
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#be123c", // rose-700
+        fontWeight: "700",
     },
 
-    // ✅ 일정 pill UI (gap 제거)
+    // ✅ 일정 pill UI
     scheduleWrap: {
         marginTop: 6,
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "flex-end",
     },
+
     pill: {
         flexDirection: "row",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: "#1f2937",
-        backgroundColor: "rgba(15,23,42,0.35)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#ffe4e6", // rose-100
         borderRadius: 999,
         paddingHorizontal: 8,
         paddingVertical: 4,
         marginLeft: 6,
         marginTop: 6,
     },
+
     pillKey: {
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
+        fontWeight: "800",
     },
+
     pillVal: {
         fontSize: 11,
-        color: "#e5e7eb",
-        fontWeight: "600",
+        color: "#9f1239", // rose-800
+        fontWeight: "800",
         marginLeft: 6,
     },
+
     ddayBadge: {
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 999,
-        backgroundColor: "rgba(244, 63, 94, 0.12)",
+        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500 12%
         marginLeft: 6,
     },
+
     ddayText: {
         fontSize: 11,
-        fontWeight: "600",
-        color: "#fb7185",
+        fontWeight: "900",
+        color: "#f43f5e", // rose-500
     },
 
     actionsRow: {
         marginTop: 8,
         flexDirection: "row",
     },
+
     actionText: {
         fontSize: 11,
-        color: "#fda4af",
+        color: "#f43f5e", // rose-500
         marginLeft: 8,
+        fontWeight: "800",
     },
 });

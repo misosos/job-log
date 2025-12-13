@@ -139,61 +139,75 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 18,
-        backgroundColor: "rgba(15,23,42,0.95)", // slate-900
+        backgroundColor: "#fff1f2", // rose-50
         borderWidth: 1,
-        borderColor: "rgba(148,163,184,0.4)", // slate-400/40
+        borderColor: "#fecdd3", // rose-200
     },
+
     title: {
         fontSize: 18,
-        fontWeight: "700",
-        color: "#f9fafb",
+        fontWeight: "800",
+        color: "#881337", // rose-900
         marginBottom: 12,
     },
+
     field: {
         marginBottom: 10,
     },
+
     label: {
         fontSize: 12,
-        color: "#cbd5f5",
+        color: "#9f1239", // rose-800
         marginBottom: 4,
+        fontWeight: "700",
     },
+
     input: {
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: "#4b5563",
+        borderColor: "#fecdd3", // rose-200
         paddingHorizontal: 10,
         paddingVertical: 8,
         fontSize: 14,
-        color: "#f9fafb",
-        backgroundColor: "#020617",
+        color: "#881337", // rose-900
+        backgroundColor: "#fff1f2", // rose-50
     },
+
     errorText: {
         marginTop: 4,
         marginBottom: 8,
         fontSize: 12,
-        color: "#fecaca",
+        color: "#e11d48", // rose-600
+        fontWeight: "700",
     },
+
     submitButton: {
         marginTop: 4,
         borderRadius: 10,
         paddingVertical: 10,
         alignItems: "center",
-        backgroundColor: "#22c55e",
+        backgroundColor: "#f43f5e", // rose-500
     },
+
     submitButtonDisabled: {
-        backgroundColor: "#4b5563",
+        backgroundColor: "#fb7185", // rose-400 (disabled도 테마 유지)
+        opacity: 0.55,
     },
+
     submitButtonText: {
         fontSize: 14,
-        fontWeight: "600",
-        color: "#020617",
+        fontWeight: "800",
+        color: "#fff1f2", // rose-50
     },
+
     switchButton: {
         marginTop: 10,
         alignItems: "center",
     },
+
     switchButtonText: {
         fontSize: 12,
-        color: "#93c5fd",
+        color: "#f43f5e", // rose-500
+        fontWeight: "700",
     },
 });

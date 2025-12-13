@@ -181,28 +181,38 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
         alignItems: "center",
+        // RN gap 미지원 환경이면 margin으로 바꿔도 됨
         gap: 8,
     },
+
     email: {
         fontSize: 12,
-        color: "#e5e7eb", // text-slate-200
+        color: "#9f1239", // rose-800 (너무 진하면 #fb7185 로 다운)
         maxWidth: 180,
     },
+
     button: {
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 999,
-        backgroundColor: "#22c55e", // emerald-500
+        backgroundColor: "#f43f5e", // rose-500
     },
+
     buttonText: {
         fontSize: 12,
-        fontWeight: "600",
-        color: "#0f172a", // slate-900
+        fontWeight: "800",
+        color: "#fff1f2", // rose-50
     },
+
+    // "로그아웃" 같은 보조 버튼이라면 연한 톤으로
     logoutButton: {
-        backgroundColor: "#e5e7eb",
+        backgroundColor: "#ffe4e6", // rose-100
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
     },
+
     logoutText: {
-        color: "#0f172a",
+        color: "#9f1239", // rose-800
+        fontWeight: "800",
     },
 });

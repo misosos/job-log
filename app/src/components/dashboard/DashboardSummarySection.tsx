@@ -80,34 +80,41 @@ export function DashboardSummarySection() {
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -4,
-  },
-  skeletonCard: {
-    width: "50%",
-    paddingHorizontal: 4,
-    marginBottom: 8,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: "rgba(15,23,42,0.8)", // slate-900/80
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  card: {
-    width: "50%",
-    paddingHorizontal: 4,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 11,
-    color: "#94a3b8", // text-slate-400
-  },
-  value: {
-    marginTop: 4,
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#f9fafb", // text-slate-50
-  },
+    grid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        marginHorizontal: -4,
+    },
+
+    skeletonCard: {
+        width: "50%",
+        paddingHorizontal: 4,
+        marginBottom: 8,
+        height: 80,
+        borderRadius: 12,
+        backgroundColor: "#fff1f2", // rose-50
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    card: {
+        width: "50%",
+        paddingHorizontal: 4,
+        marginBottom: 8,
+    },
+
+    label: {
+        fontSize: 11,
+        color: "#fb7185", // rose-400 (포인트)
+        fontWeight: "600",
+    },
+
+    value: {
+        marginTop: 4,
+        fontSize: 22,
+        fontWeight: "800",
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+    },
 });

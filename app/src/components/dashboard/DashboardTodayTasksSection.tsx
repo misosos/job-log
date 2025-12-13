@@ -55,48 +55,64 @@ export function DashboardTodayTasksSection() {
 }
 
 const styles = StyleSheet.create({
-  skeletonContainer: {
-    width: "100%",
-  },
-  skeletonItem: {
-    height: 36,
-    width: "100%",
-    borderRadius: 8,
-    backgroundColor: "rgba(30,41,59,0.6)", // slate-800/60 느낌
-  },
-  skeletonItemSpacing: {
-    marginTop: 6,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: "#9ca3af", // slate-400
-  },
-  list: {
-    width: "100%",
-  },
-  taskRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: "rgba(15,23,42,0.6)", // slate-900/60
-  },
-  taskRowSpacing: {
-    marginBottom: 8,
-  },
-  taskText: {
-    fontSize: 14,
-    color: "#f9fafb", // slate-100
-  },
-  taskTextDone: {
-    fontSize: 14,
-    color: "#9ca3af", // slate-400
-    textDecorationLine: "line-through",
-  },
-  ddayText: {
-    fontSize: 12,
-    color: "#9ca3af", // slate-400
-  },
+    skeletonContainer: {
+        width: "100%",
+    },
+
+    skeletonItem: {
+        height: 36,
+        width: "100%",
+        borderRadius: 8,
+        backgroundColor: "#ffe4e6", // rose-100
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
+    },
+
+    skeletonItemSpacing: {
+        marginTop: 6,
+    },
+
+    emptyText: {
+        fontSize: 14,
+        color: "#fb7185", // rose-400 (포인트 톤)
+        fontWeight: "600",
+    },
+
+    list: {
+        width: "100%",
+    },
+
+    taskRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        backgroundColor: "#fff1f2", // rose-50
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
+    },
+
+    taskRowSpacing: {
+        marginBottom: 8,
+    },
+
+    taskText: {
+        fontSize: 14,
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        fontWeight: "700",
+    },
+
+    taskTextDone: {
+        fontSize: 14,
+        color: "#fb7185", // rose-400
+        textDecorationLine: "line-through",
+    },
+
+    ddayText: {
+        fontSize: 12,
+        color: "#f43f5e", // rose-500 (포인트)
+        fontWeight: "700",
+    },
 });

@@ -186,36 +186,45 @@ const styles = StyleSheet.create({
     fieldHalf: {
         flexBasis: "48%",
     },
+
+    // ✅ 텍스트는 필요할 때만 진하게
     label: {
         fontSize: 11,
-        color: "#e5e7eb", // slate-200
+        color: "#9f1239", // rose-800
+        fontWeight: "700",
     },
+
     input: {
         borderWidth: 1,
-        borderColor: "#1f2937", // slate-800
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 8,
         paddingHorizontal: 10,
         paddingVertical: 10,
         fontSize: 14,
-        color: "#f9fafb", // slate-50
-        backgroundColor: "#020617", // slate-950
+        color: "#881337", // rose-900
+        backgroundColor: "#fff1f2", // rose-50
     },
+
     textArea: {
         minHeight: 100,
     },
+
     errorText: {
         fontSize: 11,
-        color: "#f87171", // red-400
+        color: "#e11d48", // rose-600
         marginTop: 4,
+        fontWeight: "700",
     },
+
     buttonRow: {
         alignItems: "flex-end",
         marginTop: 8,
     },
+
     button: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#22c55e", // emerald-500
+        backgroundColor: "#f43f5e", // rose-500
         paddingHorizontal: 16,
         paddingVertical: 9,
         borderRadius: 999,
@@ -225,7 +234,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontSize: 13,
-        fontWeight: "600",
-        color: "#020617", // almost black
+        fontWeight: "800",
+        color: "#fff1f2", // rose-50
     },
 });

@@ -167,7 +167,6 @@ export function ApplicationCreateForm({
     const [step, setStep] = useState<1 | 2>(1);
     const [showExtraDates, setShowExtraDates] = useState(false);
 
-    // 폼이 비면(저장 후 초기화) step/토글도 같이 초기화
     useEffect(() => {
         const emptyAll =
             !company.trim() &&
@@ -276,7 +275,6 @@ export function ApplicationCreateForm({
     };
 
     const renderScheduleSection = () => {
-        // full: 기존처럼 날짜 4개 다 보여주기
         if (uiVariant === "full") {
             return (
                 <>
@@ -288,7 +286,6 @@ export function ApplicationCreateForm({
             );
         }
 
-        // twoStep: step=2에서만 일정 보여주기 + 기본은 서류마감만
         if (step !== 2) return null;
 
         return (
@@ -329,6 +326,7 @@ export function ApplicationCreateForm({
                         disabled={isSubmitDisabled}
                         style={({ pressed }) => [
                             styles.button,
+                            styles.buttonPrimary,
                             isSubmitDisabled && styles.buttonDisabled,
                             pressed && !isSubmitDisabled && styles.buttonPressed,
                         ]}
@@ -339,7 +337,6 @@ export function ApplicationCreateForm({
             );
         }
 
-        // twoStep
         if (step === 1) {
             return (
                 <View style={styles.stepButtonsRow}>
@@ -401,7 +398,7 @@ export function ApplicationCreateForm({
                 <TextInput
                     style={styles.input}
                     placeholder="예: 카카오페이"
-                    placeholderTextColor="#6b7280"
+                    placeholderTextColor="#fb7185" // ✅ rose-400
                     value={company}
                     onChangeText={onCompanyChange}
                     autoCapitalize="none"
@@ -417,7 +414,7 @@ export function ApplicationCreateForm({
                 <TextInput
                     style={styles.input}
                     placeholder="예: 데이터 산출 인턴"
-                    placeholderTextColor="#6b7280"
+                    placeholderTextColor="#fb7185" // ✅ rose-400
                     value={resolvedPosition}
                     onChangeText={handlePositionChange}
                     autoCapitalize="none"
@@ -434,19 +431,24 @@ export function ApplicationCreateForm({
                     <Picker
                         selectedValue={status}
                         enabled={!saving}
-                        dropdownIconColor="#e5e7eb"
+                        dropdownIconColor="#9f1239" // ✅ rose-800 (아이콘이 안 보이던 문제 해결)
                         onValueChange={(value) => onStatusChange(value as ApplicationStatus)}
                         style={styles.picker}
                         itemStyle={styles.pickerItem}
                     >
                         {STATUS_OPTIONS.map((opt) => (
-                            <Picker.Item key={opt.value} label={opt.label} value={opt.value} color="#e5e7eb" />
+                            <Picker.Item
+                                key={opt.value}
+                                label={opt.label}
+                                value={opt.value}
+                                color="#881337" // ✅ rose-900 (기존 #e5e7eb 제거)
+                            />
                         ))}
                     </Picker>
                 </View>
             </View>
 
-            {/* ✅ 일정 섹션 */}
+            {/* 일정 */}
             {renderScheduleSection()}
 
             {/* 버튼 */}
@@ -456,12 +458,7 @@ export function ApplicationCreateForm({
 
             {/* ✅ DateTimePicker 렌더 */}
             {openField && Platform.OS === "android" && (
-                <DateTimePicker
-                    value={tempDate}
-                    mode="date"
-                    display="calendar"
-                    onChange={onAndroidChange}
-                />
+                <DateTimePicker value={tempDate} mode="date" display="calendar" onChange={onAndroidChange} />
             )}
 
             {openField && Platform.OS === "ios" && (
@@ -486,6 +483,9 @@ export function ApplicationCreateForm({
                                 value={tempDate}
                                 mode="date"
                                 display="inline"
+                                themeVariant="light"
+                                textColor="#881337"
+                                style={styles.iosPicker}
                                 onChange={(_, d) => d && setTempDate(d)}
                             />
                         </Pressable>
@@ -501,40 +501,48 @@ const styles = StyleSheet.create({
         marginVertical: 12,
         padding: 16,
         borderRadius: 14,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
     },
 
     field: { marginBottom: 14 },
 
     label: {
         fontSize: 12,
-        color: "#e5e7eb",
+        color: "#9f1239", // rose-800
         marginBottom: 4,
         fontWeight: "700",
     },
 
     input: {
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 9,
-        color: "#f9fafb",
+        color: "#881337", // rose-900
         fontSize: 14,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
     },
 
+    // ✅ 상태 Picker: 배경을 rose-100으로 올려 대비 강화
     pickerWrapper: {
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3",     // rose-200
         borderRadius: 10,
         overflow: "hidden",
-        backgroundColor: "#020617",
+        backgroundColor: "#ffe4e6", // ✅ rose-100
     },
-    picker: { color: "#e5e7eb", backgroundColor: "#020617" },
-    pickerItem: { color: "#e5e7eb", fontSize: 14 },
+
+    // Android: Picker 텍스트 컬러는 style.color가 잘 먹음
+    // iOS: itemStyle / Picker.Item color가 더 잘 먹는 편
+    picker: {
+        color: "#881337", // ✅ rose-900
+        backgroundColor: "#ffe4e6",
+        height: Platform.select({ ios: 180, android: 44 }),
+    },
+    pickerItem: { color: "#881337", fontSize: 14 },
 
     dateLabelRow: {
         flexDirection: "row",
@@ -542,24 +550,28 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 4,
     },
+
     clearText: {
         fontSize: 11,
-        color: "#fda4af", // rose-300
-        fontWeight: "700",
+        color: "#f43f5e", // rose-500
+        fontWeight: "800",
     },
+
     dateButton: {
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 11,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
     },
+
     dateButtonPressed: {
         borderColor: "#fb7185", // rose-400
     },
+
     dateButtonText: {
-        color: "#f9fafb",
+        color: "#881337", // rose-900
         fontSize: 14,
     },
 
@@ -570,29 +582,31 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: "#1e293b",
-        backgroundColor: "rgba(15,23,42,0.35)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "rgba(251, 113, 133, 0.10)", // rose-400 10%
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
+
     toggleRowPressed: {
-        backgroundColor: "rgba(15,23,42,0.55)",
+        backgroundColor: "rgba(251, 113, 133, 0.18)",
     },
+
     toggleText: {
         fontSize: 12,
         fontWeight: "800",
-        color: "#e5e7eb",
+        color: "#9f1239", // rose-800
     },
+
     toggleChevron: {
         fontSize: 12,
-        color: "#9ca3af",
-        fontWeight: "800",
+        color: "#fb7185", // rose-400
+        fontWeight: "900",
     },
 
     buttonWrapper: { marginTop: 4, alignItems: "flex-end" },
 
-    // 공통 버튼 베이스
     button: {
         paddingHorizontal: 18,
         paddingVertical: 10,
@@ -601,42 +615,49 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    buttonPressed: { opacity: 0.85 },
-    buttonDisabled: { opacity: 0.4 },
 
-    // primary/secondary
-    buttonPrimary: { backgroundColor: "#22c55e" },
+    buttonPressed: { opacity: 0.88 },
+    buttonDisabled: { opacity: 0.45 },
+
+    buttonPrimary: { backgroundColor: "#f43f5e" }, // rose-500
     buttonSecondary: {
-        backgroundColor: "rgba(15,23,42,0.55)",
+        backgroundColor: "#ffe4e6", // rose-100
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
     },
-    buttonSecondaryPressed: { backgroundColor: "rgba(15,23,42,0.8)" },
+    buttonSecondaryPressed: { backgroundColor: "#fecdd3" }, // rose-200
 
-    buttonText: { color: "#020617", fontSize: 13, fontWeight: "800" },
-    buttonSecondaryText: { color: "#e5e7eb", fontSize: 13, fontWeight: "800" },
+    buttonText: { color: "#fff1f2", fontSize: 13, fontWeight: "900" }, // rose-50
+    buttonSecondaryText: { color: "#9f1239", fontSize: 13, fontWeight: "900" }, // rose-800
 
     stepButtonsRow: {
         marginTop: 4,
         flexDirection: "row",
         justifyContent: "flex-end",
+        gap: 10,
     },
 
-    errorText: { marginTop: 8, fontSize: 11, color: "#f97373", fontWeight: "700" },
+    errorText: { marginTop: 8, fontSize: 11, color: "#e11d48", fontWeight: "800" }, // rose-600
 
     iosBackdrop: {
         flex: 1,
-        backgroundColor: "rgba(15,23,42,0.6)",
+        backgroundColor: "rgba(15, 23, 42, 0.55)",
         justifyContent: "flex-end",
     },
+
     iosSheet: {
-        backgroundColor: "#020617",
+        backgroundColor: "#ffe4e6", // rose-100 (캘린더 배경 대비)
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
         paddingBottom: 16,
     },
+
+    iosPicker: {
+        backgroundColor: "#ffe4e6", // rose-100
+    },
+
     iosHeader: {
         paddingHorizontal: 14,
         paddingTop: 12,
@@ -644,12 +665,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
     },
+
     iosHeaderText: {
-        color: "#e5e7eb",
+        color: "#9f1239", // rose-800
         fontSize: 14,
+        fontWeight: "700",
     },
+
     iosDone: {
-        color: "#4ade80",
+        color: "#f43f5e", // rose-500
         fontWeight: "900",
     },
 });

@@ -44,16 +44,22 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
     root: {
         flex: 1,
-        backgroundColor: "#020617", // 전체 배경 (slate-950 느낌)
+        backgroundColor: "#fff1f2", // rose-50 (전체 배경)
     },
     container: {
         flex: 1,
+        backgroundColor: "#fff1f2", // rose-50
     },
     content: {
         paddingHorizontal: 16,
         paddingVertical: 16,
     },
     section: {
-        marginBottom: 16, // space-y-6 비슷한 여백
+        marginBottom: 16,
+        backgroundColor: "#ffe4e6", // rose-100 (섹션 톤)
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200 (라인/보더)
+        borderRadius: 14,
+        padding: 14,
     },
 });

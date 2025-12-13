@@ -138,42 +138,52 @@ export const PlannerTaskSection = memo(PlannerTaskSectionBase);
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 14,
         paddingHorizontal: 16,
         paddingVertical: 12,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: "rgba(148,163,184,0.35)", // slate-400/35
+        borderColor: "#fecdd3", // rose-200
     },
+
     headerRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 8,
     },
+
     title: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#e5e7eb", // slate-200
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
     },
+
     loadingWrapper: {
         marginTop: 4,
     },
+
     skeleton: {
         height: 40,
         borderRadius: 10,
-        backgroundColor: "rgba(30,64,175,0.32)",
+        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500/12
         marginTop: 8,
+        borderWidth: 1,
+        borderColor: "rgba(244, 63, 94, 0.18)", // rose-500/18
     },
+
     emptyText: {
         fontSize: 13,
-        color: "#9ca3af", // slate-400
+        color: "#9f1239", // rose-800
+        opacity: 0.7,
         marginTop: 4,
     },
+
     listContent: {
         paddingVertical: 4,
     },
+
     itemWrapper: {
         marginBottom: 6,
     },

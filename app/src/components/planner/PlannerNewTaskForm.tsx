@@ -159,6 +159,26 @@ export function PlannerNewTaskForm({
                             >
                                 {deadline ? deadline : "날짜 선택"}
                             </Text>
+
+                            <View style={styles.deadlineIcon} accessibilityLabel="캘린더 아이콘" accessible>
+                                <View style={styles.calTop} />
+                                <View style={styles.calRingsRow}>
+                                    <View style={styles.calRing} />
+                                    <View style={styles.calRing} />
+                                </View>
+                                <View style={styles.calBody}>
+                                    <View style={styles.calRow}>
+                                        <View style={styles.calDot} />
+                                        <View style={styles.calDot} />
+                                        <View style={styles.calDot} />
+                                    </View>
+                                    <View style={styles.calRow}>
+                                        <View style={styles.calDot} />
+                                        <View style={styles.calDot} />
+                                        <View style={styles.calDot} />
+                                    </View>
+                                </View>
+                            </View>
                         </TouchableOpacity>
 
                         {Platform.OS === "ios" ? (
@@ -177,6 +197,15 @@ export function PlannerNewTaskForm({
                                             value={ymdToDate(deadline)}
                                             mode="date"
                                             display="spinner"
+                                            // ✅ iOS 다크모드에서도 글씨가 안 날아가도록 라이트 테마 강제
+                                            themeVariant="light"
+                                            // ✅ iOS 휠(스피너) 글씨/포인트 컬러 강제 (버전별 타입 미노출 대비)
+                                            // @ts-expect-error iOS 전용(버전별) 옵션
+                                            textColor="#881337" // rose-900
+                                            // @ts-expect-error iOS 전용(버전별) 옵션
+                                            accentColor="#f43f5e" // rose-500
+                                            // ✅ 배경도 카드와 톤 맞추기
+                                            style={{ backgroundColor: "#fff1f2" }}
                                             onChange={handlePickDate}
                                         />
 
@@ -304,31 +333,33 @@ export function PlannerNewTaskForm({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 12,
         padding: 14,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: "#111827",
+        borderColor: "#fecdd3", // rose-200
     },
     cardTitle: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#e5e7eb",
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
         marginBottom: 10,
     },
+
     titleRow: { flexDirection: "row", marginBottom: 10 },
     titleInput: {
         flex: 1,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: "#374151",
-        backgroundColor: "#020617",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#fff1f2", // rose-50
         paddingHorizontal: 12,
         paddingVertical: 9,
         fontSize: 14,
-        color: "#e5e7eb",
+        color: "#881337", // rose-900
     },
+
     bottomColumn: { marginTop: 4, gap: 10 },
 
     scopeGroupRow: {
@@ -336,53 +367,115 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
     },
-    scopeLabel: { fontSize: 12, color: "#9ca3af", marginRight: 8 },
+    scopeLabel: { fontSize: 12, color: "#9f1239", marginRight: 8 }, // rose-800
+
     scopeToggle: {
         flexDirection: "row",
-        backgroundColor: "#020617",
+        backgroundColor: "#ffe4e6", // rose-100
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "#374151",
+        borderColor: "#fecdd3", // rose-200
         overflow: "hidden",
     },
     scopeButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-    scopeButtonActive: { backgroundColor: "#10b981" },
-    scopeButtonText: { fontSize: 11, color: "#9ca3af" },
-    scopeButtonTextActive: { color: "#0f172a", fontWeight: "600" },
+    scopeButtonActive: { backgroundColor: "#fb7185" }, // rose-400
+    scopeButtonText: { fontSize: 11, color: "#9f1239" }, // rose-800
+    scopeButtonTextActive: { color: "#fff1f2", fontWeight: "700" }, // rose-50
 
     ddayGroupRow: { flexDirection: "row", alignItems: "center" },
-    ddayLabelText: { fontSize: 12, color: "#9ca3af", marginRight: 6 },
+    ddayLabelText: { fontSize: 12, color: "#9f1239", marginRight: 6 }, // rose-800
     deadlineWrap: { flex: 1, gap: 8 },
+
     deadlineButton: {
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: "#374151",
-        backgroundColor: "#020617",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#fff1f2", // rose-50
         paddingHorizontal: 10,
         paddingVertical: 10,
-        justifyContent: "center",
         minHeight: 42,
+
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
     },
-    deadlineButtonText: { fontSize: 12, color: "#e5e7eb", flexShrink: 1 },
-    deadlineButtonPlaceholder: { fontSize: 12, color: "#94a3b8", flexShrink: 1 },
+    deadlineButtonText: { fontSize: 12, color: "#881337", flexShrink: 1 }, // rose-900
+    deadlineButtonPlaceholder: { fontSize: 12, color: "#fb7185", flexShrink: 1 }, // rose-400
+    deadlineIcon: {
+        width: 18,
+        height: 18,
+        borderRadius: 5,
+        borderWidth: 1,
+        borderColor: "#f43f5e", // rose-500
+        backgroundColor: "#fff1f2", // rose-50
+        overflow: "hidden",
+        flexShrink: 0,
+        alignItems: "stretch",
+        justifyContent: "flex-start",
+        opacity: 0.95,
+    },
+    calTop: {
+        width: "100%",
+        height: 5,
+        backgroundColor: "rgba(244, 63, 94, 0.22)", // rose-500/22
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "rgba(244, 63, 94, 0.28)",
+    },
+    calRingsRow: {
+        position: "absolute",
+        top: 1,
+        left: 0,
+        right: 0,
+        height: 6,
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        alignItems: "center",
+        pointerEvents: "none",
+    },
+    calRing: {
+        width: 3,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: "#f43f5e", // rose-500
+    },
+    calBody: {
+        flex: 1,
+        paddingHorizontal: 3,
+        paddingVertical: 3,
+        justifyContent: "space-evenly",
+    },
+    calRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    calDot: {
+        width: 2.5,
+        height: 2.5,
+        borderRadius: 2,
+        backgroundColor: "rgba(244, 63, 94, 0.85)", // rose-500/85
+    },
+
     pickerWrap: {
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: "rgba(148,163,184,0.25)",
-        backgroundColor: "rgba(15,23,42,0.35)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "rgba(251, 113, 133, 0.10)", // rose-400 10%
         padding: 8,
     },
+
     modalBackdrop: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.55)",
+        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
         justifyContent: "center",
         paddingHorizontal: 16,
     },
     modalCard: {
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: "rgba(148,163,184,0.35)",
-        backgroundColor: "#0b1220",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#fff1f2", // rose-50
         padding: 12,
     },
     modalCloseBtn: {
@@ -392,13 +485,13 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: "rgba(148,163,184,0.35)",
-        backgroundColor: "rgba(15,23,42,0.55)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#ffe4e6", // rose-100
     },
     modalCloseText: {
-        color: "#e5e7eb",
+        color: "#9f1239", // rose-800
         fontSize: 12,
-        fontWeight: "600",
+        fontWeight: "700",
     },
 
     quickRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
@@ -407,53 +500,57 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "rgba(52,211,153,0.55)",
-        backgroundColor: "rgba(15,23,42,0.55)",
+        borderColor: "rgba(244, 63, 94, 0.45)", // rose-500/45
+        backgroundColor: "rgba(244, 63, 94, 0.10)", // rose-500/10
     },
-    quickBtnText: { fontSize: 11, color: "#6ee7b7", fontWeight: "600" },
+    quickBtnText: { fontSize: 11, color: "#f43f5e", fontWeight: "700" }, // rose-500
     quickBtnGhost: {
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "rgba(148,163,184,0.35)",
-        backgroundColor: "rgba(15,23,42,0.35)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#ffe4e6", // rose-100
     },
-    quickBtnGhostText: { fontSize: 11, color: "#94a3b8", fontWeight: "600" },
+    quickBtnGhostText: { fontSize: 11, color: "#fb7185", fontWeight: "700" }, // rose-400
 
     scopeBadge: {
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "rgba(52,211,153,0.55)",
-        backgroundColor: "rgba(15,23,42,0.55)",
+        borderColor: "rgba(244, 63, 94, 0.45)", // rose-500/45
+        backgroundColor: "rgba(244, 63, 94, 0.10)", // rose-500/10
         paddingHorizontal: 10,
         paddingVertical: 6,
     },
-    scopeBadgeText: { fontSize: 11, color: "#6ee7b7", fontWeight: "600" },
+    scopeBadgeText: { fontSize: 11, color: "#f43f5e", fontWeight: "700" }, // rose-500
 
     appGroupRow: { marginTop: 2 },
-    appLabelText: { fontSize: 12, color: "#9ca3af", marginBottom: 4 },
+    appLabelText: { fontSize: 12, color: "#9f1239", marginBottom: 4 }, // rose-800
     appChipsRow: { flexDirection: "row", gap: 8 } as const,
+
     appChip: {
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "#4b5563",
-        backgroundColor: "#020617",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#fff1f2", // rose-50
     },
-    appChipActive: { borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,0.15)" },
-    appChipText: { fontSize: 11, color: "#e5e7eb", maxWidth: 180 },
-    appChipTextActive: { color: "#bbf7d0", fontWeight: "600" },
+    appChipActive: {
+        borderColor: "#f43f5e", // rose-500
+        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500/12
+    },
+    appChipText: { fontSize: 11, color: "#881337", maxWidth: 180 }, // rose-900
+    appChipTextActive: { color: "#f43f5e", fontWeight: "700" }, // rose-500
 
     addButton: {
         alignSelf: "flex-end",
         borderRadius: 8,
-        backgroundColor: "#10b981",
+        backgroundColor: "#f43f5e", // rose-500
         paddingHorizontal: 14,
         paddingVertical: 9,
         marginTop: 4,
     },
     addButtonDisabled: { opacity: 0.6 },
-    addButtonText: { fontSize: 12, fontWeight: "600", color: "#020617" },
+    addButtonText: { fontSize: 12, fontWeight: "800", color: "#fff1f2" }, // rose-50
 });

@@ -34,9 +34,9 @@ export function SectionCard({ title, children, style, actions }: SectionCardProp
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617", // slate-950 비슷
+        backgroundColor: "#fff1f2", // rose-50
         borderWidth: 1,
-        borderColor: "#1e293b", // slate-800
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -45,30 +45,34 @@ const styles = StyleSheet.create({
         ...Platform.select({
             ios: {
                 shadowColor: "#000",
-                shadowOpacity: 0.15,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.10,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 6 },
             },
             android: {
-                elevation: 3,
+                elevation: 2,
             },
             default: {},
         }),
     },
+
     header: {
         marginBottom: 8,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
     },
+
     title: {
         fontSize: 16,
-        fontWeight: "600",
-        color: "#e5e7eb", // slate-200
+        fontWeight: "700",
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
     },
+
     actions: {
         marginLeft: 8,
     },
+
     body: {
         marginTop: 4,
     },

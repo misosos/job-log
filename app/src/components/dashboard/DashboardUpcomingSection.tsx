@@ -88,70 +88,88 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: 12,
-        backgroundColor: "#020617", // slate-950 느낌
+        backgroundColor: "#fff1f2", // rose-50
         borderWidth: 1,
-        borderColor: "#1e293b", // slate-800
+        borderColor: "#fecdd3", // rose-200
         marginBottom: 16,
     },
+
     cardTitle: {
         fontSize: 14,
-        fontWeight: "600",
-        color: "#e5e7eb", // slate-200
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
         marginBottom: 10,
     },
+
     errorText: {
         fontSize: 11,
-        color: "#fecaca",
+        color: "#e11d48", // rose-600
         marginBottom: 4,
+        fontWeight: "700",
     },
+
     loadingContainer: {
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 4,
     },
+
     loadingText: {
         fontSize: 12,
-        color: "#9ca3af", // slate-400
+        color: "#fb7185", // rose-400
         marginLeft: 8,
+        fontWeight: "600",
     },
+
     emptyText: {
         fontSize: 12,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
         lineHeight: 18,
+        fontWeight: "600",
     },
+
     itemRow: {
         flexDirection: "row",
         alignItems: "flex-start",
     },
+
     iconWrapper: {
         width: 28,
         height: 28,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: "#22c55e",
+        borderColor: "#f43f5e", // rose-500
+        backgroundColor: "rgba(251, 113, 133, 0.12)", // rose-400 12%
         alignItems: "center",
         justifyContent: "center",
         marginRight: 10,
         marginTop: 2,
     },
+
     itemContent: {
         flex: 1,
     },
+
     timeText: {
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
         marginBottom: 2,
+        fontWeight: "600",
     },
+
     titleText: {
         fontSize: 13,
-        fontWeight: "500",
-        color: "#e5e7eb",
+        fontWeight: "700",
+        color: "#881337", // rose-900
     },
+
     subText: {
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#9f1239", // rose-800 (너무 진하면 rose-400으로 바꿔도 됨)
         marginTop: 2,
+        opacity: 0.85,
     },
+
     separator: {
         height: 10,
     },

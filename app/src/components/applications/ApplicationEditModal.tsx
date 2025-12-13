@@ -268,11 +268,12 @@ export function ApplicationEditModal({
                                 selectedValue={status}
                                 enabled={!saving}
                                 onValueChange={(value) => setStatus(value as ApplicationStatus)}
-                                dropdownIconColor="#e5e7eb"
+                                dropdownIconColor="#be123c"
                                 style={styles.picker}
+                                itemStyle={styles.pickerItem}
                             >
                                 {STATUS_OPTIONS.map((s) => (
-                                    <Picker.Item key={s} label={s} value={s} color="#e5e7eb" />
+                                    <Picker.Item key={s} label={s} value={s} color="#881337" />
                                 ))}
                             </Picker>
                         </View>
@@ -347,6 +348,10 @@ export function ApplicationEditModal({
                                         value={tempDate}
                                         mode="date"
                                         display="inline"
+                                        themeVariant="light"
+                                        accentColor="#f43f5e"
+                                        textColor="#881337"
+                                        style={styles.iosPicker}
                                         onChange={(_, d) => d && setTempDate(d)}
                                     />
                                 </Pressable>
@@ -362,72 +367,93 @@ export function ApplicationEditModal({
 const styles = StyleSheet.create({
     backdrop: {
         flex: 1,
-        backgroundColor: "rgba(15, 23, 42, 0.7)",
+        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
         justifyContent: "center",
         alignItems: "center",
         paddingHorizontal: 16,
     },
+
     container: {
         width: "100%",
         maxWidth: 420,
         borderRadius: 18,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         paddingHorizontal: 18,
         paddingVertical: 20,
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         shadowColor: "#000",
-        shadowOpacity: 0.25,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 8 },
-        elevation: 8,
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 6,
     },
+
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 14,
     },
+
     title: {
         fontSize: 17,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "800",
+        color: "#881337", // rose-900 (필요할 때만 진하게)
     },
+
     closeText: {
-        color: "#9ca3af",
+        color: "#f43f5e", // rose-500 (포인트)
         fontSize: 20,
+        fontWeight: "900",
     },
+
     targetInfo: {
         marginBottom: 14,
     },
+
     companyText: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#f9fafb",
+        fontWeight: "800",
+        color: "#881337", // rose-900
     },
+
     roleText: {
         fontSize: 13,
-        color: "#9ca3af",
+        color: "#be123c", // rose-700
         marginTop: 4,
+        fontWeight: "700",
     },
+
     field: {
         marginBottom: 14,
     },
+
     label: {
         fontSize: 12,
-        color: "#e5e7eb",
+        color: "#be123c", // rose-700
         marginBottom: 6,
+        fontWeight: "700",
     },
+
     pickerWrapper: {
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 10,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         overflow: "hidden",
     },
+
     picker: {
         height: Platform.select({ ios: 180, android: 44 }),
-        color: "#e5e7eb",
+        color: "#881337", // rose-900
+        backgroundColor: "#fff1f2", // rose-50
+    },
+
+    pickerItem: {
+        color: "#881337", // rose-900
+        fontSize: 14,
+        fontWeight: "700",
     },
 
     grid: {
@@ -435,6 +461,7 @@ const styles = StyleSheet.create({
         flexWrap: "wrap",
         gap: 10,
     },
+
     gridItem: {
         flexBasis: "48%",
         flexGrow: 1,
@@ -447,36 +474,45 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 4,
     },
+
     clearText: {
         fontSize: 11,
-        color: "#fda4af",
+        color: "#f43f5e", // rose-500
+        fontWeight: "800",
     },
+
     dateButton: {
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 11,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
     },
+
     dateButtonPressed: {
-        borderColor: "#fb7185",
+        borderColor: "#fb7185", // rose-400
     },
+
     dateButtonText: {
-        color: "#f9fafb",
+        color: "#9f1239", // rose-800
         fontSize: 14,
+        fontWeight: "700",
     },
 
     errorText: {
-        marginTop: 4,
+        marginTop: 6,
         fontSize: 11,
-        color: "#f87171",
+        color: "#e11d48", // rose-600
+        fontWeight: "800",
     },
+
     footer: {
         marginTop: 18,
         flexDirection: "row",
         justifyContent: "flex-end",
     },
+
     button: {
         paddingHorizontal: 16,
         paddingVertical: 9,
@@ -484,45 +520,63 @@ const styles = StyleSheet.create({
         minWidth: 84,
         alignItems: "center",
     },
+
+    // ✅ 취소 버튼도 로즈-서브 톤
     buttonGray: {
-        backgroundColor: "#111827",
+        backgroundColor: "#ffe4e6", // rose-100
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
         marginRight: 8,
     },
+
     buttonGrayPressed: {
-        backgroundColor: "#1f2937",
+        backgroundColor: "#fecdd3", // rose-200
     },
+
     buttonGrayText: {
         fontSize: 13,
-        color: "#e5e7eb",
+        color: "#be123c", // rose-700
+        fontWeight: "900",
     },
+
+    // ✅ 저장 버튼: 포인트 로즈
     buttonPrimary: {
-        backgroundColor: "#22c55e",
+        backgroundColor: "#f43f5e", // rose-500
     },
+
     buttonPrimaryPressed: {
-        backgroundColor: "#4ade80",
+        backgroundColor: "#fb7185", // rose-400
     },
+
     buttonPrimaryText: {
         fontSize: 13,
-        fontWeight: "700",
-        color: "#020617",
+        fontWeight: "900",
+        color: "#fff1f2", // rose-50
     },
+
     buttonDisabled: {
-        opacity: 0.7,
+        opacity: 0.65,
     },
 
     iosBackdrop: {
         flex: 1,
-        backgroundColor: "rgba(15,23,42,0.6)",
+        backgroundColor: "rgba(15, 23, 42, 0.55)", // darken for contrast
         justifyContent: "flex-end",
     },
+
     iosSheet: {
-        backgroundColor: "#020617",
+        backgroundColor: "#ffe4e6", // rose-100
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
         borderWidth: 1,
-        borderColor: "#1e293b",
+        borderColor: "#fecdd3", // rose-200
         paddingBottom: 16,
     },
+
+    iosPicker: {
+        backgroundColor: "#ffe4e6", // rose-100
+    },
+
     iosHeader: {
         paddingHorizontal: 14,
         paddingTop: 12,
@@ -530,12 +584,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
     },
+
     iosHeaderText: {
-        color: "#e5e7eb",
+        color: "#be123c", // rose-700
         fontSize: 14,
+        fontWeight: "800",
     },
+
     iosDone: {
-        color: "#4ade80",
-        fontWeight: "700",
+        color: "#f43f5e", // rose-500
+        fontWeight: "900",
     },
 });

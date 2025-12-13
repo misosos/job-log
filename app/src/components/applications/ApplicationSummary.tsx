@@ -83,29 +83,33 @@ export function ApplicationSummary({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         marginBottom: 12,
     },
+
     headerRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 10,
     },
+
     title: {
         fontSize: 14,
-        fontWeight: "600",
-        color: "#e5e7eb",
+        fontWeight: "800",
+        color: "#881337", // rose-900 (필요할 때만 진하게)
     },
+
     loadingText: {
         marginTop: 4,
         fontSize: 12,
-        color: "#9ca3af",
+        color: "#be123c", // rose-700
+        fontWeight: "700",
     },
 
     // ✅ RN 호환: gap 대신 margin으로 처리
@@ -113,42 +117,55 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
     },
+
     statBox: {
         flex: 1,
         minWidth: 80,
         paddingVertical: 10,
         paddingHorizontal: 8,
         borderRadius: 12,
-        backgroundColor: "#020617",
+        backgroundColor: "#ffe4e6", // rose-100
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         alignItems: "center",
     },
+
+    // ✅ 강조 카드(진행중 등): rose-500 포인트
     statBoxHighlight: {
-        backgroundColor: "#022c22",
-        borderColor: "#10b981",
-        marginLeft: 8, // ✅ 간격 고정
+        backgroundColor: "rgba(244, 63, 94, 0.10)", // rose-500 10%
+        borderColor: "#fb7185", // rose-400
+        marginLeft: 8,
     },
+
     statLabel: {
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400 (포인트)
         marginBottom: 2,
+        fontWeight: "800",
     },
+
     statValue: {
         fontSize: 20,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "900",
+        color: "#9f1239", // rose-800
     },
+
     statSub: {
         marginTop: 2,
         fontSize: 10,
-        color: "#6b7280",
+        color: "#be123c", // rose-700
+        fontWeight: "700",
+        opacity: 0.85,
     },
+
+    // ✅ 진행중 강조 텍스트도 로즈로 통일
     inProgressLabel: {
-        color: "#6ee7b7",
+        color: "#f43f5e", // rose-500
+        fontWeight: "900",
     },
     inProgressValue: {
-        color: "#bbf7d0",
+        color: "#e11d48", // rose-600
+        fontWeight: "900",
     },
 
     // ✅ 3개짜리 줄
@@ -156,33 +173,42 @@ const styles = StyleSheet.create({
         marginTop: 10,
         flexDirection: "row",
     },
+
     statBoxSmall: {
         flex: 1,
         paddingVertical: 10,
         paddingHorizontal: 8,
         borderRadius: 12,
-        backgroundColor: "#020617",
+        backgroundColor: "#ffe4e6", // rose-100
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         alignItems: "center",
         minWidth: 72,
     },
+
     statBoxSmallMl: {
-        marginLeft: 8, // ✅ 2,3번째만 간격
+        marginLeft: 8,
     },
+
     smallLabel: {
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
         marginBottom: 2,
+        fontWeight: "800",
     },
+
+    // ✅ 원래 노랑 포인트였던 값도 로즈 포인트로
     smallValue: {
         fontSize: 18,
-        fontWeight: "800",
-        color: "#facc15",
+        fontWeight: "900",
+        color: "#f43f5e", // rose-500
     },
+
     smallSub: {
         marginTop: 2,
         fontSize: 10,
-        color: "#6b7280",
+        color: "#be123c", // rose-700
+        fontWeight: "700",
+        opacity: 0.85,
     },
 });

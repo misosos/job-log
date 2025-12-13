@@ -45,11 +45,11 @@ export function PageLayout({ children }: Props) {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
     },
     container: {
         flex: 1,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
     },
     flex: {
         flex: 1,
@@ -64,5 +64,10 @@ const styles = StyleSheet.create({
         width: "100%",
         maxWidth: 960,
         alignSelf: "center",
+        // 섹션 느낌 살짝(선택)
+        // backgroundColor: "#ffe4e6", // rose-100
+        // borderRadius: 16,
+        // borderWidth: 1,
+        // borderColor: "#fecdd3", // rose-200
     },
 });

@@ -182,7 +182,7 @@ export function ResumesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#020617", // slate-900 느낌
+        backgroundColor: "#fff1f2", // rose-50
     },
     content: {
         padding: 16,
@@ -199,36 +199,40 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "800",
+        color: "#9f1239", // rose-800
     },
     description: {
         marginTop: 6,
         fontSize: 13,
-        color: "#CBD5F5", // text-slate-300 느낌
+        color: "#9f1239", // rose-800
+        opacity: 0.65,
     },
 
+    // ✅ 포인트 버튼: rose-500 중심
     addBtn: {
         borderWidth: 1,
-        borderColor: "#1f2937",
-        backgroundColor: "rgba(15,23,42,0.55)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#f43f5e", // rose-500
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 999,
     },
     addBtnPressed: {
-        backgroundColor: "rgba(15,23,42,0.8)",
+        backgroundColor: "#fb7185", // rose-400
     },
     addBtnText: {
         fontSize: 12,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "900",
+        color: "#fff1f2", // rose-50
     },
 
+    // ✅ 에러: rose 계열로 정리
     error: {
         marginBottom: 8,
         fontSize: 11,
-        color: "#FCA5A5",
+        color: "#e11d48", // rose-600
+        fontWeight: "700",
     },
     listWrapper: {
         marginTop: 4,
@@ -238,7 +242,7 @@ const styles = StyleSheet.create({
     sheetRoot: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(15, 23, 42, 0.7)",
+        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
     },
     sheetBackdrop: {
         ...StyleSheet.absoluteFillObject,
@@ -248,24 +252,24 @@ const styles = StyleSheet.create({
         width: 44,
         height: 4,
         borderRadius: 999,
-        backgroundColor: "#334155",
+        backgroundColor: "#fecdd3", // rose-200
         marginBottom: 10,
     },
     modalCard: {
         width: "100%",
         height: "80%",
         maxHeight: "92%",
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderTopLeftRadius: 18,
         borderTopRightRadius: 18,
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         paddingHorizontal: 16,
         paddingTop: 10,
         paddingBottom: 10,
 
         shadowColor: "#000",
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.18,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: -6 },
         elevation: 10,
@@ -278,12 +282,13 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 15,
-        fontWeight: "800",
-        color: "#e5e7eb",
+        fontWeight: "900",
+        color: "#9f1239", // rose-800
     },
     modalClose: {
         fontSize: 18,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
+        fontWeight: "900",
     },
     modalBody: {
         flex: 1,
@@ -294,6 +299,7 @@ const styles = StyleSheet.create({
     errorInModal: {
         marginTop: 8,
         fontSize: 11,
-        color: "#FCA5A5",
+        color: "#e11d48", // rose-600
+        fontWeight: "700",
     },
 });

@@ -236,6 +236,7 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         paddingBottom: 32,
+        backgroundColor: "#fff1f2", // rose-50 (화면 배경이 여기서 결정된다면)
     },
 
     header: {
@@ -248,30 +249,32 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "800",
+        color: "#9f1239", // rose-800
     },
     subtitle: {
         marginTop: 6,
         fontSize: 13,
-        color: "#9ca3af",
+        color: "#9f1239", // rose-800
+        opacity: 0.65,
     },
 
+    // ✅ 버튼/포인트: rose-400~500
     addBtn: {
         borderWidth: 1,
-        borderColor: "#1f2937",
-        backgroundColor: "rgba(15,23,42,0.55)",
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#ffe4e6", // rose-100
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 999,
     },
     addBtnPressed: {
-        backgroundColor: "rgba(15,23,42,0.8)",
+        backgroundColor: "#fecdd3", // rose-200
     },
     addBtnText: {
         fontSize: 12,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "800",
+        color: "#f43f5e", // rose-500
     },
 
     section: {
@@ -286,18 +289,20 @@ const styles = StyleSheet.create({
     },
     listTitle: {
         fontSize: 13,
-        fontWeight: "700",
-        color: "#e5e7eb",
+        fontWeight: "800",
+        color: "#9f1239", // rose-800
     },
     listCount: {
         fontSize: 12,
-        color: "#9ca3af",
+        color: "#9f1239", // rose-800
+        opacity: 0.55,
     },
 
+    // ✅ 시트 오버레이: 로즈 틴트
     sheetRoot: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(15, 23, 42, 0.7)",
+        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
     },
     sheetBackdrop: {
         ...StyleSheet.absoluteFillObject,
@@ -308,25 +313,26 @@ const styles = StyleSheet.create({
         width: 44,
         height: 4,
         borderRadius: 999,
-        backgroundColor: "#334155",
+        backgroundColor: "#fecdd3", // rose-200
         marginBottom: 10,
     },
 
+    // ✅ 모달 카드: rose-50~100 + rose-200 라인
     modalCard: {
         width: "100%",
         height: "85%",
         maxHeight: "92%",
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderTopLeftRadius: 18,
         borderTopRightRadius: 18,
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         paddingHorizontal: 16,
         paddingTop: 10,
         paddingBottom: 10,
 
         shadowColor: "#000",
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.18,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: -6 },
         elevation: 10,
@@ -345,11 +351,12 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 15,
-        fontWeight: "800",
-        color: "#e5e7eb",
+        fontWeight: "900",
+        color: "#9f1239", // rose-800
     },
     modalClose: {
         fontSize: 18,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
+        fontWeight: "900",
     },
 });

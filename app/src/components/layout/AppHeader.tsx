@@ -171,103 +171,125 @@ const styles = StyleSheet.create({
         paddingTop: Platform.select({ ios: 32, android: 16 }),
         paddingBottom: 6,
         paddingHorizontal: 16,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         zIndex: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: "#fecdd3", // rose-200
     },
+
     topRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
     },
+
     logoText: {
         fontSize: 18,
-        fontWeight: "700",
-        color: "#a5b4fc",
+        fontWeight: "800",
+        color: "#f43f5e", // rose-500 (포인트)
     },
+
     rightContainer: {
         flexDirection: "row",
         alignItems: "center",
     },
+
     profileButton: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: "#0f172a",
+        backgroundColor: "#fb7185", // rose-100
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         marginTop: Platform.select({ ios: 4, android: 8, default: 4 }),
     },
+
     navScroll: {
         marginTop: 8,
         paddingBottom: 4,
     },
+
     navItem: {
         marginRight: 16,
         alignItems: "center",
         paddingBottom: 2,
     },
+
     navText: {
         fontSize: 13,
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
     },
+
     navTextActive: {
-        color: "#22c55e",
-        fontWeight: "600",
+        color: "#f43f5e", // rose-500
+        fontWeight: "800",
     },
+
     navUnderline: {
         marginTop: 2,
         height: 2,
         width: "100%",
-        backgroundColor: "#22c55e",
+        backgroundColor: "#f43f5e", // rose-500
         borderRadius: 999,
     },
+
     menuOverlay: {
         flex: 1,
-        backgroundColor: "rgba(15, 23, 42, 0.3)",
+        backgroundColor: "rgba(244, 63, 94, 0.18)", // rose-500 overlay
         alignItems: "flex-end",
         justifyContent: "flex-start",
         paddingTop: Platform.select({ ios: 72, android: 56, default: 56 }),
         paddingRight: 16,
     },
+
     menuContainer: {
         width: 220,
         borderRadius: 12,
-        backgroundColor: "#1f2937",
+        backgroundColor: "#fff1f2", // rose-50
         paddingVertical: 8,
         paddingHorizontal: 12,
         marginRight: 4,
         marginTop: 4,
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
         shadowColor: "#000",
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.14,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 4 },
         elevation: 6,
     },
+
     menuHeader: {
         paddingVertical: 4,
     },
+
     menuName: {
         fontSize: 13,
-        fontWeight: "600",
-        color: "#f9fafb",
+        fontWeight: "800",
+        color: "#9f1239", // rose-800
     },
+
     menuEmail: {
         marginTop: 2,
         fontSize: 11,
-        color: "#e5e7eb",
+        color: "#fb7185", // rose-400
     },
+
     menuDivider: {
         height: 1,
-        backgroundColor: "#4b5563",
+        backgroundColor: "#fecdd3", // rose-200
         marginVertical: 8,
     },
+
     menuItem: {
         paddingVertical: 6,
     },
+
     menuItemText: {
         fontSize: 13,
-        color: "#e5e7eb",
+        color: "#9f1239", // rose-800
+        fontWeight: "600",
     },
 });

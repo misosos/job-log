@@ -119,55 +119,67 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 14,
         borderRadius: 12,
-        backgroundColor: "rgba(15,23,42,0.4)", // slate-900/40
+        backgroundColor: "#ffe4e6", // rose-100
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
     },
+
     field: {
         width: "100%",
         marginBottom: 12,
     },
+
     label: {
         fontSize: 11,
-        color: "#d1d5db", // slate-300
+        color: "#9f1239", // rose-800
+        opacity: 0.8,
         marginBottom: 4,
-        fontWeight: "500",
+        fontWeight: "600",
     },
+
     input: {
         borderWidth: 1,
-        borderColor: "#374151", // slate-700
+        borderColor: "#fecdd3", // rose-200
         borderRadius: 8,
         paddingHorizontal: 10,
         paddingVertical: 8,
         fontSize: 14,
         minHeight: 40,
-        color: "#f9fafb", // slate-50
-        backgroundColor: "#020617", // slate-900
+        color: "#881337", // rose-900
+        backgroundColor: "#fff1f2", // rose-50
     },
+
     textArea: {
         minHeight: 60,
         textAlignVertical: "top",
     },
+
     footer: {
         flexDirection: "row",
         justifyContent: "flex-end",
         marginTop: 4,
     },
+
     button: {
         borderRadius: 8,
         paddingHorizontal: 14,
         paddingVertical: 10,
-        backgroundColor: "#10b981", // emerald-500
+        backgroundColor: "#f43f5e", // rose-500
         shadowColor: "#000",
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.12,
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
         alignSelf: "flex-end",
     },
+
     buttonDisabled: {
-        backgroundColor: "#4b5563", // slate-600
+        backgroundColor: "#fb7185", // rose-400 (disabled 톤)
+        opacity: 0.6,
     },
+
     buttonText: {
         fontSize: 13,
-        fontWeight: "600",
-        color: "#020617", // slate-900
+        fontWeight: "700",
+        color: "#fff1f2", // rose-50
     },
 });

@@ -64,11 +64,11 @@ function buildBadgeText(task: PlannerTaskWithLabel): string {
     const legacy = (task as unknown as { ddayLabel?: string }).ddayLabel?.trim();
     return legacy && legacy.length > 0 ? legacy : "";
 }
-
 export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
     const iconName = task.done ? "checkmark-circle" : "ellipse-outline";
-    const iconColor = task.done ? "#34d399" : "#6b7280"; // emerald-400 / slate-500
 
+    // ✅ rose theme
+    const iconColor = task.done ? "#f43f5e" : "#fb7185"; // rose-500 / rose-400
     const badgeText = buildBadgeText(task);
 
     return (
@@ -124,12 +124,15 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "rgba(15,23,42,0.9)", // slate-900/90
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 10,
         paddingHorizontal: 14,
         paddingVertical: 10,
         marginBottom: 8,
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
     },
+
     leftButton: {
         flex: 1,
         flexDirection: "row",
@@ -137,52 +140,64 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
     },
     leftButtonPressed: {
-        opacity: 0.8,
+        opacity: 0.85,
     },
+
     textColumn: {
         flexShrink: 1,
         marginLeft: 8,
     },
+
     title: {
         flexShrink: 1,
         fontSize: 14,
         lineHeight: 18,
-        color: "#f9fafb", // slate-50
+        color: "#881337", // rose-900
     },
+
     appLabel: {
         marginTop: 2,
         fontSize: 11,
-        color: "#9ca3af", // slate-400
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        opacity: 0.75,
     },
     appLabelPrefix: {
-        color: "#6b7280", // slate-500
+        color: "#fb7185", // rose-400
     },
+
     titleDone: {
-        color: "#9ca3af",
+        color: "#fb7185", // rose-400
         textDecorationLine: "line-through",
+        opacity: 0.9,
     },
+
     rightArea: {
         flexDirection: "row",
         alignItems: "center",
         marginLeft: 12,
     },
+
     ddayBadge: {
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "rgba(52,211,153,0.5)",
+        borderColor: "rgba(244, 63, 94, 0.45)", // rose-500/45
+        backgroundColor: "rgba(244, 63, 94, 0.10)", // rose-500/10
         paddingHorizontal: 8,
         paddingVertical: 3,
         marginRight: 6,
     },
     ddayText: {
         fontSize: 11,
-        color: "#6ee7b7", // emerald-300
+        color: "#f43f5e", // rose-500
+        fontWeight: "700",
     },
+
     deleteButton: {
         borderRadius: 999,
         padding: 6,
+        backgroundColor: "rgba(244, 63, 94, 0.10)", // rose-500/10 (터치 영역 시각화)
     },
     deleteButtonPressed: {
-        opacity: 0.8,
+        opacity: 0.85,
     },
 });

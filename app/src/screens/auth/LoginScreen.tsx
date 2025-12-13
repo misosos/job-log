@@ -64,7 +64,7 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#020617", // tailwind slate-900 느낌
+        backgroundColor: "#fff1f2", // rose-50
         alignItems: "center",
         justifyContent: "center",
         paddingHorizontal: 24,
@@ -72,26 +72,30 @@ const styles = StyleSheet.create({
     card: {
         width: "100%",
         maxWidth: 400,
-        backgroundColor: "#0f172a", // slate-800 느낌
+        backgroundColor: "#ffe4e6", // rose-100
         borderRadius: 16,
         padding: 24,
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
         shadowColor: "#000",
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.12,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 6 },
         elevation: 6,
     },
     title: {
         fontSize: 22,
-        fontWeight: "700",
-        color: "#ffffff",
+        fontWeight: "900",
+        color: "#9f1239", // rose-800
         marginBottom: 8,
     },
     description: {
         fontSize: 13,
-        color: "#e5e7eb", // slate-300 느낌
+        color: "#9f1239", // rose-800
+        opacity: 0.65,
         marginBottom: 20,
     },
+
     rememberRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -99,9 +103,9 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 12,
         borderRadius: 12,
-        backgroundColor: "rgba(2,6,23,0.6)",
+        backgroundColor: "#fff1f2", // rose-50
         borderWidth: 1,
-        borderColor: "#1f2937",
+        borderColor: "#fecdd3", // rose-200
         marginBottom: 12,
     },
     rememberBox: {
@@ -109,19 +113,19 @@ const styles = StyleSheet.create({
         height: 18,
         borderRadius: 4,
         borderWidth: 1,
-        borderColor: "#6b7280",
+        borderColor: "#fecdd3", // rose-200
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "transparent",
     },
     rememberBoxChecked: {
-        borderColor: "#10b981",
-        backgroundColor: "rgba(16,185,129,0.15)",
+        borderColor: "#f43f5e", // rose-500
+        backgroundColor: "rgba(244,63,94,0.12)", // rose-500 12%
     },
     rememberCheck: {
         fontSize: 12,
-        fontWeight: "800",
-        color: "#10b981",
+        fontWeight: "900",
+        color: "#f43f5e", // rose-500
         lineHeight: 14,
     },
     rememberTextCol: {
@@ -129,14 +133,16 @@ const styles = StyleSheet.create({
     },
     rememberLabel: {
         fontSize: 13,
-        fontWeight: "600",
-        color: "#ffffff",
+        fontWeight: "800",
+        color: "#9f1239", // rose-800
     },
     rememberHint: {
         marginTop: 2,
         fontSize: 11,
-        color: "#9ca3af",
+        color: "#9f1239", // rose-800
+        opacity: 0.55,
     },
+
     dividerRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -146,13 +152,15 @@ const styles = StyleSheet.create({
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: "#1f2937", // slate-800
+        backgroundColor: "#fecdd3", // rose-200
     },
     dividerText: {
         marginHorizontal: 8,
         fontSize: 11,
-        color: "#9ca3af", // slate-400
+        color: "#fb7185", // rose-400
+        fontWeight: "700",
     },
+
     googleWrapper: {
         marginTop: 4,
     },

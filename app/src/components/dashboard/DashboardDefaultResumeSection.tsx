@@ -95,37 +95,44 @@ const styles = StyleSheet.create({
     skeleton: {
         height: 64,
         borderRadius: 12,
-        backgroundColor: "#020617",
+        backgroundColor: "#fff1f2", // rose-50
         borderWidth: 1,
-        borderColor: "#111827",
+        borderColor: "#fecdd3", // rose-200
     },
+
     errorText: {
         fontSize: 12,
-        color: "#fecaca", // red-200
+        color: "#e11d48", // rose-600
+        fontWeight: "700",
     },
+
     emptyText: {
         fontSize: 13,
-        color: "#9ca3af", // slate-400
+        color: "#fb7185", // rose-400
     },
+
     title: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#e5e7eb",
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
         marginBottom: 2,
     },
+
     target: {
         fontSize: 12,
-        color: "#9ca3af",
+        color: "#f43f5e", // rose-500
         marginBottom: 6,
     },
+
     note: {
         fontSize: 12,
-        color: "#cbd5f5",
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
         marginBottom: 4,
     },
+
     link: {
         fontSize: 12,
-        color: "#a5b4fc", // 링크 느낌
+        color: "#f43f5e", // rose-500
         textDecorationLine: "underline",
     },
 });

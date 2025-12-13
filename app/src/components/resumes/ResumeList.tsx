@@ -145,110 +145,129 @@ export function ResumeList({
 }
 
 const styles = StyleSheet.create({
-  listContainer: {
-    marginTop: 8,
-  },
-  listItemWrapper: {
-    marginBottom: 8,
-  },
-  itemContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "rgba(15,23,42,0.9)", // slate-900/90
-    borderWidth: 1,
-    borderColor: "rgba(30,64,175,0.4)", // indigo-700/40 느낌
-    ...(Platform.OS === "ios"
-      ? {
-          shadowColor: "#000",
-          shadowOpacity: 0.18,
-          shadowRadius: 4,
-          shadowOffset: { width: 0, height: 2 },
-        }
-      : {
-          elevation: 2,
-        }),
-  },
-  itemLeft: {
-    flexShrink: 1,
-    flex: 1,
-    marginRight: 12,
-  },
-  itemRight: {
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#ffffff",
-  },
-  target: {
-    fontSize: 12,
-    color: "#9ca3af", // slate-400
-    marginTop: 2,
-  },
-  updatedAt: {
-    fontSize: 11,
-    color: "#6b7280", // slate-500
-    marginTop: 4,
-  },
-  note: {
-    fontSize: 12,
-    color: "#9ca3af",
-    marginTop: 6,
-  },
-  defaultBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: "#10b981", // emerald-500
-    marginBottom: 4,
-  },
-  defaultBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#020617", // slate-900
-  },
-  setDefaultButton: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "rgba(52,211,153,0.7)", // emerald-400/70
-    marginBottom: 4,
-  },
-  setDefaultButtonText: {
-    fontSize: 11,
-    color: "#6ee7b7", // emerald-300
-  },
-  openButton: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: "#10b981",
-  },
-  openButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#020617",
-  },
-  skeletonContainer: {
-    marginTop: 8,
-  },
-  skeletonItem: {
-    height: 60,
-    borderRadius: 10,
-    backgroundColor: "rgba(15,23,42,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: "#9ca3af",
-    marginTop: 4,
-  },
+    listContainer: {
+        marginTop: 8,
+    },
+    listItemWrapper: {
+        marginBottom: 8,
+    },
+
+    itemContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 10,
+        backgroundColor: "#fff1f2", // rose-50
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
+        ...(Platform.OS === "ios"
+            ? {
+                shadowColor: "#000",
+                shadowOpacity: 0.12,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+            }
+            : {
+                elevation: 2,
+            }),
+    },
+
+    itemLeft: {
+        flexShrink: 1,
+        flex: 1,
+        marginRight: 12,
+    },
+    itemRight: {
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+    },
+
+    title: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#881337", // rose-900
+    },
+    target: {
+        fontSize: 12,
+        color: "#9f1239", // rose-800
+        opacity: 0.75,
+        marginTop: 2,
+    },
+    updatedAt: {
+        fontSize: 11,
+        color: "#9f1239", // rose-800
+        opacity: 0.55,
+        marginTop: 4,
+    },
+    note: {
+        fontSize: 12,
+        color: "#9f1239", // rose-800
+        opacity: 0.65,
+        marginTop: 6,
+    },
+
+    // ✅ 기본 뱃지(포인트: rose-500)
+    defaultBadge: {
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        backgroundColor: "#f43f5e", // rose-500
+        marginBottom: 4,
+    },
+    defaultBadgeText: {
+        fontSize: 11,
+        fontWeight: "800",
+        color: "#fff1f2", // rose-50
+    },
+
+    // ✅ 기본 설정 버튼(라인: rose-200, 포인트 텍스트: rose-500)
+    setDefaultButton: {
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
+        backgroundColor: "#ffe4e6", // rose-100
+        marginBottom: 4,
+    },
+    setDefaultButtonText: {
+        fontSize: 11,
+        color: "#f43f5e", // rose-500
+        fontWeight: "700",
+    },
+
+    // ✅ 열기 버튼(포인트: rose-500)
+    openButton: {
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        backgroundColor: "#f43f5e", // rose-500
+    },
+    openButtonText: {
+        fontSize: 12,
+        fontWeight: "700",
+        color: "#fff1f2", // rose-50
+    },
+
+    skeletonContainer: {
+        marginTop: 8,
+    },
+    skeletonItem: {
+        height: 60,
+        borderRadius: 10,
+        backgroundColor: "#ffe4e6", // rose-100
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 8,
+    },
+
+    emptyText: {
+        fontSize: 13,
+        color: "#9f1239", // rose-800
+        opacity: 0.65,
+        marginTop: 4,
+    },
 });

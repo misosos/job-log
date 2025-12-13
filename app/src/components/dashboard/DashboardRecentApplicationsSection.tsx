@@ -116,8 +116,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    emptyText: { fontSize: 13, color: "#9ca3af" },
+
+    emptyText: {
+        fontSize: 13,
+        color: "#fb7185", // rose-400
+    },
+
     listContainer: { marginTop: 4 },
+
     itemRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -125,22 +131,49 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 10,
         borderRadius: 10,
-        backgroundColor: "rgba(15,23,42,0.92)",
+        backgroundColor: "#fff1f2", // rose-50
+        borderWidth: 1,
+        borderColor: "#fecdd3", // rose-200
         marginBottom: 8,
     },
-    itemRowPressed: { opacity: 0.8 },
+
+    itemRowPressed: { opacity: 0.85 },
+
     itemMain: { flexShrink: 1, paddingRight: 8 },
-    companyText: { fontSize: 14, fontWeight: "600", color: "#ffffff" },
-    roleText: { marginTop: 2, fontSize: 12, color: "#e5e7eb" },
-    statusText: { marginTop: 4, fontSize: 11, fontWeight: "500" },
+
+    companyText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
+    },
+
+    roleText: {
+        marginTop: 2,
+        fontSize: 12,
+        color: "#be123c", // rose-700
+    },
+
+    statusText: {
+        marginTop: 4,
+        fontSize: 11,
+        fontWeight: "600",
+        color: "#f43f5e", // rose-500 (포인트)
+    },
+
     deadlineBox: {
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 999,
-        backgroundColor: "rgba(15,23,42,0.9)",
+        backgroundColor: "#ffe4e6", // rose-100
         borderWidth: 1,
-        borderColor: "#4b5563",
+        borderColor: "#fecdd3", // rose-200
         maxWidth: 90,
     },
-    deadlineText: { fontSize: 11, color: "#e5e7eb", textAlign: "right" },
+
+    deadlineText: {
+        fontSize: 11,
+        color: "#f43f5e", // rose-500
+        textAlign: "right",
+        fontWeight: "700",
+    },
 });

@@ -57,78 +57,93 @@ export function UpcomingInterviewsSection({ items, loading }: Props) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: 12,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: "#111827", // slate-900
+        borderColor: "#fecdd3", // rose-200
     },
+
     title: {
         fontSize: 15,
-        fontWeight: "600",
-        color: "#e5e7eb", // slate-200
+        fontWeight: "700",
+        color: "#9f1239", // rose-800
         marginBottom: 10,
     },
+
     loadingBox: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
     } as any,
+
     loadingText: {
         fontSize: 13,
-        color: "#d1d5db",
+        color: "#fb7185", // rose-400
     },
+
     emptyText: {
         fontSize: 13,
-        color: "#d1d5db", // slate-300
+        color: "#fb7185", // rose-400
     },
+
     list: {
         marginTop: 4,
     },
+
     itemRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#fff1f2", // rose-50
         borderRadius: 10,
         paddingHorizontal: 10,
         paddingVertical: 10,
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: "#1f2937", // slate-800
+        borderColor: "#fecdd3", // rose-200
     },
+
     itemTextBox: {
         flex: 1,
         marginRight: 10,
     },
+
     companyRoleText: {
         fontSize: 14,
-        fontWeight: "500",
-        color: "#f9fafb", // slate-50
+        fontWeight: "700",
+        color: "#881337", // rose-900
     },
+
     metaText: {
         marginTop: 2,
         fontSize: 12,
-        color: "#9ca3af", // slate-400
+        color: "#fb7185", // rose-400
     },
+
     noteText: {
         marginTop: 4,
         fontSize: 12,
         lineHeight: 17,
-        color: "#e5e7eb", // slate-200
+        color: "#9f1239", // rose-800 (필요할 때만 진하게)
     },
+
+    // ✅ 예정 뱃지 → 로즈 포인트
     badge: {
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 999,
-        backgroundColor: "#f59e0b", // 예정 뱃지 색
+        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500 12%
         alignSelf: "flex-start",
+        borderWidth: 1,
+        borderColor: "rgba(244, 63, 94, 0.25)",
     },
+
     badgeText: {
         fontSize: 11,
-        fontWeight: "600",
-        color: "#111827",
+        fontWeight: "800",
+        color: "#f43f5e", // rose-500
     },
 });
