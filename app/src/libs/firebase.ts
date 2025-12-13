@@ -10,13 +10,22 @@ import {
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
+function requiredEnv(name: string): string {
+    const v = process.env[name];
+    if (!v) {
+        // 모듈 로드시 바로 터지면 원인 파악이 힘들어서 에러 메시지를 명확히 남김
+        throw new Error(`[firebase] Missing env var: ${name}. Check .env.local and Expo env export.`);
+    }
+    return v;
+}
+
 const firebaseConfig: FirebaseOptions = {
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID!,
-    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
+    apiKey: requiredEnv("EXPO_PUBLIC_FIREBASE_API_KEY"),
+    authDomain: requiredEnv("EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN"),
+    projectId: requiredEnv("EXPO_PUBLIC_FIREBASE_PROJECT_ID"),
+    storageBucket: requiredEnv("EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET"),
+    messagingSenderId: requiredEnv("EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
+    appId: requiredEnv("EXPO_PUBLIC_FIREBASE_APP_ID"),
 };
 
 export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);

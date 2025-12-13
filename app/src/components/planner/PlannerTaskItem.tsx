@@ -1,14 +1,12 @@
-// app/src/components/planner/PlannerTaskItem.tsx
-
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-// 🔹 shared 쪽 기본 PlannerTask 타입
 import type { PlannerTask as BasePlannerTask } from "../../../../shared/features/planner/types";
 
-// 🔹 shared PlannerTask 에서 앱에서만 쓸 표시용 필드 확장
+// ✅ 앱에서만 쓰는 표시용 필드만 확장 (중복 필드 재정의 X)
 export type PlannerTaskWithLabel = BasePlannerTask & {
     applicationLabel?: string | null;
+    deadline?: string | null; // YYYY-MM-DD
 };
 
 type Props = {
@@ -17,9 +15,61 @@ type Props = {
     onDelete?: () => void;
 };
 
+function parseYmd(deadline?: string | null): { y: number; m: number; d: number } | null {
+    if (!deadline) return null;
+    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return null;
+    return { y, m, d };
+}
+
+function computeDdayLabelFromDeadline(deadline?: string | null): string {
+    const parsed = parseYmd(deadline);
+    if (!parsed) return "";
+
+    const { y, m, d } = parsed;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const due = new Date(y, m - 1, d).getTime();
+
+    const diffDays = Math.round((due - startOfToday) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "D-day";
+    if (diffDays > 0) return `D-${diffDays}`;
+    return `D+${Math.abs(diffDays)}`;
+}
+
+function formatDeadlineShort(deadline?: string | null): string {
+    const parsed = parseYmd(deadline);
+    if (!parsed) return "";
+    const mm = String(parsed.m).padStart(2, "0");
+    const dd = String(parsed.d).padStart(2, "0");
+    return `${mm}.${dd}`;
+}
+
+function buildBadgeText(task: PlannerTaskWithLabel): string {
+    // ✅ 1) deadline이 있으면: "MM.DD · D-x"
+    if (task.deadline) {
+        const date = formatDeadlineShort(task.deadline);
+        const dday = computeDdayLabelFromDeadline(task.deadline);
+
+        // 둘 중 하나라도 있으면 표시 (조합 깔끔하게)
+        if (date && dday) return `${date} · ${dday}`;
+        if (date) return date;
+        if (dday) return dday;
+        return "";
+    }
+
+    // ✅ 2) 구데이터 fallback: ddayLabel만 있는 경우
+    const legacy = (task as unknown as { ddayLabel?: string }).ddayLabel?.trim();
+    return legacy && legacy.length > 0 ? legacy : "";
+}
+
 export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
     const iconName = task.done ? "checkmark-circle" : "ellipse-outline";
     const iconColor = task.done ? "#34d399" : "#6b7280"; // emerald-400 / slate-500
+
+    const badgeText = buildBadgeText(task);
 
     return (
         <View style={styles.container}>
@@ -27,34 +77,29 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
             <Pressable
                 onPress={onToggle}
                 android_ripple={{ color: "rgba(148,163,184,0.3)" }}
-                style={({ pressed }) => [
-                    styles.leftButton,
-                    pressed && styles.leftButtonPressed,
-                ]}
+                style={({ pressed }) => [styles.leftButton, pressed && styles.leftButtonPressed]}
             >
                 <Ionicons name={iconName} size={20} color={iconColor} />
 
                 <View style={styles.textColumn}>
-                    <Text
-                        style={[styles.title, task.done && styles.titleDone]}
-                        numberOfLines={2}
-                    >
+                    <Text style={[styles.title, task.done && styles.titleDone]} numberOfLines={2}>
                         {task.title}
                     </Text>
 
                     {task.applicationLabel ? (
                         <Text style={styles.appLabel} numberOfLines={1}>
+                            <Text style={styles.appLabelPrefix}>관련 공고: </Text>
                             {task.applicationLabel}
                         </Text>
                     ) : null}
                 </View>
             </Pressable>
 
-            {/* 오른쪽: D-day + 삭제 버튼 */}
+            {/* 오른쪽: 마감 뱃지 + 삭제 */}
             <View style={styles.rightArea}>
-                {task.ddayLabel ? (
+                {badgeText ? (
                     <View style={styles.ddayBadge}>
-                        <Text style={styles.ddayText}>{task.ddayLabel}</Text>
+                        <Text style={styles.ddayText}>{badgeText}</Text>
                     </View>
                 ) : null}
 
@@ -62,14 +107,8 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
                     <Pressable
                         onPress={onDelete}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        android_ripple={{
-                            color: "rgba(148,163,184,0.3)",
-                            borderless: true,
-                        }}
-                        style={({ pressed }) => [
-                            styles.deleteButton,
-                            pressed && styles.deleteButtonPressed,
-                        ]}
+                        android_ripple={{ color: "rgba(148,163,184,0.3)", borderless: true }}
+                        style={({ pressed }) => [styles.deleteButton, pressed && styles.deleteButtonPressed]}
                     >
                         <Ionicons name="trash-outline" size={18} color="#9ca3af" />
                     </Pressable>
@@ -115,8 +154,11 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: "#9ca3af", // slate-400
     },
+    appLabelPrefix: {
+        color: "#6b7280", // slate-500
+    },
     titleDone: {
-        color: "#9ca3af", // slate-400
+        color: "#9ca3af",
         textDecorationLine: "line-through",
     },
     rightArea: {
@@ -127,7 +169,7 @@ const styles = StyleSheet.create({
     ddayBadge: {
         borderRadius: 999,
         borderWidth: 1,
-        borderColor: "rgba(52,211,153,0.5)", // emerald-400/50
+        borderColor: "rgba(52,211,153,0.5)",
         paddingHorizontal: 8,
         paddingVertical: 3,
         marginRight: 6,
