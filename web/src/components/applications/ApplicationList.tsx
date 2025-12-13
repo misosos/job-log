@@ -1,4 +1,4 @@
-// src/components/applications/ApplicationList.tsx (웹용)
+// src/components/applications/ApplicationList.tsx
 
 import { memo } from "react";
 import type { Timestamp } from "firebase/firestore";
@@ -6,10 +6,8 @@ import type { Timestamp } from "firebase/firestore";
 import { SectionCard } from "../common/SectionCard";
 import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
 
-// ✅ features 쪽의 공통 타입 재사용
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
 
-// ✅ RN이랑 동일하게 props 타입 분리
 export type ApplicationListProps = {
     loading: boolean;
     applications: ApplicationRow[];
@@ -17,21 +15,51 @@ export type ApplicationListProps = {
     onDelete?: (id: string) => void;
 };
 
-// ✅ deadline이 undefined일 수도 있으니까 | undefined 허용
-function formatDeadline(deadline: Timestamp | null | undefined): string {
-    if (!deadline) return "-";
-    const d = deadline.toDate();
+type DateLike = Timestamp | Date | string | null | undefined;
+
+type TimestampLike = { toDate: () => Date };
+function isTimestampLike(v: unknown): v is TimestampLike {
+    return (
+        typeof v === "object" &&
+        v !== null &&
+        "toDate" in v &&
+        typeof (v as { toDate?: unknown }).toDate === "function"
+    );
+}
+
+function toDate(value: DateLike): Date | null {
+    if (!value) return null;
+
+    if (isTimestampLike(value)) return value.toDate();
+    if (value instanceof Date) return value;
+
+    if (typeof value === "string") {
+        const v = value.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+        const [y, m, d] = v.split("-").map(Number);
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
+    }
+
+    return null;
+}
+
+function formatMd(value: DateLike): string {
+    const d = toDate(value);
+    if (!d) return "-";
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
     return `${month}.${day}`;
 }
 
-function formatDday(deadline: Timestamp | null | undefined): string {
+function formatDday(value: DateLike): string {
+    const deadline = toDate(value);
     if (!deadline) return "";
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const target = deadline.toDate();
+    const target = new Date(deadline);
     target.setHours(0, 0, 0, 0);
 
     const diffMs = target.getTime() - today.getTime();
@@ -42,43 +70,95 @@ function formatDday(deadline: Timestamp | null | undefined): string {
     return `D+${Math.abs(diffDays)}`;
 }
 
+/** ✅ appliedAt(지원일)도 점진 도입 중이면 여기서만 확장해서 읽기 */
+type ApplicationRowExtended = ApplicationRow & {
+    appliedAt?: DateLike;
+};
+
+/** ✅ appliedAtLabel이 "12.13 지원" 같은 형태여도 리스트에서는 "12.13"만 보이게 정리 */
+function normalizeAppliedLabel(label?: string): string {
+    const v = (label ?? "").trim();
+    if (!v) return "";
+    return v.replace(/\s*지원\s*$/, "").trim();
+}
+
 type RowProps = {
     app: ApplicationRow;
     onEdit?: (row: ApplicationRow) => void;
     onDelete?: (id: string) => void;
 };
 
-// ✅ RN처럼 Row 컴포넌트 분리 + memo
 const ApplicationRowItem = memo(function ApplicationRowItem({
                                                                 app,
                                                                 onEdit,
                                                                 onDelete,
                                                             }: RowProps) {
-    const deadlineLabel = formatDeadline(app.deadline as Timestamp | null | undefined);
-    const dday = formatDday(app.deadline as Timestamp | null | undefined);
+    const ext = app as ApplicationRowExtended;
+
+    const positionLabel = (app.position ?? "").trim() || (app.role ?? "").trim() || "";
+
+    const documentDeadline: DateLike = app.docDeadline ?? app.deadline ?? null;
+    const interviewAt: DateLike = app.interviewAt ?? null;
+    const finalResultAt: DateLike = app.finalResultAt ?? null;
+
+    // ✅ 1순위: appliedAtLabel(있으면)
+    // ✅ 2순위: appliedAt(실제 값이 있으면)에서 MM.DD 생성
+    const appliedFromLabel = normalizeAppliedLabel(app.appliedAtLabel);
+    const appliedFromValue = ext.appliedAt ? formatMd(ext.appliedAt) : "";
+
+    // ✅ 핵심: 기본값 "-" 제거 → 없으면 그냥 빈 문자열
+    const appliedAtText = appliedFromLabel || appliedFromValue; // "" 가능
+    const hasAppliedAt = Boolean(appliedAtText);
+
+    const deadlineLabel = formatMd(documentDeadline);
+    const interviewLabel = formatMd(interviewAt);
+    const finalLabel = formatMd(finalResultAt);
+    const dday = formatDday(documentDeadline);
+
+    const hasAnySchedule = Boolean(
+        toDate(documentDeadline) || toDate(interviewAt) || toDate(finalResultAt),
+    );
 
     return (
         <div className="flex items-center justify-between py-3">
-            {/* 회사 / 직무 */}
             <div>
                 <p className="text-sm font-medium text-white">{app.company}</p>
-                <p className="text-xs text-slate-300">{app.role}</p>
+                <p className="text-xs text-slate-300">{positionLabel}</p>
             </div>
 
-            {/* 상태 / 날짜 / 액션 */}
             <div className="flex flex-col items-end gap-1">
                 <ApplicationStatusBadge status={app.status} />
 
-                <span className="text-xs text-slate-400">
-          {app.appliedAtLabel || "-"}
-        </span>
+                {/* ✅ 지원일이 있을 때만 보여주기 (없으면 아예 렌더링 X) */}
+                {hasAppliedAt && (
+                    <span className="text-xs text-slate-400">지원일 {appliedAtText}</span>
+                )}
 
-                {app.deadline && (
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                        <span>마감 {deadlineLabel}</span>
-                        {dday && (
-                            <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[11px] font-medium text-rose-400">
-                {dday}
+                {hasAnySchedule && (
+                    <div className="mt-0.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[11px] text-slate-300">
+                        {toDate(documentDeadline) && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5">
+                <span className="text-slate-400">서류</span>
+                <span className="text-slate-200">{deadlineLabel}</span>
+                                {dday && (
+                                    <span className="ml-1 rounded-full bg-rose-500/10 px-1.5 py-0.5 font-medium text-rose-300">
+                    {dday}
+                  </span>
+                                )}
+              </span>
+                        )}
+
+                        {toDate(interviewAt) && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5">
+                <span className="text-slate-400">면접</span>
+                <span className="text-slate-200">{interviewLabel}</span>
+              </span>
+                        )}
+
+                        {toDate(finalResultAt) && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5">
+                <span className="text-slate-400">최종</span>
+                <span className="text-slate-200">{finalLabel}</span>
               </span>
                         )}
                     </div>
@@ -111,7 +191,6 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
     );
 });
 
-// ✅ 메인 리스트 컴포넌트
 export function ApplicationList({
                                     loading,
                                     applications,
@@ -121,9 +200,7 @@ export function ApplicationList({
     if (loading) {
         return (
             <SectionCard title="지원 목록">
-                <div className="py-6 text-sm text-slate-400">
-                    지원 내역을 불러오는 중입니다…
-                </div>
+                <div className="py-6 text-sm text-slate-400">지원 내역을 불러오는 중입니다…</div>
             </SectionCard>
         );
     }
@@ -141,19 +218,12 @@ export function ApplicationList({
     return (
         <SectionCard title="지원 목록">
             <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-slate-400">
-                    총 {applications.length}건의 지원 내역
-                </p>
+                <p className="text-xs text-slate-400">총 {applications.length}건의 지원 내역</p>
             </div>
 
             <div className="divide-y divide-slate-800">
                 {applications.map((app) => (
-                    <ApplicationRowItem
-                        key={app.id}
-                        app={app}
-                        onEdit={onEdit}
-                        onDelete={onDelete}
-                    />
+                    <ApplicationRowItem key={app.id} app={app} onEdit={onEdit} onDelete={onDelete} />
                 ))}
             </div>
         </SectionCard>

@@ -1,4 +1,3 @@
-// src/features/interviews/api.ts
 import {
     addDoc,
     collection,

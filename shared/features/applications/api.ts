@@ -34,14 +34,18 @@ export function initApplicationsApi(deps: { db: Firestore; auth: Auth }) {
 
 function getAuthOrThrow(): Auth {
     if (!injectedAuth) {
-        throw new Error("Applications API가 초기화되지 않았습니다. initApplicationsApi를 먼저 호출하세요.");
+        throw new Error(
+            "Applications API가 초기화되지 않았습니다. initApplicationsApi를 먼저 호출하세요.",
+        );
     }
     return injectedAuth;
 }
 
 function getDbOrThrow(): Firestore {
     if (!injectedDb) {
-        throw new Error("Applications API가 초기화되지 않았습니다. initApplicationsApi를 먼저 호출하세요.");
+        throw new Error(
+            "Applications API가 초기화되지 않았습니다. initApplicationsApi를 먼저 호출하세요.",
+        );
     }
     return injectedDb;
 }
@@ -50,9 +54,7 @@ function getDbOrThrow(): Firestore {
 function getUserIdOrThrow(): string {
     const auth = getAuthOrThrow();
     const user = auth.currentUser;
-    if (!user) {
-        throw new Error("로그인이 필요합니다.");
-    }
+    if (!user) throw new Error("로그인이 필요합니다.");
     return user.uid;
 }
 
@@ -66,20 +68,55 @@ function applicationsCollection(userId: string) {
 function mapApplicationDoc(
     snap: QueryDocumentSnapshot | DocumentSnapshot,
 ): JobApplication {
-    const data = snap.data() as Omit<JobApplication, "id">;
+    // Firestore 문서는 레거시/확장 필드가 섞일 수 있으므로 널널하게 받는다.
+    const data = (snap.data() ?? {}) as Record<string, unknown>;
+
+    // ✅ any 없이 처리: 마지막에만 JobApplication으로 캐스팅
     return {
         id: snap.id,
-        ...data,
-    };
+        ...(data as Record<string, unknown>),
+    } as JobApplication;
+}
+
+/**
+ * ✅ 서류마감 동기화 규칙
+ * - docDeadline이 들어오면: deadline도 같이 맞춰준다(레거시 화면/쿼리 호환)
+ * - deadline만 들어오면: docDeadline도 같이 맞춰준다(점진 마이그레이션)
+ */
+function resolveDocAndLegacyDeadline(input: {
+    docDeadline?: Timestamp | null | undefined;
+    deadline?: Timestamp | null | undefined;
+}): { docDeadline: Timestamp | null; deadline: Timestamp | null } {
+    const docDeadline = input.docDeadline ?? input.deadline ?? null;
+    const deadline = input.deadline ?? input.docDeadline ?? null;
+    return { docDeadline, deadline };
 }
 
 // 1) 생성: 지원 내역 추가
 export type CreateApplicationInput = {
     company: string;
+
+    /** ✅ 신규 권장: position */
     position: string;
+
+    /** (옵션) */
     status?: ApplicationStatus;
+
+    /** 지원일 */
     appliedAt?: Timestamp | null;
+
+    /** ✅ 신규 권장: 서류 마감일 */
+    docDeadline?: Timestamp | null;
+
+    /** ✅ 면접일 */
+    interviewAt?: Timestamp | null;
+
+    /** ✅ 최종 발표일 */
+    finalResultAt?: Timestamp | null;
+
+    /** ⚠️ 레거시: 예전 마감일(=서류마감으로 취급) */
     deadline?: Timestamp | null;
+
     memo?: string;
 };
 
@@ -91,14 +128,29 @@ export async function createApplication(
 
     const nowServer = serverTimestamp();
 
+    const { docDeadline, deadline } = resolveDocAndLegacyDeadline({
+        docDeadline: input.docDeadline,
+        deadline: input.deadline,
+    });
+
     const docRef = await addDoc(colRef, {
         userId,
         company: input.company,
         position: input.position,
-        // 기본 상태를 한국어 레이블로 통일
+
+        // ✅ 기본값은 유니온에 포함된 "지원 예정" 사용 (캐스팅 X)
         status: input.status ?? "지원 예정",
+
         appliedAt: input.appliedAt ?? null,
-        deadline: input.deadline ?? null,
+
+        // ✅ 신규 필드
+        docDeadline,
+        interviewAt: input.interviewAt ?? null,
+        finalResultAt: input.finalResultAt ?? null,
+
+        // ⚠️ 레거시 필드도 같이 유지(=서류마감)
+        deadline,
+
         memo: input.memo ?? "",
         createdAt: nowServer,
         updatedAt: nowServer,
@@ -112,7 +164,15 @@ export async function createApplication(
 export type ListApplicationsOptions = {
     status?: ApplicationStatus;
     limit?: number;
-    orderByField?: "createdAt" | "appliedAt" | "deadline";
+
+    orderByField?:
+        | "createdAt"
+        | "appliedAt"
+        | "docDeadline"
+        | "interviewAt"
+        | "finalResultAt"
+        | "deadline";
+
     orderDirection?: "asc" | "desc";
 };
 
@@ -129,9 +189,7 @@ export async function listApplications(
     }
 
     if (options.orderByField) {
-        constraints.push(
-            orderBy(options.orderByField, options.orderDirection ?? "desc"),
-        );
+        constraints.push(orderBy(options.orderByField, options.orderDirection ?? "desc"));
     } else {
         constraints.push(orderBy("createdAt", "desc"));
     }
@@ -143,15 +201,11 @@ export async function listApplications(
     const q = query(colRef, ...constraints);
     const snap = await getDocs(q);
 
-    return snap.docs.map((docSnap: QueryDocumentSnapshot) =>
-        mapApplicationDoc(docSnap),
-    );
+    return snap.docs.map((docSnap: QueryDocumentSnapshot) => mapApplicationDoc(docSnap));
 }
 
 // 3) 단건 조회
-export async function getApplication(
-    id: string,
-): Promise<JobApplication | null> {
+export async function getApplication(id: string): Promise<JobApplication | null> {
     const userId = getUserIdOrThrow();
     const docRef = doc(getDbOrThrow(), "users", userId, "applications", id);
     const snap = await getDoc(docRef);
@@ -166,7 +220,19 @@ export type UpdateApplicationInput = {
     position?: string;
     status?: ApplicationStatus;
     appliedAt?: Timestamp | null;
+
+    /** ✅ 신규 권장: 서류 마감일 */
+    docDeadline?: Timestamp | null;
+
+    /** ✅ 면접일 */
+    interviewAt?: Timestamp | null;
+
+    /** ✅ 최종 발표일 */
+    finalResultAt?: Timestamp | null;
+
+    /** ⚠️ 레거시: 예전 마감일(=서류마감) */
     deadline?: Timestamp | null;
+
     memo?: string;
 };
 
@@ -185,8 +251,25 @@ export async function updateApplication(
     if (patch.position !== undefined) payload.position = patch.position;
     if (patch.status !== undefined) payload.status = patch.status;
     if (patch.appliedAt !== undefined) payload.appliedAt = patch.appliedAt;
-    if (patch.deadline !== undefined) payload.deadline = patch.deadline;
     if (patch.memo !== undefined) payload.memo = patch.memo;
+
+    // ✅ 3대 날짜 업데이트
+    if (patch.interviewAt !== undefined) payload.interviewAt = patch.interviewAt;
+    if (patch.finalResultAt !== undefined) payload.finalResultAt = patch.finalResultAt;
+
+    // ✅ 서류마감은 docDeadline/deadline 동기화
+    const touchedDocDeadline = patch.docDeadline !== undefined;
+    const touchedLegacyDeadline = patch.deadline !== undefined;
+
+    if (touchedDocDeadline || touchedLegacyDeadline) {
+        const { docDeadline, deadline } = resolveDocAndLegacyDeadline({
+            docDeadline: touchedDocDeadline ? patch.docDeadline ?? null : undefined,
+            deadline: touchedLegacyDeadline ? patch.deadline ?? null : undefined,
+        });
+
+        payload.docDeadline = docDeadline;
+        payload.deadline = deadline;
+    }
 
     await updateDoc(docRef, payload);
 }

@@ -2,10 +2,11 @@
 import { useCallback, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { ApplicationStatus, ApplicationRow } from "../../../../shared/features/applications/types";
+import type { ApplicationStatus } from "../../../../shared/features/applications/types";
 import {
     useApplications,
     type CreateApplicationFormInput,
+    type ApplicationRowWithLabels,
 } from "./useApplications";
 
 const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
@@ -13,42 +14,73 @@ const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
 export function useApplicationsPageController() {
     // 폼 상태
     const [newCompany, setNewCompany] = useState("");
-    const [newRole, setNewRole] = useState("");
-    const [newStatus, setNewStatus] =
-        useState<ApplicationStatus>(DEFAULT_STATUS);
-    const [newDeadline, setNewDeadline] = useState("");
+    const [newRole, setNewRole] = useState(""); // UI 호환을 위해 이름 유지(= position으로 저장)
+    const [newStatus, setNewStatus] = useState<ApplicationStatus>(DEFAULT_STATUS);
 
-    // 기존 비즈니스 로직 훅 재사용
+    // ✅ 지원일(YYYY-MM-DD)
+    const [newAppliedAt, setNewAppliedAt] = useState("");
+
+    // ✅ 실용적인 일정 필드(서류/면접/최종)
+    const [newDocumentDeadline, setNewDocumentDeadline] = useState("");
+    const [newInterviewAt, setNewInterviewAt] = useState("");
+    const [newFinalResultAt, setNewFinalResultAt] = useState("");
+
     const {
         applications,
         loading,
         create,
         saving,
         saveError,
+
         editingTarget,
         openEdit,
         closeEdit,
         saveEdit,
         editSaving,
         editError,
+
         remove,
+
         totalCount,
         inProgressCount,
+
+        // ✅ 실용 요약(7일)
+        docDue7Count,
+        interviewDue7Count,
+        finalResultDue7Count,
+
+        // (호환)
         dueThisWeekCount,
     } = useApplications();
 
     const handleCreate = useCallback(
         async (e?: FormEvent<HTMLFormElement>) => {
-            // 웹: form onSubmit 에서 들어오는 이벤트만 preventDefault
-            if (e && typeof e.preventDefault === "function") {
-                e.preventDefault();
-            }
+            e?.preventDefault?.();
+
+            const company = newCompany.trim();
+            const position = newRole.trim();
+            if (!company || !position) return;
+
+            const appliedAt = newAppliedAt.trim();
+            const docDeadline = newDocumentDeadline.trim();
+            const interviewAt = newInterviewAt.trim();
+            const finalResultAt = newFinalResultAt.trim();
 
             const payload: CreateApplicationFormInput = {
-                company: newCompany,
-                role: newRole,
+                company,
+                position,
                 status: newStatus,
-                deadline: newDeadline || undefined,
+
+                // ✅ 신규: 지원일 (미입력이면 undefined)
+                appliedAt: appliedAt || undefined,
+
+                // ✅ 신규 권장: 3대 날짜
+                docDeadline: docDeadline || undefined,
+                interviewAt: interviewAt || undefined,
+                finalResultAt: finalResultAt || undefined,
+
+                // ✅ (호환) legacy deadline도 서류마감으로 동기화
+                deadline: docDeadline || undefined,
             };
 
             await create(payload);
@@ -57,13 +89,26 @@ export function useApplicationsPageController() {
             setNewCompany("");
             setNewRole("");
             setNewStatus(DEFAULT_STATUS);
-            setNewDeadline("");
+
+            setNewAppliedAt("");
+            setNewDocumentDeadline("");
+            setNewInterviewAt("");
+            setNewFinalResultAt("");
         },
-        [newCompany, newRole, newStatus, newDeadline, create],
+        [
+            newCompany,
+            newRole,
+            newStatus,
+            newAppliedAt,
+            newDocumentDeadline,
+            newInterviewAt,
+            newFinalResultAt,
+            create,
+        ],
     );
 
     const handleOpenEdit = useCallback(
-        (row: ApplicationRow) => {
+        (row: ApplicationRowWithLabels) => {
             openEdit(row);
         },
         [openEdit],
@@ -77,45 +122,73 @@ export function useApplicationsPageController() {
         [remove],
     );
 
+    // ✅ EditModal meta(지원일/서류/면접/최종) 저장
     const handleSaveEdit = useCallback(
-        async (id: string, status: ApplicationStatus) => {
-            await saveEdit(id, status);
+        async (
+            id: string,
+            status: ApplicationStatus,
+            meta?: {
+                /** ✅ 지원일 추가 */
+                appliedAt?: string | null;
+
+                docDeadline?: string | null;
+                interviewAt?: string | null;
+                finalResultAt?: string | null;
+
+                // 레거시 호환
+                documentDeadline?: string | null;
+                interviewDate?: string | null;
+                finalResultDate?: string | null;
+            },
+        ) => {
+            await saveEdit(id, status, meta);
         },
         [saveEdit],
     );
 
     return {
-        // ✅ 폼 상태 + setter
+        // 폼 상태 + setter
         newCompany,
         newRole,
         newStatus,
-        newDeadline,
+        newAppliedAt,
+        newDocumentDeadline,
+        newInterviewAt,
+        newFinalResultAt,
         setNewCompany,
         setNewRole,
         setNewStatus,
-        setNewDeadline,
+        setNewAppliedAt,
+        setNewDocumentDeadline,
+        setNewInterviewAt,
+        setNewFinalResultAt,
 
-        // ✅ 생성 관련
+        // 생성 관련
         saving,
         saveError,
         handleCreate,
 
-        // ✅ 목록 관련
+        // 목록 관련
         applications,
         loading,
         totalCount,
         inProgressCount,
+
+        // ✅ 요약(실용: 7일)
+        docDueSoonCount: docDue7Count,
+        interviewSoonCount: interviewDue7Count,
+        finalSoonCount: finalResultDue7Count,
+
+        // (호환)
         dueThisWeekCount,
 
-        // ✅ 수정 관련
+        // 수정/삭제 관련
         editingTarget,
         editSaving,
         editError,
         handleOpenEdit,
         handleSaveEdit,
         handleCloseEdit: closeEdit,
-
-        // ✅ 삭제 관련
         handleDelete,
     };
 }

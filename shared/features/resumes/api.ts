@@ -1,4 +1,3 @@
-// src/features/resumes/api.ts
 import {
     addDoc,
     collection,

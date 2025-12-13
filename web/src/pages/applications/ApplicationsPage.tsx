@@ -1,7 +1,5 @@
 // src/pages/applications/ApplicationsPage.tsx
-import {
-    ApplicationList,
-} from "../../components/applications/ApplicationList";
+import { ApplicationList } from "../../components/applications/ApplicationList";
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
@@ -9,29 +7,34 @@ import { useApplicationsPageController } from "../../features/applications/useAp
 
 export function ApplicationsPage() {
     const {
-        // 폼 상태
         newCompany,
         newRole,
         newStatus,
-        newDeadline,
+        newAppliedAt,
+        newDocumentDeadline,
+        newInterviewAt,
+        newFinalResultAt,
         setNewCompany,
         setNewRole,
         setNewStatus,
-        setNewDeadline,
+        setNewAppliedAt,
+        setNewDocumentDeadline,
+        setNewInterviewAt,
+        setNewFinalResultAt,
 
-        // 생성 관련
         saving,
         saveError,
         handleCreate,
 
-        // 목록 관련
         applications,
         loading,
         totalCount,
         inProgressCount,
-        dueThisWeekCount,
 
-        // 수정/삭제 관련
+        docDueSoonCount,
+        interviewSoonCount,
+        finalSoonCount,
+
         editingTarget,
         editSaving,
         editError,
@@ -43,41 +46,65 @@ export function ApplicationsPage() {
 
     return (
         <div className="space-y-6">
-            <ApplicationCreateForm
-                company={newCompany}
-                role={newRole}
-                status={newStatus}
-                deadline={newDeadline}
-                saving={saving}
-                error={saveError}
-                onCompanyChange={setNewCompany}
-                onRoleChange={setNewRole}
-                onStatusChange={setNewStatus}
-                onDeadlineChange={setNewDeadline}
-                onSubmit={handleCreate}
-            />
+            <header className="space-y-1">
+                <h1 className="text-xl font-semibold text-slate-100">지원 현황</h1>
+                <p className="text-sm text-slate-400">
+                    지원한 공고를 한눈에 정리하고, 마감 일정 위주로 관리해요.
+                </p>
+            </header>
 
-            <ApplicationSummary
-                loading={loading}
-                total={totalCount}
-                inProgress={inProgressCount}
-                dueThisWeek={dueThisWeekCount}
-            />
+            <div className="grid gap-6 md:grid-cols-2">
+                <ApplicationCreateForm
+                    company={newCompany}
+                    position={newRole}
+                    status={newStatus}
+                    appliedAt={newAppliedAt}
+                    onAppliedAtChange={setNewAppliedAt}
+                    docDeadline={newDocumentDeadline}
+                    interviewAt={newInterviewAt}
+                    finalResultAt={newFinalResultAt}
+                    saving={saving}
+                    error={saveError}
+                    onCompanyChange={setNewCompany}
+                    onPositionChange={setNewRole}
+                    onStatusChange={setNewStatus}
+                    onDocDeadlineChange={setNewDocumentDeadline}
+                    onInterviewAtChange={setNewInterviewAt}
+                    onFinalResultAtChange={setNewFinalResultAt}
+                    onSubmit={handleCreate}
+                />
 
-            <ApplicationList
-                loading={loading}
-                applications={applications}
-                onEdit={handleOpenEdit}
-                onDelete={handleDelete}
-            />
+                <ApplicationSummary
+                    loading={loading}
+                    total={totalCount}
+                    inProgress={inProgressCount}
+                    docDueSoon={docDueSoonCount}
+                    interviewSoon={interviewSoonCount}
+                    finalSoon={finalSoonCount}
+                />
+            </div>
+
+            <section className="space-y-3">
+                <div className="flex items-end justify-between">
+                    <h2 className="text-sm font-semibold text-slate-200">지원 목록</h2>
+                    <span className="text-xs text-slate-400">총 {totalCount}건</span>
+                </div>
+
+                <ApplicationList
+                    loading={loading}
+                    applications={applications}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleDelete}
+                />
+            </section>
 
             <ApplicationEditModal
                 open={!!editingTarget}
-                target={editingTarget}
+                target={editingTarget ?? null}
                 saving={editSaving}
                 error={editError}
                 onClose={handleCloseEdit}
-                onSave={handleSaveEdit}
+                onSave={handleSaveEdit}  // ✅ 매핑 제거: 그대로 전달
             />
         </div>
     );

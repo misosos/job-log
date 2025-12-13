@@ -1,4 +1,3 @@
-// src/features/planner/api.ts
 import {
     addDoc,
     collection,
