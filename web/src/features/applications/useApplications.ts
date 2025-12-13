@@ -24,7 +24,6 @@ function toTimestampFromYmd(ymd?: string | null): Timestamp | null {
     const trimmed = (ymd ?? "").trim();
     if (!trimmed) return null;
 
-    // date input: YYYY-MM-DD
     if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
 
     const [year, month, day] = trimmed.split("-").map(Number);
@@ -42,7 +41,6 @@ function formatDotDate(ts?: Timestamp | null): string {
     return `${month}.${day}`;
 }
 
-/** ✅ "지원 {appliedAtLabel}"로 붙여 쓰니까 여기서는 날짜만 반환 */
 function formatAppliedLabel(appliedAt?: Timestamp | null): string {
     return appliedAt ? formatDotDate(appliedAt) : "";
 }
@@ -52,15 +50,7 @@ function isWithinNextNDays(ts?: Timestamp | null, days = 7): boolean {
     if (days <= 0) return false;
 
     const now = new Date();
-    const startOfToday = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        0,
-        0,
-        0,
-        0,
-    );
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
     const end = new Date(startOfToday);
     end.setDate(end.getDate() + (days - 1));
@@ -78,7 +68,6 @@ function isWithinNext7Days(deadline?: Timestamp | null): boolean {
 // Types
 // -----------------------------
 export type ApplicationRowWithLabels = ApplicationRow & {
-    /** ✅ 리스트에서 raw도 포함 */
     appliedAt?: Timestamp | null;
 
     docDeadlineLabel?: string;
@@ -91,7 +80,6 @@ export type CreateApplicationFormInput = {
     position: string;
     status: ApplicationStatus;
 
-    /** ✅ 지원일(YYYY-MM-DD) */
     appliedAt?: string;
 
     docDeadline?: string;
@@ -102,17 +90,13 @@ export type CreateApplicationFormInput = {
     finalResultAt?: string;
 };
 
-/** ✅ EditModal meta: 신규 키 or 레거시 키 둘 다 허용 */
 type EditMeta = {
-    /** ✅ 지원일 */
     appliedAt?: string | null;
 
-    // 신규(권장)
     docDeadline?: string | null;
     interviewAt?: string | null;
     finalResultAt?: string | null;
 
-    // 레거시(호환)
     documentDeadline?: string | null;
     interviewDate?: string | null;
     finalResultDate?: string | null;
@@ -128,21 +112,17 @@ function toRow(app: JobApplication): ApplicationRowWithLabels {
 
     const interviewAt = app.interviewAt ?? null;
     const finalResultAt = app.finalResultAt ?? null;
-
-    // ✅ 지원일: fallback 금지(없으면 그냥 null)
     const appliedAt = app.appliedAt ?? null;
 
     return {
         id: app.id,
         company: app.company ?? "",
 
-        // ✅ UI 호환: role도 같이 채움(값은 position으로 통일)
         position,
         role: position,
 
         status: app.status ?? DEFAULT_STATUS,
 
-        // ✅ 지원일 raw + label
         appliedAt,
         appliedAtLabel: formatAppliedLabel(appliedAt),
 
@@ -150,10 +130,8 @@ function toRow(app: JobApplication): ApplicationRowWithLabels {
         interviewAt,
         finalResultAt,
 
-        // 레거시 유지
         deadline: app.deadline ?? null,
 
-        // 라벨
         docDeadlineLabel: docDeadline ? `${formatDotDate(docDeadline)} 서류마감` : "",
         interviewAtLabel: interviewAt ? `${formatDotDate(interviewAt)} 면접` : "",
         finalResultAtLabel: finalResultAt ? `${formatDotDate(finalResultAt)} 최종발표` : "",
@@ -170,6 +148,10 @@ export function useApplications() {
     const [editingTarget, setEditingTarget] = useState<ApplicationRowWithLabels | null>(null);
     const [editSaving, setEditSaving] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
+
+    // ✅ 삭제 상태 (선택이지만 앱 UX에 좋음)
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -190,7 +172,6 @@ export function useApplications() {
         void load();
     }, [load]);
 
-    // 생성
     const create = useCallback(
         async (input: CreateApplicationFormInput) => {
             const company = input.company.trim();
@@ -201,7 +182,6 @@ export function useApplications() {
             setSaveError(null);
 
             try {
-                // ✅ 지원일: 입력 없으면 null
                 const appliedAtTs = toTimestampFromYmd(input.appliedAt ?? null);
 
                 const docDeadlineYmd =
@@ -219,14 +199,12 @@ export function useApplications() {
                     position,
                     status: input.status,
 
-                    // ✅ 지원일은 "선택했을 때만" 넣기
                     ...(appliedAtTs ? { appliedAt: appliedAtTs } : {}),
 
                     docDeadline: docDeadlineTs,
                     interviewAt: interviewTs,
                     finalResultAt: finalTs,
 
-                    // ✅ 레거시 동기화(서류마감)
                     deadline: docDeadlineTs,
                 });
 
@@ -234,6 +212,7 @@ export function useApplications() {
             } catch (e) {
                 console.error("지원 내역 저장 실패:", e);
                 setSaveError("지원 내역을 저장하는 중 문제가 발생했습니다.");
+                throw e; // ✅ 상위(UI)에서도 잡을 수 있게
             } finally {
                 setSaving(false);
             }
@@ -241,7 +220,6 @@ export function useApplications() {
         [load],
     );
 
-    // 수정 모달
     const openEdit = useCallback((row: ApplicationRowWithLabels) => {
         setEditingTarget(row);
         setEditError(null);
@@ -251,7 +229,6 @@ export function useApplications() {
         setEditingTarget(null);
     }, []);
 
-    // 수정
     const saveEdit = useCallback(
         async (id: string, status: ApplicationStatus, meta?: EditMeta) => {
             setEditSaving(true);
@@ -260,19 +237,17 @@ export function useApplications() {
             try {
                 const patch: UpdateApplicationInput = { status };
 
-                // ✅ 지원일: meta에 appliedAt 키가 "존재"하면(=사용자가 건드렸으면) null 포함해서 반영
                 const touchedApplied = !!meta && ("appliedAt" in meta);
                 if (touchedApplied) {
                     patch.appliedAt = toTimestampFromYmd(meta?.appliedAt ?? null);
                 }
 
-                // ✅ 서류마감
                 const touchedDoc = !!meta && ("docDeadline" in meta || "documentDeadline" in meta);
                 if (touchedDoc) {
                     const ymd = meta?.docDeadline ?? meta?.documentDeadline ?? null;
                     const ts = toTimestampFromYmd(ymd);
                     patch.docDeadline = ts;
-                    patch.deadline = ts; // legacy 동기화
+                    patch.deadline = ts;
                 }
 
                 const touchedInterview = !!meta && ("interviewAt" in meta || "interviewDate" in meta);
@@ -294,6 +269,7 @@ export function useApplications() {
             } catch (e) {
                 console.error("지원 내역 수정 실패:", e);
                 setEditError("지원 내역을 수정하는 중 문제가 발생했습니다.");
+                throw e; // ✅ 상위에서도 잡게
             } finally {
                 setEditSaving(false);
             }
@@ -301,20 +277,34 @@ export function useApplications() {
         [load],
     );
 
-    // 삭제
+    // ✅ 삭제: 에러를 먹지 말고 throw + (추천) optimistic UI
     const remove = useCallback(
         async (id: string) => {
+            setDeletingId(id);
+            setDeleteError(null);
+
+            // optimistic: 먼저 UI에서 제거
+            setApplications((prev) => prev.filter((a) => a.id !== id));
+            // 편집중인 것 삭제했으면 모달 닫기
+            setEditingTarget((prev) => (prev?.id === id ? null : prev));
+
             try {
                 await deleteApplication(id);
+                // 서버 기준 동기화
                 await load();
             } catch (e) {
                 console.error("지원 내역 삭제 실패:", e);
+                setDeleteError("지원 내역을 삭제하는 중 문제가 발생했습니다.");
+                // 실패 시 서버 기준으로 복구
+                await load();
+                throw e; // ✅ 화면에서 Alert 띄울 수 있게
+            } finally {
+                setDeletingId(null);
             }
         },
         [load],
     );
 
-    // 요약(7일)
     const {
         totalCount,
         inProgressCount,
@@ -347,8 +337,6 @@ export function useApplications() {
             docDue7Count: docDue7,
             interviewDue7Count: interviewDue7,
             finalResultDue7Count: finalDue7,
-
-            // (호환)
             dueThisWeekCount: docDue7,
         };
     }, [applications]);
@@ -369,6 +357,8 @@ export function useApplications() {
         editError,
 
         remove,
+        deletingId,     // ✅ 추가
+        deleteError,    // ✅ 추가
 
         totalCount,
         inProgressCount,

@@ -20,6 +20,23 @@ export type CreatePlannerTaskInput = {
     applicationId?: string;
 };
 
+function computeDdayLabelFromDeadline(deadline?: string | null): string {
+    if (!deadline) return "오늘";
+
+    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return "오늘";
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const due = new Date(y, m - 1, d).getTime();
+
+    const diffDays = Math.round((due - startOfToday) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "D-day";
+    if (diffDays > 0) return `D-${diffDays}`;
+    return `D+${Math.abs(diffDays)}`;
+}
+
 function parseDeadlineMs(deadline?: string | null): number | null {
     if (!deadline) return null;
     const [y, m, d] = deadline.split("-").map((v) => Number(v));
@@ -27,36 +44,19 @@ function parseDeadlineMs(deadline?: string | null): number | null {
     return new Date(y, m - 1, d).getTime();
 }
 
-function startOfTodayMs(): number {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-}
-
-function computeDdayLabelFromDeadline(deadline?: string | null): string {
-    if (!deadline) return "D-day";
-
-    const dueMs = parseDeadlineMs(deadline);
-    if (dueMs === null) return "D-day";
-
-    const diffDays = Math.round((dueMs - startOfTodayMs()) / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "D-day";
-    if (diffDays > 0) return `D-${diffDays}`;
-    return `D+${Math.abs(diffDays)}`;
-}
-
-/**
- * ✅ 버킷 분류 규칙
- * - deadline이 있으면: 오늘(또는 지남)=today, 내일 이후=week
- * - deadline이 없으면: task.scope 사용
- */
 function bucketFromTask(task: PlannerTask): PlannerScope {
-    const dueMs = parseDeadlineMs(task.deadline ?? null);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const startOfTodayMs = start.getTime();
 
+    const dueMs = parseDeadlineMs((task as unknown as { deadline?: string | null }).deadline ?? null);
+
+    // ✅ deadline이 있으면: 오늘(또는 지남)=today, 내일 이후=week
     if (dueMs !== null) {
-        return dueMs <= startOfTodayMs() ? "today" : "week";
+        return dueMs <= startOfTodayMs ? "today" : "week";
     }
 
+    // ✅ deadline이 없으면: 기존 scope로 fallback
     return task.scope;
 }
 
@@ -104,7 +104,7 @@ export function usePlanner() {
             try {
                 const normalizedDdayLabel = ddayLabel?.trim();
 
-                const newTaskFromApi = await createPlannerTask({
+                const newTask = await createPlannerTask({
                     title: trimmedTitle,
                     scope,
                     applicationId,
@@ -113,18 +113,10 @@ export function usePlanner() {
                     deadline: deadline ?? null,
 
                     // ✅ (호환) ddayLabel이 없으면 deadline 기반으로 자동 생성
-                    ddayLabel:
-                        normalizedDdayLabel && normalizedDdayLabel.length > 0
-                            ? normalizedDdayLabel
-                            : computeDdayLabelFromDeadline(deadline ?? null),
+                    ddayLabel: normalizedDdayLabel && normalizedDdayLabel.length > 0
+                        ? normalizedDdayLabel
+                        : computeDdayLabelFromDeadline(deadline ?? null),
                 });
-
-                // ✅ 중요: API가 deadline을 안 내려주거나(기존 데이터/타입 불일치) null로 오면
-                // 현재 입력값(deadline)로 강제 보정해서 버킷 판정이 흔들리지 않게 함
-                const newTask: PlannerTask = {
-                    ...newTaskFromApi,
-                    deadline: newTaskFromApi.deadline ?? (deadline ?? null),
-                };
 
                 if (bucketFromTask(newTask) === "today") {
                     setTodayTasks((prev) => [newTask, ...prev]);
@@ -140,26 +132,44 @@ export function usePlanner() {
         [],
     );
 
-    const toggleTask = useCallback(async (id: string) => {
-        // ✅ 1) 로컬에서 먼저 낙관적 업데이트
-        setTodayTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-        setWeekTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    const toggleTask = useCallback(
+        async (id: string) => {
+            // ✅ 1) 로컬에서 먼저 낙관적 업데이트 (깜빡임 방지)
+            setTodayTasks((prev) =>
+                prev.map((t) =>
+                    t.id === id ? { ...t, done: !t.done } : t,
+                ),
+            );
+            setWeekTasks((prev) =>
+                prev.map((t) =>
+                    t.id === id ? { ...t, done: !t.done } : t,
+                ),
+            );
 
-        try {
-            await togglePlannerTaskDone(id);
-        } catch (error) {
-            console.error("[Planner] 할 일 완료 상태 변경 실패:", error);
-
-            // 실패 시 원복
-            setTodayTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-            setWeekTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-        }
-    }, []);
+            try {
+                // ✅ 2) 서버에 실제 토글 요청
+                await togglePlannerTaskDone(id);
+            } catch (error) {
+                console.error("[Planner] 할 일 완료 상태 변경 실패:", error);
+                // 실패 시 다시 한 번 토글해서 원복
+                setTodayTasks((prev) =>
+                    prev.map((t) =>
+                        t.id === id ? { ...t, done: !t.done } : t,
+                    ),
+                );
+                setWeekTasks((prev) =>
+                    prev.map((t) =>
+                        t.id === id ? { ...t, done: !t.done } : t,
+                    ),
+                );
+            }
+        },
+        [],
+    );
 
     const deleteTaskById = useCallback(
         async (id: string) => {
             setSaving(true);
-
             // ✅ 로컬에서 먼저 제거
             setTodayTasks((prev) => prev.filter((t) => t.id !== id));
             setWeekTasks((prev) => prev.filter((t) => t.id !== id));
@@ -168,6 +178,7 @@ export function usePlanner() {
                 await deletePlannerTask(id);
             } catch (error) {
                 console.error("[Planner] 할 일 삭제 실패:", error);
+                // 실패했으면 서버 상태로 다시 동기화
                 void loadTasks();
             } finally {
                 setSaving(false);

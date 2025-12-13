@@ -24,10 +24,10 @@ export function usePlannerPageController() {
     const [newTitle, setNewTitle] = useState("");
     const [newScope, setNewScope] = useState<PlannerScope>("today");
 
-    /** ✅ 신규: 마감일(YYYY-MM-DD). date picker로 받고, ddayLabel은 자동 계산 */
+    /** ✅ 신규: 마감일(YYYY-MM-DD). 입력은 date picker로 받고, ddayLabel은 자동 생성 */
     const [newDeadline, setNewDeadline] = useState<string | null>(null);
 
-    /** 공고 선택: "" = 선택 안 함 */
+    // 🔥 새로 추가: 연결할 공고 ID
     const [newApplicationId, setNewApplicationId] = useState<string>("");
 
     // ✅ 플래너 비즈니스 로직 훅 (API 연동)
@@ -44,13 +44,15 @@ export function usePlannerPageController() {
     // ✅ 지원 공고 훅 재사용해서 셀렉트 옵션 만들기
     const { applications } = useApplications();
 
-    const applicationOptions: PlannerApplicationOption[] = useMemo(() => {
-        return (applications ?? []).map((app: ApplicationRow) => ({
-            value: app.id,
-            id: app.id,
-            label: app.role ? `${app.company} · ${app.role}` : app.company,
-        }));
-    }, [applications]);
+    const applicationOptions: PlannerApplicationOption[] = useMemo(
+        () =>
+            applications.map((app: ApplicationRow) => ({
+                value: app.id,
+                id: app.id,
+                label: app.role ? `${app.company} · ${app.role}` : app.company,
+            })),
+        [applications],
+    );
 
     // ✅ 생성 핸들러 (폼 submit)
     const handleCreate = useCallback(
@@ -64,14 +66,16 @@ export function usePlannerPageController() {
                 title: trimmedTitle,
                 scope: newScope,
 
-                // ✅ 신규: 마감일(없으면 null)
+                // ✅ 신규: 마감일(YYYY-MM-DD)
                 deadline: newDeadline ?? null,
 
-                // ✅ ddayLabel은 이제 "수동 입력 제거" → 보내지 않는다
-                // (usePlanner/createTask에서 deadline 기반으로 자동 계산 or 기본값 처리)
+                // ✅ (호환) deadline을 안 쓰는 경우에만 간단 표시(수동 입력 제거)
+                ddayLabel: newDeadline
+                    ? undefined
+                    : (newScope === "today" ? "D-day" : "예정"),
 
-                // ✅ 공고 연결 없으면 undefined로
-                applicationId: newApplicationId ? newApplicationId : undefined,
+                // 🔥 선택한 공고가 있으면 함께 저장
+                applicationId: newApplicationId || undefined,
             };
 
             await createTask(payload);
@@ -105,7 +109,7 @@ export function usePlannerPageController() {
         newTitle,
         newScope,
 
-        /** ✅ 신규 */
+        /** ✅ 신규 권장 */
         newDeadline,
         setNewDeadline,
 

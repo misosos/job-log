@@ -7,11 +7,10 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from "react-native";
-import type { Timestamp } from "firebase/firestore";
 
-import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
+// ✅ 같은 폴더에 있다면 이게 가장 안전
+import { ApplicationStatusBadge } from "../../components/common/ApplicationStatusBadge";
 
-// 타입은 features 쪽에서 가져오기
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
 
 export type ApplicationListProps = {
@@ -21,21 +20,54 @@ export type ApplicationListProps = {
     onDelete?: (id: string) => void;
 };
 
-// deadline이 undefined일 수도 있으니까 | undefined까지 허용
-function formatDeadline(deadline: Timestamp | null | undefined): string {
-    if (!deadline) return "-";
-    const d = deadline.toDate();
+// -----------------------------
+// date utils (Timestamp/Date/string 모두 지원)
+// -----------------------------
+type DateLike = unknown;
+type TimestampLike = { toDate: () => Date };
+
+function isTimestampLike(v: unknown): v is TimestampLike {
+    return (
+        typeof v === "object" &&
+        v !== null &&
+        "toDate" in v &&
+        typeof (v as { toDate?: unknown }).toDate === "function"
+    );
+}
+
+function toDate(value: DateLike): Date | null {
+    if (!value) return null;
+
+    if (value instanceof Date) return value;
+    if (isTimestampLike(value)) return value.toDate();
+
+    if (typeof value === "string") {
+        const v = value.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+        const [y, m, d] = v.split("-").map(Number);
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
+    }
+
+    return null;
+}
+
+function formatMd(value: DateLike): string {
+    const d = toDate(value);
+    if (!d) return "-";
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
     return `${month}.${day}`;
 }
 
-function formatDday(deadline: Timestamp | null | undefined): string {
+function formatDday(value: DateLike): string {
+    const deadline = toDate(value);
     if (!deadline) return "";
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const target = deadline.toDate();
+    const target = new Date(deadline);
     target.setHours(0, 0, 0, 0);
 
     const diffMs = target.getTime() - today.getTime();
@@ -45,6 +77,34 @@ function formatDday(deadline: Timestamp | null | undefined): string {
     if (diffDays === 0) return "D-DAY";
     return `D+${Math.abs(diffDays)}`;
 }
+
+/** "12.13 지원" -> "12.13" */
+function normalizeAppliedLabel(label?: string): string {
+    const v = (label ?? "").trim();
+    if (!v) return "";
+    return v.replace(/\s*지원\s*$/, "").trim();
+}
+
+/** ✅ 앱/웹 혼합 필드 안전 접근용 */
+type ApplicationRowExtended = ApplicationRow & {
+    position?: string;
+    role?: string;
+
+    appliedAt?: unknown;
+    appliedAtLabel?: string;
+
+    docDeadline?: unknown;
+    interviewAt?: unknown;
+    finalResultAt?: unknown;
+
+    // 레거시
+    deadline?: unknown;
+
+    // label
+    docDeadlineLabel?: string;
+    interviewAtLabel?: string;
+    finalResultAtLabel?: string;
+};
 
 type RowProps = {
     app: ApplicationRow;
@@ -59,8 +119,38 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                                                                 onEdit,
                                                                 onDelete,
                                                             }: RowProps) {
-    const deadlineLabel = formatDeadline(app.deadline as Timestamp | null | undefined);
-    const dday = formatDday(app.deadline as Timestamp | null | undefined);
+    const ext = app as ApplicationRowExtended;
+
+    const positionLabel =
+        (ext.position ?? "").trim() || (ext.role ?? "").trim() || "";
+
+    // ✅ 일정 3종 + 레거시 deadline(서류마감으로 취급)
+    const docDeadline = ext.docDeadline ?? ext.deadline ?? null;
+    const interviewAt = ext.interviewAt ?? null;
+    const finalResultAt = ext.finalResultAt ?? null;
+
+    const hasAnySchedule = Boolean(
+        toDate(docDeadline) || toDate(interviewAt) || toDate(finalResultAt),
+    );
+
+    // ✅ 지원일: 1) appliedAtLabel 우선  2) appliedAt 값 있으면 MM.DD 생성
+    const appliedFromLabel = normalizeAppliedLabel(ext.appliedAtLabel);
+    const appliedFromValue = ext.appliedAt ? formatMd(ext.appliedAt) : "";
+    const appliedAtText = appliedFromLabel || appliedFromValue || "-";
+
+    const docLabel = ext.docDeadlineLabel?.trim()
+        ? ext.docDeadlineLabel.replace(/\s*서류마감\s*$/, "").trim()
+        : formatMd(docDeadline);
+
+    const interviewLabel = ext.interviewAtLabel?.trim()
+        ? ext.interviewAtLabel.replace(/\s*면접\s*$/, "").trim()
+        : formatMd(interviewAt);
+
+    const finalLabel = ext.finalResultAtLabel?.trim()
+        ? ext.finalResultAtLabel.replace(/\s*최종발표\s*$/, "").trim()
+        : formatMd(finalResultAt);
+
+    const dday = formatDday(docDeadline);
 
     return (
         <View style={[styles.row, !isLast && styles.rowDivider]}>
@@ -70,24 +160,44 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                     {app.company}
                 </Text>
                 <Text style={styles.roleText} numberOfLines={1}>
-                    {app.role}
+                    {positionLabel}
                 </Text>
             </View>
 
             {/* 상태 / 날짜 / 액션 */}
             <View style={styles.infoRight}>
-                <ApplicationStatusBadge status={app.status} />
+                {/* ✅ 만약 Badge 컴포넌트 타입이 shared status랑 다르면,
+            Badge쪽을 shared 타입으로 바꾸는 게 정답이야. */}
+                <ApplicationStatusBadge status={app.status as any} />
 
-                <Text style={styles.appliedText}>
-                    {app.appliedAtLabel || "-"}
-                </Text>
+                <Text style={styles.appliedText}>지원일 {appliedAtText}</Text>
 
-                {app.deadline && (
-                    <View style={styles.deadlineRow}>
-                        <Text style={styles.deadlineText}>마감 {deadlineLabel}</Text>
-                        {!!dday && (
-                            <View style={styles.ddayBadge}>
-                                <Text style={styles.ddayText}>{dday}</Text>
+                {hasAnySchedule && (
+                    <View style={styles.scheduleWrap}>
+                        {toDate(docDeadline) && (
+                            <View style={styles.pill}>
+                                <Text style={styles.pillKey}>서류</Text>
+                                <Text style={styles.pillVal}>{docLabel}</Text>
+
+                                {!!dday && (
+                                    <View style={styles.ddayBadge}>
+                                        <Text style={styles.ddayText}>{dday}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
+
+                        {toDate(interviewAt) && (
+                            <View style={styles.pill}>
+                                <Text style={styles.pillKey}>면접</Text>
+                                <Text style={styles.pillVal}>{interviewLabel}</Text>
+                            </View>
+                        )}
+
+                        {toDate(finalResultAt) && (
+                            <View style={styles.pill}>
+                                <Text style={styles.pillKey}>최종</Text>
+                                <Text style={styles.pillVal}>{finalLabel}</Text>
                             </View>
                         )}
                     </View>
@@ -96,18 +206,12 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                 {(onEdit || onDelete) && (
                     <View style={styles.actionsRow}>
                         {onEdit && (
-                            <TouchableOpacity
-                                onPress={() => onEdit(app)}
-                                hitSlop={8}
-                            >
+                            <TouchableOpacity onPress={() => onEdit(app)} hitSlop={8}>
                                 <Text style={styles.actionText}>수정</Text>
                             </TouchableOpacity>
                         )}
                         {onDelete && (
-                            <TouchableOpacity
-                                onPress={() => onDelete(app.id)}
-                                hitSlop={8}
-                            >
+                            <TouchableOpacity onPress={() => onDelete(app.id)} hitSlop={8}>
                                 <Text style={styles.actionText}>삭제</Text>
                             </TouchableOpacity>
                         )}
@@ -118,7 +222,6 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
     );
 });
 
-// ✅ 여기서 Props → ApplicationListProps 로 변경
 export function ApplicationList({
                                     loading,
                                     applications,
@@ -130,9 +233,7 @@ export function ApplicationList({
             <View style={styles.card}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator color="#22c55e" />
-                    <Text style={styles.loadingText}>
-                        지원 내역을 불러오는 중입니다…
-                    </Text>
+                    <Text style={styles.loadingText}>지원 내역을 불러오는 중입니다…</Text>
                 </View>
             </View>
         );
@@ -151,21 +252,18 @@ export function ApplicationList({
     return (
         <View style={styles.card}>
             <View style={styles.headerRow}>
-                <Text style={styles.countText}>
-                    총 {applications.length}건의 지원 내역
-                </Text>
+                <Text style={styles.countText}>총 {applications.length}건의 지원 내역</Text>
             </View>
 
             <View style={styles.listContent}>
                 {applications.map((item, index) => (
-                    <React.Fragment key={item.id}>
-                        <ApplicationRowItem
-                            app={item}
-                            isLast={index === applications.length - 1}
-                            onEdit={onEdit}
-                            onDelete={onDelete}
-                        />
-                    </React.Fragment>
+                    <ApplicationRowItem
+                        key={item.id}
+                        app={item}
+                        isLast={index === applications.length - 1}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
                 ))}
             </View>
         </View>
@@ -174,12 +272,12 @@ export function ApplicationList({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#020617", // slate-950
+        backgroundColor: "#020617",
         borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 14,
         borderWidth: 1,
-        borderColor: "#1f2937", // slate-800
+        borderColor: "#1f2937",
     },
     listContent: {
         paddingTop: 4,
@@ -193,19 +291,19 @@ const styles = StyleSheet.create({
     loadingText: {
         marginLeft: 8,
         fontSize: 13,
-        color: "#9ca3af", // slate-400
+        color: "#9ca3af",
     },
     emptyText: {
         paddingVertical: 16,
         fontSize: 13,
-        color: "#9ca3af", // slate-400
+        color: "#9ca3af",
     },
     headerRow: {
         marginBottom: 4,
     },
     countText: {
         fontSize: 11,
-        color: "#9ca3af", // slate-400
+        color: "#9ca3af",
     },
     row: {
         flexDirection: "row",
@@ -214,7 +312,7 @@ const styles = StyleSheet.create({
     },
     rowDivider: {
         borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#1f2937", // slate-800
+        borderBottomColor: "#1f2937",
     },
     infoLeft: {
         flex: 1,
@@ -228,7 +326,7 @@ const styles = StyleSheet.create({
     roleText: {
         marginTop: 2,
         fontSize: 13,
-        color: "#e5e7eb", // slate-200
+        color: "#e5e7eb",
     },
     infoRight: {
         alignItems: "flex-end",
@@ -237,36 +335,58 @@ const styles = StyleSheet.create({
     appliedText: {
         marginTop: 4,
         fontSize: 11,
-        color: "#9ca3af", // slate-400
+        color: "#9ca3af",
     },
-    deadlineRow: {
+
+    // ✅ 일정 pill UI (gap 제거)
+    scheduleWrap: {
+        marginTop: 6,
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "flex-end",
+    },
+    pill: {
         flexDirection: "row",
         alignItems: "center",
-        marginTop: 4,
+        borderWidth: 1,
+        borderColor: "#1f2937",
+        backgroundColor: "rgba(15,23,42,0.35)",
+        borderRadius: 999,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginLeft: 6,
+        marginTop: 6,
     },
-    deadlineText: {
+    pillKey: {
         fontSize: 11,
         color: "#9ca3af",
-        marginRight: 6,
+    },
+    pillVal: {
+        fontSize: 11,
+        color: "#e5e7eb",
+        fontWeight: "600",
+        marginLeft: 6,
     },
     ddayBadge: {
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 999,
-        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500/12
+        backgroundColor: "rgba(244, 63, 94, 0.12)",
+        marginLeft: 6,
     },
     ddayText: {
         fontSize: 11,
-        fontWeight: "500",
-        color: "#fb7185", // rose-400
+        fontWeight: "600",
+        color: "#fb7185",
     },
+
     actionsRow: {
-        marginTop: 6,
+        marginTop: 8,
         flexDirection: "row",
     },
     actionText: {
         fontSize: 11,
-        color: "#fda4af", // rose-300-ish
+        color: "#fda4af",
         marginLeft: 8,
     },
 });

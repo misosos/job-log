@@ -1,58 +1,54 @@
 // app/screens/ApplicationsScreen.tsx
-
 import React from "react";
-import { ScrollView, View, StyleSheet, Alert } from "react-native";
+import { ScrollView, View, Text, StyleSheet, Alert } from "react-native";
 
 import { ApplicationList } from "../../components/applications/ApplicationList";
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
 
-import type { ApplicationStatus } from "../../components/common/ApplicationStatusBadge";
-import type { ApplicationRow } from "../../../../shared/features/applications/types";
 import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
 
 export function ApplicationsScreen() {
     const {
-        // 폼 상태
         newCompany,
         newRole,
         newStatus,
-        newDeadline,
+        newAppliedAt,
+        newDocumentDeadline,
+        newInterviewAt,
+        newFinalResultAt,
         setNewCompany,
         setNewRole,
         setNewStatus,
-        setNewDeadline,
+        setNewAppliedAt,
+        setNewDocumentDeadline,
+        setNewInterviewAt,
+        setNewFinalResultAt,
 
-        // 생성
         saving,
         saveError,
         handleCreate,
 
-        // 목록/요약
         applications,
         loading,
         totalCount,
         inProgressCount,
-        dueThisWeekCount,
 
-        // 수정
+        docDueSoonCount,
+        interviewSoonCount,
+        finalSoonCount,
+
         editingTarget,
         editSaving,
         editError,
         handleOpenEdit,
         handleSaveEdit,
         handleCloseEdit,
-
-        // 삭제
         handleDelete,
     } = useApplicationsPageController();
 
-    // RN 폼 onSubmit은 이벤트가 없으니까 그냥 래핑
-    const handleCreatePress = () => {
-        void handleCreate();
-    };
-
+    // RN confirm
     const handleDeleteWithConfirm = (id: string) => {
         Alert.alert(
             "지원 내역 삭제",
@@ -62,66 +58,82 @@ export function ApplicationsScreen() {
                 {
                     text: "삭제",
                     style: "destructive",
-                    onPress: () => {
-                        void handleDelete(id);
-                    },
+                    onPress: () => void handleDelete(id),
                 },
             ],
             { cancelable: true },
         );
     };
 
-    const handleOpenEditRow = (row: ApplicationRow) => {
-        handleOpenEdit(row);
-    };
-
-    const handleSaveEditStatus = async (id: string, status: ApplicationStatus) => {
-        await handleSaveEdit(id, status);
-    };
-
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            {/* header */}
+            <View style={styles.header}>
+                <Text style={styles.title}>지원 현황</Text>
+                <Text style={styles.subtitle}>
+                    지원한 공고를 한눈에 정리하고, 마감 일정 위주로 관리해요.
+                </Text>
+            </View>
+
+            {/* form */}
             <View style={styles.section}>
                 <ApplicationCreateForm
                     company={newCompany}
-                    role={newRole}
+                    position={newRole}
                     status={newStatus}
-                    deadline={newDeadline}
+                    appliedAt={newAppliedAt}
+                    onAppliedAtChange={setNewAppliedAt}
+                    docDeadline={newDocumentDeadline}
+                    interviewAt={newInterviewAt}
+                    finalResultAt={newFinalResultAt}
                     saving={saving}
                     error={saveError}
                     onCompanyChange={setNewCompany}
-                    onRoleChange={setNewRole}
+                    onPositionChange={setNewRole}
                     onStatusChange={setNewStatus}
-                    onDeadlineChange={setNewDeadline}
-                    onSubmit={handleCreatePress}
+                    onDocDeadlineChange={setNewDocumentDeadline}
+                    onInterviewAtChange={setNewInterviewAt}
+                    onFinalResultAtChange={setNewFinalResultAt}
+                    onSubmit={() => void handleCreate()}
                 />
             </View>
 
+            {/* summary */}
             <View style={styles.section}>
                 <ApplicationSummary
                     loading={loading}
                     total={totalCount}
                     inProgress={inProgressCount}
-                    dueThisWeek={dueThisWeekCount}
+                    docDueSoon={docDueSoonCount}
+                    interviewSoon={interviewSoonCount}
+                    finalSoon={finalSoonCount}
                 />
             </View>
 
+            {/* list header */}
+            <View style={styles.listHeader}>
+                <Text style={styles.listTitle}>지원 목록</Text>
+                <Text style={styles.listCount}>총 {totalCount}건</Text>
+            </View>
+
+            {/* list */}
             <View style={styles.section}>
                 <ApplicationList
                     loading={loading}
                     applications={applications}
-                    onEdit={handleOpenEditRow}
+                    onEdit={handleOpenEdit}
                     onDelete={handleDeleteWithConfirm}
                 />
             </View>
 
+            {/* edit modal */}
             <ApplicationEditModal
                 open={!!editingTarget}
-                target={editingTarget}
+                target={editingTarget ?? null}
                 saving={editSaving}
                 error={editError}
                 onClose={handleCloseEdit}
-                onSave={handleSaveEditStatus}
+                onSave={handleSaveEdit}
             />
         </ScrollView>
     );
@@ -132,7 +144,35 @@ const styles = StyleSheet.create({
         padding: 16,
         paddingBottom: 32,
     },
+    header: {
+        marginBottom: 16,
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: "#e5e7eb",
+    },
+    subtitle: {
+        marginTop: 6, // ✅ gap 대체
+        fontSize: 13,
+        color: "#9ca3af",
+    },
     section: {
-        marginBottom: 24,
+        marginBottom: 18,
+    },
+    listHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+        marginBottom: 10,
+    },
+    listTitle: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#e5e7eb",
+    },
+    listCount: {
+        fontSize: 12,
+        color: "#9ca3af",
     },
 });

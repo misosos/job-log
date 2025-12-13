@@ -1,8 +1,15 @@
 // src/features/auth/useEmailAuthForm.ts
 import { useCallback, useState } from "react";
-import { signInWithEmail, signUpWithEmail } from "../../../../shared/features/auth/emailAuthApi";
+import { auth } from "../../libs/firebase";
+import {
+    initEmailAuthApi,
+    signInWithEmail,
+    signUpWithEmail,
+} from "../../../../shared/features/auth/emailAuthApi";
 
 type Mode = "login" | "signup";
+
+initEmailAuthApi(auth);
 
 /** 웹 form onSubmit 이벤트와 호환되게 최소한으로 정의 */
 type SubmitEventLike = {

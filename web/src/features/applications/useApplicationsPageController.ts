@@ -1,6 +1,5 @@
 // src/features/applications/useApplicationsPageController.ts
 import { useCallback, useState } from "react";
-import type { FormEvent } from "react";
 
 import type { ApplicationStatus } from "../../../../shared/features/applications/types";
 import {
@@ -11,10 +10,15 @@ import {
 
 const DEFAULT_STATUS: ApplicationStatus = "지원 예정";
 
+/** ✅ 웹/앱 공용: DOM FormEvent 대신 최소 형태만 사용 */
+type SubmitEventLike = {
+    preventDefault?: () => void;
+};
+
 export function useApplicationsPageController() {
     // 폼 상태
     const [newCompany, setNewCompany] = useState("");
-    const [newRole, setNewRole] = useState(""); // UI 호환을 위해 이름 유지(= position으로 저장)
+    const [newRole, setNewRole] = useState(""); // UI 호환 이름 유지(= position으로 저장)
     const [newStatus, setNewStatus] = useState<ApplicationStatus>(DEFAULT_STATUS);
 
     // ✅ 지원일(YYYY-MM-DD)
@@ -54,7 +58,7 @@ export function useApplicationsPageController() {
     } = useApplications();
 
     const handleCreate = useCallback(
-        async (e?: FormEvent<HTMLFormElement>) => {
+        async (e?: SubmitEventLike) => {
             e?.preventDefault?.();
 
             const company = newCompany.trim();
@@ -114,9 +118,21 @@ export function useApplicationsPageController() {
         [openEdit],
     );
 
+    /**
+     * ✅ 웹/앱 공용 삭제
+     * - 웹: window.confirm 있으면 confirm
+     * - 앱(RN): window 없으므로 confirm 없이 삭제 실행 (RN 화면에서 Alert로 감싸서 호출하면 됨)
+     */
     const handleDelete = useCallback(
         async (id: string) => {
-            if (!window.confirm("이 지원 내역을 삭제할까요?")) return;
+            const canUseWindowConfirm =
+                typeof window !== "undefined" && typeof window.confirm === "function";
+
+            if (canUseWindowConfirm) {
+                const ok = window.confirm("이 지원 내역을 삭제할까요?");
+                if (!ok) return;
+            }
+
             await remove(id);
         },
         [remove],
