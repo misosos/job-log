@@ -1,6 +1,14 @@
 // app/src/components/applications/ApplicationCreateForm.tsx
-import React, { useMemo, useCallback, useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Platform, Modal } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    View,
+    Text,
+    TextInput,
+    Pressable,
+    StyleSheet,
+    Platform,
+    Modal,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
@@ -8,6 +16,9 @@ import type { ApplicationStatus } from "../../../../shared/features/applications
 
 type Props = {
     company: string;
+
+    /** ✅ UI 변형: 기본(full) / 2-step(모바일) */
+    variant?: "full" | "twoStep";
 
     /** ✅ 권장: position (신규) */
     position?: string;
@@ -85,6 +96,7 @@ type PickerField = "appliedAt" | "docDeadline" | "interviewAt" | "finalResultAt"
 
 export function ApplicationCreateForm({
                                           company,
+                                          variant,
                                           position,
                                           role,
                                           status,
@@ -118,6 +130,8 @@ export function ApplicationCreateForm({
 
                                           onSubmit,
                                       }: Props) {
+    const uiVariant = variant ?? "full";
+
     const resolvedPosition = (position ?? "").trim() || (role ?? "").trim() || "";
     const resolvedDocDeadline = (docDeadline ?? "").trim() || (deadline ?? "").trim() || "";
 
@@ -146,6 +160,28 @@ export function ApplicationCreateForm({
         },
         [onDocDeadlineChange, onDeadlineChange],
     );
+
+    // -----------------------------
+    // ✅ 2-step + 접기/펼치기 UI 상태
+    // -----------------------------
+    const [step, setStep] = useState<1 | 2>(1);
+    const [showExtraDates, setShowExtraDates] = useState(false);
+
+    // 폼이 비면(저장 후 초기화) step/토글도 같이 초기화
+    useEffect(() => {
+        const emptyAll =
+            !company.trim() &&
+            !resolvedPosition.trim() &&
+            !(appliedAt ?? "").trim() &&
+            !resolvedDocDeadline.trim() &&
+            !(interviewAt ?? "").trim() &&
+            !(finalResultAt ?? "").trim();
+
+        if (emptyAll) {
+            setStep(1);
+            setShowExtraDates(false);
+        }
+    }, [company, resolvedPosition, appliedAt, resolvedDocDeadline, interviewAt, finalResultAt]);
 
     // -----------------------------
     // ✅ Date Picker Controller
@@ -211,18 +247,15 @@ export function ApplicationCreateForm({
         [openField, tempDate, commitDate, closePicker],
     );
 
-    const renderDateField = (
-        label: string,
-        field: PickerField,
-        value?: string,
-    ) => {
+    const renderDateField = (label: string, field: PickerField, value?: string) => {
         const display = (value ?? "").trim();
+
         return (
             <View style={styles.field}>
                 <View style={styles.dateLabelRow}>
                     <Text style={styles.label}>{label}</Text>
                     {!!display && (
-                        <Pressable onPress={() => clearDate(field)} disabled={saving}>
+                        <Pressable onPress={() => clearDate(field)} disabled={saving} hitSlop={8}>
                             <Text style={styles.clearText}>지우기</Text>
                         </Pressable>
                     )}
@@ -236,9 +269,125 @@ export function ApplicationCreateForm({
                         pressed && !saving && styles.dateButtonPressed,
                     ]}
                 >
-                    <Text style={styles.dateButtonText}>
-                        {display || "선택 (YYYY-MM-DD)"}
+                    <Text style={styles.dateButtonText}>{display || "선택 (YYYY-MM-DD)"}</Text>
+                </Pressable>
+            </View>
+        );
+    };
+
+    const renderScheduleSection = () => {
+        // full: 기존처럼 날짜 4개 다 보여주기
+        if (uiVariant === "full") {
+            return (
+                <>
+                    {renderDateField("지원일", "appliedAt", appliedAt)}
+                    {renderDateField("서류 마감일", "docDeadline", resolvedDocDeadline)}
+                    {renderDateField("면접일", "interviewAt", interviewAt)}
+                    {renderDateField("최종 발표일", "finalResultAt", finalResultAt)}
+                </>
+            );
+        }
+
+        // twoStep: step=2에서만 일정 보여주기 + 기본은 서류마감만
+        if (step !== 2) return null;
+
+        return (
+            <>
+                {renderDateField("서류 마감일", "docDeadline", resolvedDocDeadline)}
+
+                <Pressable
+                    onPress={() => setShowExtraDates((v) => !v)}
+                    disabled={saving}
+                    style={({ pressed }) => [
+                        styles.toggleRow,
+                        pressed && !saving && styles.toggleRowPressed,
+                    ]}
+                >
+                    <Text style={styles.toggleText}>
+                        {showExtraDates ? "추가 일정 접기" : "추가 일정 입력"}
                     </Text>
+                    <Text style={styles.toggleChevron}>{showExtraDates ? "▲" : "▼"}</Text>
+                </Pressable>
+
+                {showExtraDates && (
+                    <>
+                        {renderDateField("지원일", "appliedAt", appliedAt)}
+                        {renderDateField("면접일", "interviewAt", interviewAt)}
+                        {renderDateField("최종 발표일", "finalResultAt", finalResultAt)}
+                    </>
+                )}
+            </>
+        );
+    };
+
+    const renderButtons = () => {
+        if (uiVariant === "full") {
+            return (
+                <View style={styles.buttonWrapper}>
+                    <Pressable
+                        onPress={handleSubmitPress}
+                        disabled={isSubmitDisabled}
+                        style={({ pressed }) => [
+                            styles.button,
+                            isSubmitDisabled && styles.buttonDisabled,
+                            pressed && !isSubmitDisabled && styles.buttonPressed,
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>{saving ? "저장 중..." : "지원 기록 추가"}</Text>
+                    </Pressable>
+                </View>
+            );
+        }
+
+        // twoStep
+        if (step === 1) {
+            return (
+                <View style={styles.stepButtonsRow}>
+                    <Pressable
+                        onPress={() => {
+                            if (isSubmitDisabled) return;
+                            setStep(2);
+                        }}
+                        disabled={isSubmitDisabled}
+                        style={({ pressed }) => [
+                            styles.button,
+                            styles.buttonPrimary,
+                            isSubmitDisabled && styles.buttonDisabled,
+                            pressed && !isSubmitDisabled && styles.buttonPressed,
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>다음</Text>
+                    </Pressable>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.stepButtonsRow}>
+                <Pressable
+                    onPress={() => setStep(1)}
+                    disabled={saving}
+                    style={({ pressed }) => [
+                        styles.button,
+                        styles.buttonSecondary,
+                        saving && styles.buttonDisabled,
+                        pressed && !saving && styles.buttonSecondaryPressed,
+                    ]}
+                >
+                    <Text style={styles.buttonSecondaryText}>이전</Text>
+                </Pressable>
+
+                <Pressable
+                    onPress={handleSubmitPress}
+                    disabled={isSubmitDisabled}
+                    style={({ pressed }) => [
+                        styles.button,
+                        styles.buttonPrimary,
+                        isSubmitDisabled && styles.buttonDisabled,
+                        pressed && !isSubmitDisabled && styles.buttonPressed,
+                    ]}
+                >
+                    <Text style={styles.buttonText}>{saving ? "저장 중..." : "지원 기록 추가"}</Text>
                 </Pressable>
             </View>
         );
@@ -297,26 +446,11 @@ export function ApplicationCreateForm({
                 </View>
             </View>
 
-            {/* ✅ 날짜: 캘린더 선택 */}
-            {renderDateField("지원일", "appliedAt", appliedAt)}
-            {renderDateField("서류 마감일", "docDeadline", resolvedDocDeadline)}
-            {renderDateField("면접일", "interviewAt", interviewAt)}
-            {renderDateField("최종 발표일", "finalResultAt", finalResultAt)}
+            {/* ✅ 일정 섹션 */}
+            {renderScheduleSection()}
 
             {/* 버튼 */}
-            <View style={styles.buttonWrapper}>
-                <Pressable
-                    onPress={handleSubmitPress}
-                    disabled={isSubmitDisabled}
-                    style={({ pressed }) => [
-                        styles.button,
-                        isSubmitDisabled && styles.buttonDisabled,
-                        pressed && !isSubmitDisabled && styles.buttonPressed,
-                    ]}
-                >
-                    <Text style={styles.buttonText}>{saving ? "저장 중..." : "지원 기록 추가"}</Text>
-                </Pressable>
-            </View>
+            {renderButtons()}
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -371,12 +505,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#1e293b",
     },
+
     field: { marginBottom: 14 },
+
     label: {
         fontSize: 12,
         color: "#e5e7eb",
         marginBottom: 4,
+        fontWeight: "700",
     },
+
     input: {
         borderWidth: 1,
         borderColor: "#1e293b",
@@ -387,6 +525,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         backgroundColor: "#020617",
     },
+
     pickerWrapper: {
         borderWidth: 1,
         borderColor: "#1e293b",
@@ -406,6 +545,7 @@ const styles = StyleSheet.create({
     clearText: {
         fontSize: 11,
         color: "#fda4af", // rose-300
+        fontWeight: "700",
     },
     dateButton: {
         borderWidth: 1,
@@ -423,17 +563,66 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
 
+    toggleRow: {
+        marginTop: -4,
+        marginBottom: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#1e293b",
+        backgroundColor: "rgba(15,23,42,0.35)",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    toggleRowPressed: {
+        backgroundColor: "rgba(15,23,42,0.55)",
+    },
+    toggleText: {
+        fontSize: 12,
+        fontWeight: "800",
+        color: "#e5e7eb",
+    },
+    toggleChevron: {
+        fontSize: 12,
+        color: "#9ca3af",
+        fontWeight: "800",
+    },
+
     buttonWrapper: { marginTop: 4, alignItems: "flex-end" },
+
+    // 공통 버튼 베이스
     button: {
-        backgroundColor: "#22c55e",
         paddingHorizontal: 18,
         paddingVertical: 10,
         borderRadius: 999,
+        minWidth: 92,
+        alignItems: "center",
+        justifyContent: "center",
     },
-    buttonPressed: { backgroundColor: "#4ade80" },
-    buttonDisabled: { opacity: 0.5 },
-    buttonText: { color: "#020617", fontSize: 13, fontWeight: "600" },
-    errorText: { marginTop: 8, fontSize: 11, color: "#f97373" },
+    buttonPressed: { opacity: 0.85 },
+    buttonDisabled: { opacity: 0.4 },
+
+    // primary/secondary
+    buttonPrimary: { backgroundColor: "#22c55e" },
+    buttonSecondary: {
+        backgroundColor: "rgba(15,23,42,0.55)",
+        borderWidth: 1,
+        borderColor: "#1e293b",
+    },
+    buttonSecondaryPressed: { backgroundColor: "rgba(15,23,42,0.8)" },
+
+    buttonText: { color: "#020617", fontSize: 13, fontWeight: "800" },
+    buttonSecondaryText: { color: "#e5e7eb", fontSize: 13, fontWeight: "800" },
+
+    stepButtonsRow: {
+        marginTop: 4,
+        flexDirection: "row",
+        justifyContent: "flex-end",
+    },
+
+    errorText: { marginTop: 8, fontSize: 11, color: "#f97373", fontWeight: "700" },
 
     iosBackdrop: {
         flex: 1,
@@ -461,6 +650,6 @@ const styles = StyleSheet.create({
     },
     iosDone: {
         color: "#4ade80",
-        fontWeight: "700",
+        fontWeight: "900",
     },
 });
