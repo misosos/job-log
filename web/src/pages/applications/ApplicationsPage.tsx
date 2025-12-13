@@ -27,19 +27,19 @@ function CreateModal({
             {/* backdrop */}
             <button
                 type="button"
-                className="absolute inset-0 bg-slate-950/70"
+                className="absolute inset-0 bg-rose-950/25"
                 onClick={disabledClose ? undefined : onClose}
                 aria-label="닫기"
             />
 
             {/* panel */}
-            <div className="relative mx-auto mt-16 w-[min(560px,calc(100%-24px))] rounded-2xl border border-slate-800 bg-slate-950 p-5 shadow-xl">
+            <div className="relative mx-auto mt-16 w-[min(560px,calc(100%-24px))] rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-xl">
                 <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
+                    <h2 className="text-sm font-semibold text-rose-900">{title}</h2>
                     <button
                         type="button"
                         onClick={disabledClose ? undefined : onClose}
-                        className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-900 hover:text-slate-200 disabled:opacity-50"
+                        className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-100 hover:text-rose-600 disabled:opacity-50"
                         disabled={disabledClose}
                         aria-label="닫기"
                     >
@@ -122,8 +122,8 @@ export function ApplicationsPage() {
             {/* header: 제목 + 추가 버튼 */}
             <header className="flex items-end justify-between gap-3">
                 <div className="space-y-1">
-                    <h1 className="text-xl font-semibold text-slate-100">지원 현황</h1>
-                    <p className="text-sm text-slate-400">
+                    <h1 className="text-xl font-semibold text-rose-900">지원 현황</h1>
+                    <p className="text-sm text-rose-700/80">
                         지원한 공고를 한눈에 정리하고, 마감 일정 위주로 관리해요.
                     </p>
                 </div>
@@ -131,7 +131,7 @@ export function ApplicationsPage() {
                 <button
                     type="button"
                     onClick={openCreate}
-                    className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-rose-400 disabled:opacity-60"
+                    className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-400 disabled:opacity-60"
                     disabled={saving}
                 >
                     + 지원 추가
@@ -149,27 +149,13 @@ export function ApplicationsPage() {
                     finalSoon={finalSoonCount}
                 />
 
-                {/* 오른쪽 칸이 허전하면 “간단 안내 카드” 정도만 */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
-                    <div className="text-sm font-semibold text-slate-100">빠른 추가</div>
-                    <p className="mt-1 text-sm text-slate-400">
-                        오른쪽 위 <span className="text-rose-300">+ 지원 추가</span>로 기록을 추가할 수 있어요.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={openCreate}
-                        className="mt-3 inline-flex rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-800"
-                    >
-                        지금 추가하기
-                    </button>
-                </div>
             </div>
 
             {/* list */}
             <section className="space-y-3">
                 <div className="flex items-end justify-between">
-                    <h2 className="text-sm font-semibold text-slate-200">지원 목록</h2>
-                    <span className="text-xs text-slate-400">총 {totalCount}건</span>
+                    <h2 className="text-sm font-semibold text-rose-900">지원 목록</h2>
+                    <span className="text-xs text-rose-700/70">총 {totalCount}건</span>
                 </div>
 
                 <ApplicationList

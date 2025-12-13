@@ -45,7 +45,7 @@ export function ResumesPage() {
         <div className="space-y-6">
             <SectionCard title="이력서 버전 관리">
                 <div className="space-y-4">
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-rose-700">
                         회사/직무별로 다른 이력서 버전을 만들고, 공고에 맞게 골라 쓸 수 있어요.
                     </p>
 
@@ -54,7 +54,7 @@ export function ResumesPage() {
                         <button
                             type="button"
                             onClick={openCreate}
-                            className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
+                            className="inline-flex items-center gap-2 rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-rose-50 hover:bg-rose-400 disabled:opacity-60"
                             disabled={saving}
                         >
                             + 새 이력서 추가
@@ -77,26 +77,26 @@ export function ResumesPage() {
                     <button
                         type="button"
                         aria-label="닫기"
-                        className="absolute inset-0 bg-slate-950/70"
+                        className="absolute inset-0 bg-rose-900/20 backdrop-blur-sm"
                         onClick={closeCreate}
                     />
 
                     {/* modal */}
                     <div
-                        className="relative w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-950 p-5 shadow-xl"
+                        className="relative w-full max-w-xl rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-xl"
                         role="dialog"
                         aria-modal="true"
                         aria-label="새 이력서 추가"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-sm font-semibold text-slate-100">
+                            <h2 className="text-sm font-semibold text-rose-900">
                                 새 이력서 기록 추가
                             </h2>
                             <button
                                 type="button"
                                 onClick={closeCreate}
-                                className="rounded-md px-2 py-1 text-slate-400 hover:text-slate-200"
+                                className="rounded-md px-2 py-1 text-rose-500 hover:text-rose-700"
                                 aria-label="닫기"
                             >
                                 ✕
@@ -118,15 +118,6 @@ export function ResumesPage() {
 
                         {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
 
-                        <div className="mt-4 flex justify-end">
-                            <button
-                                type="button"
-                                onClick={closeCreate}
-                                className="rounded-full border border-slate-800 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-800"
-                            >
-                                닫기
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}

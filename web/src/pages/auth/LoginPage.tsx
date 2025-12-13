@@ -48,10 +48,10 @@ export function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
-            <div className="w-full max-w-md rounded-2xl bg-slate-800 p-8 shadow-lg">
-                <h1 className="mb-4 text-2xl font-bold text-white">Job Log 로그인</h1>
-                <p className="mb-6 text-sm text-slate-300">
+        <div className="flex min-h-screen items-center justify-center bg-rose-50 px-4">
+            <div className="w-full max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-8 shadow-lg">
+                <h1 className="mb-4 text-2xl font-bold text-rose-900">Job Log 로그인</h1>
+                <p className="mb-6 text-sm text-rose-700/80">
                     지원 현황, 이력서, 면접 기록을 한 번에 관리해요.
                 </p>
 
@@ -59,45 +59,45 @@ export function LoginPage() {
                 <form onSubmit={onSubmit} className="mb-6 space-y-3">
                     {isSignup && (
                         <div>
-                            <label className="mb-1 block text-xs text-slate-300">
+                            <label className="mb-1 block text-xs text-rose-700">
                                 이름 / 닉네임
                             </label>
                             <input
                                 type="text"
                                 value={displayName}
                                 onChange={(e) => setDisplayName(e.target.value)}
-                                className="block w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-400 focus:outline-none"
+                                className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
                             />
                         </div>
                     )}
 
                     <div>
-                        <label className="mb-1 block text-xs text-slate-300">이메일</label>
+                        <label className="mb-1 block text-xs text-rose-700">이메일</label>
                         <input
                             type="email"
                             value={email}
                             autoComplete="email"
                             onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-400 focus:outline-none"
+                            className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
                             placeholder="you@example.com"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs text-slate-300">비밀번호</label>
+                        <label className="mb-1 block text-xs text-rose-700">비밀번호</label>
                         <input
                             type="password"
                             value={password}
                             autoComplete={isSignup ? "new-password" : "current-password"}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="block w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-400 focus:outline-none"
+                            className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
                         />
                     </div>
 
                     {/* 회원가입 모드일 때만 비밀번호 확인 표시 */}
                     {isSignup && (
                         <div>
-                            <label className="mb-1 block text-xs text-slate-300">
+                            <label className="mb-1 block text-xs text-rose-700">
                                 비밀번호 확인
                             </label>
                             <input
@@ -105,24 +105,24 @@ export function LoginPage() {
                                 value={passwordConfirm}
                                 autoComplete="new-password"
                                 onChange={(e) => setPasswordConfirm(e.target.value)}
-                                className="block w-full rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 placeholder-slate-500 focus:border-emerald-400 focus:outline-none"
+                                className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
                             />
                         </div>
                     )}
 
-                    {error && <p className="text-xs text-red-400">{error}</p>}
+                    {error && <p className="text-xs text-rose-600">{error}</p>}
 
                     {/* ✅ 로그인 유지 */}
-                    <label className="mt-1 flex cursor-pointer items-start gap-2 rounded-md border border-slate-600 bg-slate-900 px-3 py-2">
+                    <label className="mt-1 flex cursor-pointer items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2">
                         <input
                             type="checkbox"
                             checked={rememberMe}
                             onChange={(e) => void setRememberMe(e.target.checked)}
-                            className="mt-0.5 h-4 w-4 accent-emerald-400"
+                            className="mt-0.5 h-4 w-4 accent-rose-500"
                         />
-                        <span className="text-xs text-slate-200">
+                        <span className="text-xs text-rose-800">
               로그인 유지
-              <span className="mt-0.5 block text-[11px] text-slate-400">
+              <span className="mt-0.5 block text-[11px] text-rose-700/70">
                 체크하지 않으면 브라우저를 닫을 때 자동 로그아웃돼요.
               </span>
             </span>
@@ -131,20 +131,20 @@ export function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading || !isFormValid}
-                        className="mt-2 flex w-full items-center justify-center rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+                        className="mt-2 flex w-full items-center justify-center rounded-md bg-rose-500 px-3 py-2 text-sm font-semibold text-rose-50 shadow-sm transition hover:bg-rose-400 disabled:opacity-60"
                     >
                         {loading ? "처리 중..." : isSignup ? "회원가입" : "이메일로 로그인"}
                     </button>
                 </form>
 
-                <div className="mb-4 text-center text-xs text-slate-300">
+                <div className="mb-4 text-center text-xs text-rose-700/80">
                     {isSignup ? (
                         <>
                             이미 계정이 있나요?{" "}
                             <button
                                 type="button"
                                 onClick={toggleMode}
-                                className="font-semibold text-emerald-300 hover:underline"
+                                className="font-semibold text-rose-500 hover:underline"
                             >
                                 로그인하기
                             </button>
@@ -155,7 +155,7 @@ export function LoginPage() {
                             <button
                                 type="button"
                                 onClick={toggleMode}
-                                className="font-semibold text-emerald-300 hover:underline"
+                                className="font-semibold text-rose-500 hover:underline"
                             >
                                 회원가입하기
                             </button>
@@ -164,9 +164,9 @@ export function LoginPage() {
                 </div>
 
                 <div className="my-4 flex items-center gap-2">
-                    <div className="h-px flex-1 bg-slate-600" />
-                    <span className="text-xs text-slate-400">또는</span>
-                    <div className="h-px flex-1 bg-slate-600" />
+                    <div className="h-px flex-1 bg-rose-200" />
+                    <span className="text-xs text-rose-500/80">또는</span>
+                    <div className="h-px flex-1 bg-rose-200" />
                 </div>
 
                 {/* ✅ 구글 로그인도 rememberMe 전달 */}

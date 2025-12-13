@@ -1,99 +1,128 @@
-import type { FormEvent } from "react";
+// src/components/applications/ApplicationCreateForm.tsx
+import { useRef, type FormEvent } from "react";
 import { Button, Label, TextInput, Select } from "flowbite-react";
-import { SectionCard } from "../common/SectionCard";
+import { HiOutlineCalendar } from "react-icons/hi";
 import type { ApplicationStatus } from "../../../../shared/features/applications/types";
 
 type Props = {
     company: string;
-
-    /** ✅ 권장: position (신규) */
     position?: string;
-
-    /** ⚠️ 레거시 호환: role (구버전) */
     role?: string;
-
     status: ApplicationStatus;
-
-    /** ✅ 지원일(YYYY-MM-DD) */
     appliedAt?: string;
-
-    /** ✅ 실무형 날짜(권장) */
-    docDeadline?: string; // 서류 마감일(YYYY-MM-DD)
-    interviewAt?: string; // 면접일(YYYY-MM-DD)
-    finalResultAt?: string; // 최종 발표일(YYYY-MM-DD)
-
-    /** ⚠️ 레거시: 예전 마감일(=서류 마감일로 취급) */
+    docDeadline?: string;
+    interviewAt?: string;
+    finalResultAt?: string;
     deadline?: string;
-
     saving: boolean;
     error: string | null;
-
     onCompanyChange: (value: string) => void;
-
-    /** ✅ 권장 */
     onPositionChange?: (value: string) => void;
-
-    /** ⚠️ 레거시 */
     onRoleChange?: (value: string) => void;
-
     onStatusChange: (value: ApplicationStatus) => void;
-
-    /** ✅ 지원일 핸들러 */
     onAppliedAtChange?: (value: string) => void;
-
-    /** ✅ 권장 핸들러 */
     onDocDeadlineChange?: (value: string) => void;
     onInterviewAtChange?: (value: string) => void;
     onFinalResultAtChange?: (value: string) => void;
-
-    /** ⚠️ 레거시 */
     onDeadlineChange?: (value: string) => void;
-
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
+
+function DateField({
+                       id,
+                       label,
+                       value,
+                       onChange,
+                   }: {
+    id: string;
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+}) {
+    const dateInputRef = useRef<HTMLInputElement | null>(null);
+
+    const openDatePicker = () => {
+        const el = dateInputRef.current;
+        if (!el) return;
+
+        // Chromium 계열 showPicker 지원
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyEl = el as any;
+        if (typeof anyEl.showPicker === "function") anyEl.showPicker();
+        else {
+            el.focus();
+            el.click();
+        }
+    };
+
+    return (
+        <div className="flex-1 min-w-[10rem]">
+            <Label htmlFor={id} className="mb-1 block text-xs md:text-sm !text-rose-800">
+                {label}
+            </Label>
+
+            <div className="relative">
+                <input
+                    ref={dateInputRef}
+                    id={id}
+                    type="date"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    style={{ colorScheme: "light" }}
+                    className="
+            w-full
+            rounded-lg
+            border border-rose-200 bg-rose-50
+            px-3 py-2 pr-9
+            text-sm text-rose-900
+            focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-300
+            [&::-webkit-calendar-picker-indicator]:opacity-0
+          "
+                />
+
+                <button
+                    type="button"
+                    onClick={openDatePicker}
+                    className="
+            absolute right-2 top-1/2 -translate-y-1/2
+            rounded p-0.5
+            text-rose-500 hover:text-rose-600
+            focus:outline-none focus:ring-2 focus:ring-rose-300/40
+          "
+                    aria-label={`${label} 선택`}
+                >
+                    <HiOutlineCalendar className="h-4 w-4" aria-hidden="true" />
+                </button>
+            </div>
+        </div>
+    );
+}
 
 export function ApplicationCreateForm({
                                           company,
                                           position,
                                           role,
                                           status,
-
                                           appliedAt,
-
                                           docDeadline,
                                           interviewAt,
                                           finalResultAt,
-
-                                          // legacy
                                           deadline,
-
                                           saving,
                                           error,
                                           onCompanyChange,
-
                                           onPositionChange,
                                           onRoleChange,
-
                                           onStatusChange,
-
                                           onAppliedAtChange,
-
                                           onDocDeadlineChange,
                                           onInterviewAtChange,
                                           onFinalResultAtChange,
-
-                                          // legacy
                                           onDeadlineChange,
-
                                           onSubmit,
                                       }: Props) {
-    // ✅ position이 빈 문자열이면 role로 fallback
     const resolvedPosition = position?.trim() || role?.trim() || "";
-
-    // ✅ 지원일도 안전하게(빈 값이면 "")
     const resolvedAppliedAt = appliedAt?.trim() || "";
-
-    // ✅ docDeadline 없으면 legacy deadline을 서류마감으로 취급
     const resolvedDocDeadline = docDeadline?.trim() || deadline?.trim() || "";
 
     const handlePositionChange = (value: string) => {
@@ -101,23 +130,40 @@ export function ApplicationCreateForm({
         else onRoleChange?.(value);
     };
 
-    const handleAppliedAtChange = (value: string) => {
-        onAppliedAtChange?.(value);
-    };
-
     const handleDocDeadlineChange = (value: string) => {
         if (onDocDeadlineChange) onDocDeadlineChange(value);
         else onDeadlineChange?.(value);
     };
 
+    // ✅ Flowbite 내부 input/select 라이트 강제(텍스트 입력/셀렉트용)
+    const inputWrapClass =
+        "[color-scheme:light] " +
+        "[&_input]:[color-scheme:light] " +
+        "[&_input]:!bg-rose-50 [&_input]:!text-rose-900 [&_input]:!border-rose-200 " +
+        "[&_input::placeholder]:!text-rose-300 " +
+        "[&_input:focus]:!border-rose-400 [&_input:focus]:!ring-rose-200";
+
+    const selectWrapClass =
+        "[color-scheme:light] " +
+        "[&_select]:[color-scheme:light] " +
+        "[&_select]:!bg-rose-50 [&_select]:!text-rose-900 [&_select]:!border-rose-200 " +
+        "[&_select:focus]:!border-rose-400 [&_select:focus]:!ring-rose-200";
+
+    const labelClass = "mb-1 block text-xs md:text-sm !text-rose-800";
+
     return (
-        <SectionCard title="새 지원 기록 추가">
+        <div className="[color-scheme:light]">
             <form
-                className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end"
+                className="
+          [color-scheme:light]
+          flex flex-col gap-3 rounded-xl
+          border border-rose-200 bg-rose-50/80
+          p-4 md:flex-row md:flex-wrap md:items-end
+        "
                 onSubmit={onSubmit}
             >
                 <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="company" className="mb-1 block text-xs md:text-sm">
+                    <Label htmlFor="company" className={labelClass}>
                         회사명
                     </Label>
                     <TextInput
@@ -126,11 +172,12 @@ export function ApplicationCreateForm({
                         value={company}
                         onChange={(e) => onCompanyChange(e.target.value)}
                         required
+                        className={inputWrapClass}
                     />
                 </div>
 
                 <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="position" className="mb-1 block text-xs md:text-sm">
+                    <Label htmlFor="position" className={labelClass}>
                         직무명
                     </Label>
                     <TextInput
@@ -139,17 +186,19 @@ export function ApplicationCreateForm({
                         value={resolvedPosition}
                         onChange={(e) => handlePositionChange(e.target.value)}
                         required
+                        className={inputWrapClass}
                     />
                 </div>
 
                 <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="status" className="mb-1 block text-xs md:text-sm">
+                    <Label htmlFor="status" className={labelClass}>
                         상태
                     </Label>
                     <Select
                         id="status"
                         value={status}
                         onChange={(e) => onStatusChange(e.target.value as ApplicationStatus)}
+                        className={selectWrapClass}
                     >
                         <option value="지원 예정">지원 예정</option>
                         <option value="서류 제출">서류 제출</option>
@@ -162,78 +211,48 @@ export function ApplicationCreateForm({
                     </Select>
                 </div>
 
-                {/* ✅ 지원일 */}
-                <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="appliedAt" className="mb-1 block text-xs md:text-sm">
-                        지원일
-                    </Label>
-                    <TextInput
-                        id="appliedAt"
-                        type="date"
-                        value={resolvedAppliedAt}
-                        className="dark:[color-scheme:dark]"
-                        onChange={(e) => handleAppliedAtChange(e.target.value)}
-                    />
-                </div>
+                {/* ✅ 날짜 4개는 플래너 방식(커스텀 캘린더 아이콘)로 */}
+                <DateField
+                    id="appliedAt"
+                    label="지원일"
+                    value={resolvedAppliedAt}
+                    onChange={(v) => onAppliedAtChange?.(v)}
+                />
 
-                <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="docDeadline" className="mb-1 block text-xs md:text-sm">
-                        서류 마감일
-                    </Label>
-                    <TextInput
-                        id="docDeadline"
-                        type="date"
-                        value={resolvedDocDeadline}
-                        className="dark:[color-scheme:dark]"
-                        onChange={(e) => handleDocDeadlineChange(e.target.value)}
-                    />
-                </div>
+                <DateField
+                    id="docDeadline"
+                    label="서류 마감일"
+                    value={resolvedDocDeadline}
+                    onChange={(v) => handleDocDeadlineChange(v)}
+                />
 
-                <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="interviewAt" className="mb-1 block text-xs md:text-sm">
-                        면접일
-                    </Label>
-                    <TextInput
-                        id="interviewAt"
-                        type="date"
-                        value={(interviewAt ?? "").trim()}
-                        className="dark:[color-scheme:dark]"
-                        onChange={(e) => onInterviewAtChange?.(e.target.value)}
-                    />
-                </div>
+                <DateField
+                    id="interviewAt"
+                    label="면접일"
+                    value={(interviewAt ?? "").trim()}
+                    onChange={(v) => onInterviewAtChange?.(v)}
+                />
 
-                <div className="flex-1 min-w-[10rem]">
-                    <Label htmlFor="finalResultAt" className="mb-1 block text-xs md:text-sm">
-                        최종 발표일
-                    </Label>
-                    <TextInput
-                        id="finalResultAt"
-                        type="date"
-                        value={(finalResultAt ?? "").trim()}
-                        className="dark:[color-scheme:dark]"
-                        onChange={(e) => onFinalResultAtChange?.(e.target.value)}
-                    />
-                </div>
+                <DateField
+                    id="finalResultAt"
+                    label="최종 발표일"
+                    value={(finalResultAt ?? "").trim()}
+                    onChange={(v) => onFinalResultAtChange?.(v)}
+                />
 
                 <div className="flex-none">
                     <Button
                         type="submit"
                         disabled={saving}
                         color="gray"
-                        className="
-              !bg-emerald-500
-              hover:!bg-emerald-400
-              !border-0
-              !text-slate-900
-              disabled:opacity-60
-            "
+                        className="!bg-rose-500 hover:!bg-rose-400 !border-0 !text-white focus:!ring-rose-200 disabled:opacity-60"
                     >
                         {saving ? "저장 중..." : "지원 기록 추가"}
                     </Button>
                 </div>
             </form>
 
-            {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-        </SectionCard>
+            {error && <p className="mt-2 text-xs !text-rose-600">{error}</p>}
+        </div>
     );
 }

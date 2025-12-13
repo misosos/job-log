@@ -20,12 +20,12 @@ export function DashboardTodayTasksSection() {
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className="h-9 w-full animate-pulse rounded-lg bg-slate-800/60"
+                            className="h-9 w-full animate-pulse rounded-lg bg-rose-100 border border-rose-200"
                         />
                     ))}
                 </div>
             ) : tasks.length === 0 ? (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-rose-700">
                     오늘은 아직 등록된 할 일이 없어요. 플래너에서 할 일을 추가해 보세요.
                 </p>
             ) : (
@@ -33,20 +33,20 @@ export function DashboardTodayTasksSection() {
                     {tasks.map((task) => (
                         <div
                             key={task.id}
-                            className="flex items-center justify-between rounded-lg bg-slate-900/60 px-3 py-2"
+                            className="flex items-center justify-between rounded-lg bg-rose-50 px-3 py-2 border border-rose-200"
                         >
                             <p
                                 className={
                                     task.done
-                                        ? "text-sm text-slate-400 line-through"
-                                        : "text-sm text-slate-50"
+                                        ? "text-sm text-rose-400 line-through"
+                                        : "text-sm text-rose-900"
                                 }
                             >
                                 {task.title}
                             </p>
 
                             {task.ddayLabel && (
-                                <span className="text-xs text-slate-400">
+                                <span className="text-xs text-rose-600">
                   {task.ddayLabel}
                 </span>
                             )}

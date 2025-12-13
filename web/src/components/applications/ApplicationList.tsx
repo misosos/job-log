@@ -122,8 +122,8 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
     return (
         <div className="flex items-center justify-between py-3">
             <div>
-                <p className="text-sm font-medium text-white">{app.company}</p>
-                <p className="text-xs text-slate-300">{positionLabel}</p>
+                <p className="text-sm font-semibold text-rose-900">{app.company}</p>
+                <p className="text-xs text-rose-700">{positionLabel}</p>
             </div>
 
             <div className="flex flex-col items-end gap-1">
@@ -131,17 +131,17 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
 
                 {/* ✅ 지원일이 있을 때만 보여주기 (없으면 아예 렌더링 X) */}
                 {hasAppliedAt && (
-                    <span className="text-xs text-slate-400">지원일 {appliedAtText}</span>
+                    <span className="text-xs text-rose-600">지원일 {appliedAtText}</span>
                 )}
 
                 {hasAnySchedule && (
-                    <div className="mt-0.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[11px] text-slate-300">
+                    <div className="mt-0.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[11px] text-rose-700">
                         {toDate(documentDeadline) && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5">
-                <span className="text-slate-400">서류</span>
-                <span className="text-slate-200">{deadlineLabel}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5">
+                <span className="text-rose-600">서류</span>
+                <span className="text-rose-900">{deadlineLabel}</span>
                                 {dday && (
-                                    <span className="ml-1 rounded-full bg-rose-500/10 px-1.5 py-0.5 font-medium text-rose-300">
+                                    <span className="ml-1 rounded-full bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-500">
                     {dday}
                   </span>
                                 )}
@@ -149,28 +149,28 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                         )}
 
                         {toDate(interviewAt) && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5">
-                <span className="text-slate-400">면접</span>
-                <span className="text-slate-200">{interviewLabel}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5">
+                <span className="text-rose-600">면접</span>
+                <span className="text-rose-900">{interviewLabel}</span>
               </span>
                         )}
 
                         {toDate(finalResultAt) && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5">
-                <span className="text-slate-400">최종</span>
-                <span className="text-slate-200">{finalLabel}</span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5">
+                <span className="text-rose-600">최종</span>
+                <span className="text-rose-900">{finalLabel}</span>
               </span>
                         )}
                     </div>
                 )}
 
                 {(onEdit || onDelete) && (
-                    <div className="mt-1 flex gap-3 text-[11px] text-slate-400">
+                    <div className="mt-1 flex gap-3 text-[11px] text-rose-600">
                         {onEdit && (
                             <button
                                 type="button"
                                 onClick={() => onEdit(app)}
-                                className="hover:text-rose-300"
+                                className="hover:text-rose-500"
                             >
                                 수정
                             </button>
@@ -179,7 +179,7 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                             <button
                                 type="button"
                                 onClick={() => onDelete(app.id)}
-                                className="hover:text-rose-300"
+                                className="hover:text-rose-500"
                             >
                                 삭제
                             </button>
@@ -200,7 +200,7 @@ export function ApplicationList({
     if (loading) {
         return (
             <SectionCard title="지원 목록">
-                <div className="py-6 text-sm text-slate-400">지원 내역을 불러오는 중입니다…</div>
+                <div className="py-6 text-sm text-rose-600">지원 내역을 불러오는 중입니다…</div>
             </SectionCard>
         );
     }
@@ -208,7 +208,7 @@ export function ApplicationList({
     if (applications.length === 0) {
         return (
             <SectionCard title="지원 목록">
-                <div className="py-6 text-sm text-slate-400">
+                <div className="py-6 text-sm text-rose-600">
                     아직 등록된 지원 내역이 없어요. 첫 번째 지원을 기록해보세요!
                 </div>
             </SectionCard>
@@ -218,10 +218,10 @@ export function ApplicationList({
     return (
         <SectionCard title="지원 목록">
             <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-slate-400">총 {applications.length}건의 지원 내역</p>
+                <p className="text-xs text-rose-600">총 {applications.length}건의 지원 내역</p>
             </div>
 
-            <div className="divide-y divide-slate-800">
+            <div className="divide-y divide-rose-100">
                 {applications.map((app) => (
                     <ApplicationRowItem key={app.id} app={app} onEdit={onEdit} onDelete={onDelete} />
                 ))}

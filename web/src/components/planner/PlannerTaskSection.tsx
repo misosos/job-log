@@ -103,12 +103,12 @@ function PlannerTaskSectionBase({
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className="h-10 rounded-md bg-slate-800/60 animate-pulse"
+                            className="h-10 rounded-md border border-rose-200 bg-rose-100/70 animate-pulse"
                         />
                     ))}
                 </div>
             ) : tasks.length === 0 ? (
-                <p className="text-sm text-slate-400">{emptyMessage}</p>
+                <p className="text-sm text-rose-700/80">{emptyMessage}</p>
             ) : (
                 <div className="space-y-2">
                     {sortedTasks.map((task) => (

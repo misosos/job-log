@@ -47,38 +47,38 @@ export function DashboardSummarySection() {
                     {[1, 2, 3, 4].map((i) => (
                         <div
                             key={i}
-                            className="flex h-20 items-center justify-center rounded-lg bg-slate-800/60"
+                            className="flex h-20 items-center justify-center rounded-lg border border-rose-200 bg-rose-100"
                         >
-                            <span className="text-xs text-slate-400">불러오는 중...</span>
+                            <span className="text-xs text-rose-700">불러오는 중...</span>
                         </div>
                     ))}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    <div className="rounded-lg bg-slate-900/60 p-4">
-                        <p className="text-xs font-medium text-slate-400">전체 지원</p>
-                        <p className="mt-2 text-2xl font-semibold text-white">
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                        <p className="text-xs font-medium text-rose-700">전체 지원</p>
+                        <p className="mt-2 text-2xl font-semibold text-rose-900">
                             {summary.totalApplications}
                         </p>
                     </div>
 
-                    <div className="rounded-lg bg-slate-900/60 p-4">
-                        <p className="text-xs font-medium text-slate-400">진행 중 공고</p>
-                        <p className="mt-2 text-2xl font-semibold text-white">
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                        <p className="text-xs font-medium text-rose-700">진행 중 공고</p>
+                        <p className="mt-2 text-2xl font-semibold text-rose-900">
                             {summary.inProgressApplications}
                         </p>
                     </div>
 
-                    <div className="rounded-lg bg-slate-900/60 p-4">
-                        <p className="text-xs font-medium text-slate-400">오늘 할 일</p>
-                        <p className="mt-2 text-2xl font-semibold text-white">
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                        <p className="text-xs font-medium text-rose-700">오늘 할 일</p>
+                        <p className="mt-2 text-2xl font-semibold text-rose-900">
                             {summary.todayTasks}
                         </p>
                     </div>
 
-                    <div className="rounded-lg bg-slate-900/60 p-4">
-                        <p className="text-xs font-medium text-slate-400">다가오는 면접</p>
-                        <p className="mt-2 text-2xl font-semibold text-white">
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                        <p className="text-xs font-medium text-rose-700">다가오는 면접</p>
+                        <p className="mt-2 text-2xl font-semibold text-rose-900">
                             {summary.upcomingInterviews}
                         </p>
                     </div>

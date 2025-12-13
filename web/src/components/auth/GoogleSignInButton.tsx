@@ -45,8 +45,13 @@ export function GoogleSignInButton({
     if (userEmail) {
         return (
             <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-300">{userEmail}</span>
-                <Button size="xs" color="gray" onClick={handleSignOut}>
+                <span className="text-xs text-rose-700">{userEmail}</span>
+                <Button
+                    size="xs"
+                    color="light"
+                    onClick={handleSignOut}
+                    className="!border-rose-200 !bg-white !text-rose-700 hover:!bg-rose-50 focus:!ring-rose-200"
+                >
                     로그아웃
                 </Button>
             </div>
@@ -59,7 +64,12 @@ export function GoogleSignInButton({
     }
 
     return (
-        <Button size="xs" color="light" onClick={handleSignIn}>
+        <Button
+            size="xs"
+            color="light"
+            onClick={handleSignIn}
+            className="!border-rose-200 !bg-rose-500 !text-white hover:!bg-rose-400 focus:!ring-rose-200"
+        >
             Google로 로그인
         </Button>
     );

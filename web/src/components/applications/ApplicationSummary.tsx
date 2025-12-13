@@ -56,50 +56,50 @@ export function ApplicationSummary({
                     {SKELETON_CHIPS.map((i) => (
                         <div
                             key={i}
-                            className="h-8 w-28 animate-pulse rounded-full bg-slate-800/60"
+                            className="h-8 w-28 animate-pulse rounded-full bg-rose-100"
                         />
                     ))}
                 </div>
             ) : (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="rounded-full border border-slate-700 bg-slate-900/60 px-2.5 py-1 text-slate-200">
-            전체 <span className="font-semibold">{total}</span>건
+                <div className="flex flex-wrap items-center gap-2 text-sm text-rose-700">
+          <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-800">
+            전체 <span className="font-semibold text-rose-900">{total}</span>건
           </span>
 
-                    <span className="rounded-full border border-rose-400/30 bg-rose-400/10 px-2.5 py-1 text-rose-200">
-            진행 중 <span className="font-semibold">{inProgress}</span>건
+                    <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-800">
+            진행 중 <span className="font-semibold text-rose-900">{inProgress}</span>건
           </span>
 
                     {shouldShow(docCount) && (
                         <span
-                            className="rounded-full border border-rose-300/30 bg-rose-300/10 px-2.5 py-1 text-rose-200"
+                            className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-800"
                             title="오늘 포함 7일 이내 서류 마감"
                         >
-              서류 마감(7일) <span className="font-semibold">{docCount}</span>건
+              서류 마감(7일) <span className="font-semibold text-rose-900">{docCount}</span>건
             </span>
                     )}
 
                     {shouldShow(interviewCount) && (
                         <span
-                            className="rounded-full border border-rose-200/30 bg-rose-200/10 px-2.5 py-1 text-rose-100"
+                            className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-800"
                             title="오늘 포함 7일 이내 면접 일정"
                         >
-              면접(7일) <span className="font-semibold">{interviewCount}</span>건
+              면접(7일) <span className="font-semibold text-rose-900">{interviewCount}</span>건
             </span>
                     )}
 
                     {shouldShow(finalCount) && (
                         <span
-                            className="rounded-full border border-rose-100/30 bg-rose-100/10 px-2.5 py-1 text-rose-100"
+                            className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-800"
                             title="오늘 포함 7일 이내 최종 발표"
                         >
-              최종 발표(7일) <span className="font-semibold">{finalCount}</span>건
+              최종 발표(7일) <span className="font-semibold text-rose-900">{finalCount}</span>건
             </span>
                     )}
 
                     {/* ✅ 아무 일정도 없을 때 힌트: showZeroBadges=false일 때만 표시 */}
                     {!showZeroBadges && !hasAnySoon && (
-                        <span className="rounded-full border border-slate-700 bg-slate-900/40 px-2.5 py-1 text-slate-400">
+                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-600">
               7일 이내 일정 없음
             </span>
                     )}

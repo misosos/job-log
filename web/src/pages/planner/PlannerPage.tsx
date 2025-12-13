@@ -1,5 +1,5 @@
 // src/pages/planner/PlannerPage.tsx
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, type ReactNode } from "react";
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
 import { usePlannerPageController } from "../../features/planner/usePlannerPageController";
@@ -14,28 +14,28 @@ function Modal({
     open: boolean;
     title: string;
     onClose: () => void;
-    children: React.ReactNode;
+    children: ReactNode;
 }) {
     if (!open) return null;
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-rose-900/20 p-4 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
             aria-label={title}
             onClick={onClose}
         >
             <div
-                className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-950 shadow-xl"
+                className="w-full max-w-xl rounded-2xl border border-rose-200 bg-rose-50 shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-                    <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
+                <div className="flex items-center justify-between border-b border-rose-200 px-5 py-4">
+                    <h2 className="text-sm font-semibold text-rose-900">{title}</h2>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+                        className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-100 hover:text-rose-700"
                         aria-label="닫기"
                     >
                         ✕
@@ -149,8 +149,8 @@ export function PlannerPage() {
             {/* 상단 액션바 */}
             <div className="flex items-end justify-between">
                 <div className="space-y-1">
-                    <h1 className="text-xl font-semibold text-slate-100">플래너</h1>
-                    <p className="text-sm text-slate-400">
+                    <h1 className="text-xl font-semibold text-rose-900">플래너</h1>
+                    <p className="text-sm text-rose-700">
                         오늘/앞으로 할 일을 마감일 기준으로 정리해요.
                     </p>
                 </div>
@@ -158,7 +158,7 @@ export function PlannerPage() {
                 <button
                     type="button"
                     onClick={openCreate}
-                    className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-rose-400 disabled:opacity-60"
+                    className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-rose-50 hover:bg-rose-400 disabled:opacity-60"
                     disabled={saving}
                 >
                     + 할 일 추가
@@ -167,7 +167,7 @@ export function PlannerPage() {
 
             {/* ✅ 추가 폼: 모달로 이동 */}
             <Modal open={createOpen} title="새 할 일 추가" onClose={closeCreate}>
-                <SectionCard title="할 일 입력">
+                <SectionCard>
                     <PlannerNewTaskForm
                         title={newTitle}
                         scope={newScope}
