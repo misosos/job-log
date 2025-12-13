@@ -1,18 +1,62 @@
 // src/pages/planner/PlannerPage.tsx
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
 import { usePlannerPageController } from "../../features/planner/usePlannerPageController";
+import { SectionCard } from "../../components/common/SectionCard";
+
+function Modal({
+                   open,
+                   title,
+                   onClose,
+                   children,
+               }: {
+    open: boolean;
+    title: string;
+    onClose: () => void;
+    children: React.ReactNode;
+}) {
+    if (!open) return null;
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            onClick={onClose}
+        >
+            <div
+                className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-950 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+                    <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+                        aria-label="닫기"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <div className="px-5 py-5">{children}</div>
+            </div>
+        </div>
+    );
+}
 
 export function PlannerPage() {
     const {
         newTitle,
         newScope,
-        newDeadline, // ✅ 추가
+        newDeadline,
         newApplicationId,
         setNewTitle,
         setNewScope,
-        setNewDeadline, // ✅ 추가
+        setNewDeadline,
         setNewApplicationId,
         todayTasks,
         weekTasks,
@@ -23,6 +67,8 @@ export function PlannerPage() {
         handleDeleteTask,
         applicationOptions,
     } = usePlannerPageController();
+
+    const [createOpen, setCreateOpen] = useState(false);
 
     // ✅ 앱처럼: 연결된 공고는 id가 아니라 라벨(공고명)로 표시
     const applicationLabelById = useMemo(() => {
@@ -44,7 +90,6 @@ export function PlannerPage() {
         return map;
     }, [applicationOptions]);
 
-    // todayTasks/weekTasks는 기존 scope 기반 분리일 수 있어서, 화면에서는 "마감일" 기준으로 다시 분리
     const allTasks = useMemo(
         () => [...(todayTasks ?? []), ...(weekTasks ?? [])],
         [todayTasks, weekTasks],
@@ -75,16 +120,15 @@ export function PlannerPage() {
         const future: typeof allTasksWithLabel = [];
 
         for (const t of allTasksWithLabel) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const dueMs = parseDeadlineMs((t as any).deadline);
 
-            // ✅ deadline이 있으면: 오늘(또는 지남) = 오늘 섹션, 내일 이후 = 앞으로의 계획
             if (dueMs !== null) {
                 if (dueMs <= startOfTodayMs) today.push(t);
                 else future.push(t);
                 continue;
             }
 
-            // ✅ deadline이 없으면: 기존 scope로 fallback
             if (t.scope === "today") today.push(t);
             else future.push(t);
         }
@@ -92,23 +136,53 @@ export function PlannerPage() {
         return { todayBucket: today, futureBucket: future };
     }, [allTasksWithLabel]);
 
+    const openCreate = useCallback(() => setCreateOpen(true), []);
+    const closeCreate = useCallback(() => setCreateOpen(false), []);
+
+    const handleCreateFromModal = useCallback(async () => {
+        await handleCreate(); // 컨트롤러가 내부에서 폼 초기화한다는 전제
+        setCreateOpen(false);
+    }, [handleCreate]);
+
     return (
         <div className="space-y-6">
-            <PlannerNewTaskForm
-                title={newTitle}
-                scope={newScope}
-                // ✅ 이제는 D-day 라벨 입력 말고, 마감일만 선택
-                deadline={newDeadline}
-                onDeadlineChange={setNewDeadline}
-                applicationId={newApplicationId}
-                applicationOptions={applicationOptions}
-                saving={saving}
-                onTitleChange={setNewTitle}
-                onScopeChange={setNewScope}
-                // 🔥 여기만 래핑해서 null 방어
-                onApplicationChange={(id) => setNewApplicationId(id ?? "")}
-                onSubmit={handleCreate}
-            />
+            {/* 상단 액션바 */}
+            <div className="flex items-end justify-between">
+                <div className="space-y-1">
+                    <h1 className="text-xl font-semibold text-slate-100">플래너</h1>
+                    <p className="text-sm text-slate-400">
+                        오늘/앞으로 할 일을 마감일 기준으로 정리해요.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={openCreate}
+                    className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-rose-400 disabled:opacity-60"
+                    disabled={saving}
+                >
+                    + 할 일 추가
+                </button>
+            </div>
+
+            {/* ✅ 추가 폼: 모달로 이동 */}
+            <Modal open={createOpen} title="새 할 일 추가" onClose={closeCreate}>
+                <SectionCard title="할 일 입력">
+                    <PlannerNewTaskForm
+                        title={newTitle}
+                        scope={newScope}
+                        deadline={newDeadline}
+                        onDeadlineChange={setNewDeadline}
+                        applicationId={newApplicationId}
+                        applicationOptions={applicationOptions}
+                        saving={saving}
+                        onTitleChange={setNewTitle}
+                        onScopeChange={setNewScope}
+                        onApplicationChange={(id) => setNewApplicationId(id ?? "")}
+                        onSubmit={handleCreateFromModal}
+                    />
+                </SectionCard>
+            </Modal>
 
             <PlannerTaskSection
                 title="오늘 할 일"

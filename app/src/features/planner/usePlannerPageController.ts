@@ -56,8 +56,8 @@ export function usePlannerPageController() {
 
     // ✅ 생성 핸들러 (폼 submit)
     const handleCreate = useCallback(
-        async (e: FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
+        async (e?: FormEvent<HTMLFormElement>) => {
+            e?.preventDefault();
 
             const trimmedTitle = newTitle.trim();
             if (!trimmedTitle) return;
