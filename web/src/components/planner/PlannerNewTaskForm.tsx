@@ -1,6 +1,7 @@
-import type { FormEvent } from "react";
+import { useRef, type FormEvent } from "react";
 import { SectionCard } from "../common/SectionCard";
 import type { PlannerScope } from "../../../../shared/features/planner/types";
+import { HiOutlineCalendar } from "react-icons/hi";
 
 // 💡 플래너에서 사용할 "관련 공고" 옵션 타입
 type RelatedApplicationOption = {
@@ -87,6 +88,22 @@ export function PlannerNewTaskForm({
                                    }: PlannerNewTaskFormProps) {
     const isSubmitDisabled = saving || title.trim().length === 0;
 
+    const dateInputRef = useRef<HTMLInputElement | null>(null);
+
+    const openDatePicker = () => {
+        const el = dateInputRef.current;
+        if (!el) return;
+        // Chromium 계열은 showPicker 지원
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyEl = el as any;
+        if (typeof anyEl.showPicker === "function") {
+            anyEl.showPicker();
+        } else {
+            el.focus();
+            el.click();
+        }
+    };
+
     const autoScope = deadline ? inferScopeFromDeadline(deadline) : scope;
 
     const handleApplicationChange = (value: string) => {
@@ -141,25 +158,41 @@ export function PlannerNewTaskForm({
                     {onDeadlineChange ? (
                         <div className="flex items-center gap-2">
                             <span className="text-slate-400">마감일</span>
-                            <input
-                                type="date"
-                                value={deadline ?? ""}
-                                onChange={(e) => {
-                                    const value = e.target.value ? e.target.value : null;
-                                    onDeadlineChange(value);
 
-                                    // deadline이 선택되면 범위를 자동 업데이트
-                                    if (value) {
-                                        onScopeChange(inferScopeFromDeadline(value));
-                                    }
-                                }}
-                                className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                                aria-label="마감일"
-                            />
+                            <div className="relative">
+                                <input
+                                    ref={dateInputRef}
+                                    type="date"
+                                    value={deadline ?? ""}
+                                    onChange={(e) => {
+                                        const value = e.target.value ? e.target.value : null;
+                                        onDeadlineChange(value);
+
+                                        // deadline이 선택되면 범위를 자동 업데이트
+                                        if (value) {
+                                            onScopeChange(inferScopeFromDeadline(value));
+                                        }
+                                    }}
+                                    className="w-[9.5rem] rounded-md border border-slate-700 bg-slate-900 px-2 py-1 pr-9 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 [&::-webkit-calendar-picker-indicator]:opacity-0"
+                                    style={{ colorScheme: "dark" }}
+                                    aria-label="마감일"
+                                />
+
+                                {/* ✅ 네이티브 아이콘이 어두운 환경에서 안 보일 수 있어 커스텀 아이콘을 오버레이 */}
+                                <button
+                                    type="button"
+                                    onClick={openDatePicker}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                                    aria-label="마감일 선택"
+                                >
+                                    <HiOutlineCalendar className="h-4 w-4" aria-hidden="true" />
+                                </button>
+                            </div>
+
                             {deadline ? (
                                 <span className="text-[11px] text-slate-400">
-                  {computeDdayLabel(deadline)}
-                </span>
+                                    {computeDdayLabel(deadline)}
+                                </span>
                             ) : null}
                         </div>
                     ) : (

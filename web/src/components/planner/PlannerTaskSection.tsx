@@ -49,7 +49,6 @@ const PlannerTaskRow = memo(
         prev.task.id === next.task.id &&
         prev.task.title === next.task.title &&
         prev.task.done === next.task.done &&
-        // @ts-expect-error: deadline may exist in extended web type
         (prev.task.deadline ?? null) === (next.task.deadline ?? null) &&
         (prev.task.ddayLabel ?? "") === (next.task.ddayLabel ?? "") &&
         (prev.task.applicationLabel ?? null) === (next.task.applicationLabel ?? null) &&
@@ -76,11 +75,7 @@ function PlannerTaskSectionBase({
         return [...tasks].sort((a, b) => {
             // 1) 미완료 먼저
             if (a.done !== b.done) return a.done ? 1 : -1;
-
-            // 2) deadline(있으면) 기준 오름차순
-            // @ts-expect-error: deadline may exist in extended web type
             const aDue = parseDeadlineMs(a.deadline ?? null);
-            // @ts-expect-error: deadline may exist in extended web type
             const bDue = parseDeadlineMs(b.deadline ?? null);
 
             if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
