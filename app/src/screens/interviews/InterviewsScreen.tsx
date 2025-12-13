@@ -1,14 +1,14 @@
 // app/screens/interviews/InterviewsScreen.tsx
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ScrollView,
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    Pressable,
     KeyboardAvoidingView,
+    Modal,
     Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { SectionCard } from "../../components/common/SectionCard";
@@ -16,62 +16,131 @@ import { UpcomingInterviewsSection } from "../../components/interviews/UpcomingI
 import { InterviewReviewSection } from "../../components/interviews/InterviewReviewSection";
 import { InterviewCreateForm } from "../../components/interviews/InterviewCreateForm";
 import { useAuth } from "../../libs/auth-context";
-import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
+import {
+    useInterviewPageController,
+    type CreateInterviewFormValues,
+} from "../../features/interviews/useInterviewPageController";
+
+// ✅ 테마 토큰 import (경로만 맞춰줘)
+import { colors, space, radius, font } from "../../styles/theme";
+
+type CreateInterviewSheetProps = {
+    open: boolean;
+    nonce: number;
+    saving: boolean;
+    error?: string | null;
+    onClose: () => void;
+    onSubmit: (payload: CreateInterviewFormValues) => void;
+};
+
+function CreateInterviewSheet({
+                                  open,
+                                  nonce,
+                                  saving,
+                                  error,
+                                  onClose,
+                                  onSubmit,
+                              }: CreateInterviewSheetProps) {
+    return (
+        <Modal
+            visible={open}
+            transparent
+            animationType="slide"
+            presentationStyle="overFullScreen"
+            statusBarTranslucent
+            onRequestClose={onClose}
+        >
+            <KeyboardAvoidingView
+                style={styles.sheetRoot}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+            >
+                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+
+                <View style={styles.modalCard}>
+                    <View style={styles.sheetHandle} />
+
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>새 면접 기록 추가</Text>
+                        <Pressable onPress={onClose} hitSlop={10}>
+                            <Text style={styles.modalClose}>✕</Text>
+                        </Pressable>
+                    </View>
+
+                    <ScrollView
+                        style={styles.modalBody}
+                        contentContainerStyle={styles.modalBodyContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+                        nestedScrollEnabled
+                        automaticallyAdjustKeyboardInsets
+                    >
+                        <SectionCard title="면접 정보 입력">
+                            <InterviewCreateForm
+                                key={`create-${nonce}`}
+                                saving={saving}
+                                error={error ?? null}
+                                onSubmit={onSubmit}
+                            />
+                        </SectionCard>
+                    </ScrollView>
+                </View>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
 
 export function InterviewsScreen() {
     const { user } = useAuth();
     const userId = user?.uid ?? "app";
 
-    const {
-        upcoming,
-        past,
-        loading,
-        listError,
-        saving,
-        formError,
-        handleCreate,
-    } = useInterviewPageController(userId);
+    const { upcoming, past, loading, listError, saving, formError, handleCreate } =
+        useInterviewPageController(userId);
 
-    // ✅ Create Modal
     const [createOpen, setCreateOpen] = useState(false);
+    const [createNonce, setCreateNonce] = useState(0);
     const didSubmitRef = useRef(false);
 
-    const openCreate = useCallback(() => setCreateOpen(true), []);
+    const isOverlayOpen = useMemo(() => createOpen, [createOpen]);
+
+    const openCreate = useCallback(() => {
+        setCreateNonce((n) => n + 1);
+        setCreateOpen(true);
+    }, []);
+
     const closeCreate = useCallback(() => setCreateOpen(false), []);
 
     const handleCreateFromModal = useCallback(
-        (payload: any) => {
+        (payload: CreateInterviewFormValues) => {
             didSubmitRef.current = true;
             void handleCreate(payload);
         },
         [handleCreate],
     );
-    // ✅ 저장 성공 시에만 모달 자동 닫기
+
     useEffect(() => {
         if (!didSubmitRef.current) return;
         if (saving) return;
 
-        // 저장 끝났고 에러 없으면 닫기
-        if (!formError) {
-            setCreateOpen(false);
-        }
+        if (!formError) setCreateOpen(false);
         didSubmitRef.current = false;
     }, [saving, formError]);
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            {/* header */}
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            scrollEnabled={!isOverlayOpen}
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.header}>
                 <View style={styles.headerTopRow}>
                     <Text style={styles.title}>면접</Text>
 
-                    {/* ✅ 추가 버튼 */}
                     <Pressable
                         onPress={openCreate}
-                        style={({ pressed }) => [
-                            styles.addBtn,
-                            pressed && styles.addBtnPressed,
-                        ]}
+                        style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
                         accessibilityRole="button"
                         accessibilityLabel="면접 기록 추가"
                     >
@@ -84,70 +153,24 @@ export function InterviewsScreen() {
                 </Text>
             </View>
 
-            {/* 목록 에러 */}
             {listError ? <Text style={styles.errorText}>{listError}</Text> : null}
 
-            {/* 다가올 면접 */}
             <View style={styles.section}>
                 <UpcomingInterviewsSection items={upcoming} loading={loading} />
             </View>
 
-            {/* 지난 면접 / 리뷰 */}
             <View style={styles.section}>
                 <InterviewReviewSection items={past} loading={loading} />
             </View>
 
-            {/* ✅ create modal */}
-            <Modal
-                visible={createOpen}
-                transparent
-                animationType="slide"
-                presentationStyle="overFullScreen"
-                statusBarTranslucent
-                onRequestClose={closeCreate}
-            >
-                <KeyboardAvoidingView
-                    style={styles.sheetRoot}
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-                >
-                    {/* ✅ backdrop: 모달 열린 동안 배경 터치/스크롤 완전 차단 */}
-                    <Pressable style={styles.sheetBackdrop} onPress={closeCreate} />
-
-                    {/* ✅ bottom sheet */}
-                    <View style={styles.modalCard}>
-                        {/* ✅ 손잡이 */}
-                        <View style={styles.sheetHandle} />
-
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>새 면접 기록 추가</Text>
-                            <Pressable onPress={closeCreate} hitSlop={10}>
-                                <Text style={styles.modalClose}>✕</Text>
-                            </Pressable>
-                        </View>
-
-                        <ScrollView
-                            style={styles.modalBody}
-                            contentContainerStyle={styles.modalBodyContent}
-                            showsVerticalScrollIndicator={false}
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-                        >
-                            {/* ✅ 기존 폼 그대로 재사용 */}
-                            <SectionCard title="면접 정보 입력">
-                                <InterviewCreateForm
-                                    saving={saving}
-                                    error={formError}
-                                    onSubmit={handleCreateFromModal}
-                                />
-                            </SectionCard>
-
-                            {/* 폼 에러(이미 Form 내부에서 보여주면 중복될 수 있어 선택) */}
-                            {formError ? <Text style={styles.formErrorText}>{formError}</Text> : null}
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+            <CreateInterviewSheet
+                open={createOpen}
+                nonce={createNonce}
+                saving={saving}
+                error={formError ?? null}
+                onClose={closeCreate}
+                onSubmit={handleCreateFromModal}
+            />
         </ScrollView>
     );
 }
@@ -155,74 +178,62 @@ export function InterviewsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
     },
     content: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        paddingBottom: 32,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.lg,
+        paddingBottom: space.lg * 2,
     },
 
-    header: {
-        marginBottom: 16,
-    },
+    header: { marginBottom: space.lg },
     headerTopRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
     title: {
-        fontSize: 20,
+        fontSize: font.h1,
         fontWeight: "800",
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        color: colors.text,
     },
     subtitle: {
-        marginTop: 6,
-        fontSize: 13,
-        color: "#9f1239", // rose-800
+        marginTop: space.sm,
+        fontSize: font.body,
+        color: colors.text,
         opacity: 0.65,
     },
 
-    // ✅ +추가 버튼: rose-500 포인트
     addBtn: {
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        backgroundColor: "#f43f5e", // rose-500
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 999,
+        borderColor: colors.border,
+        backgroundColor: colors.accent,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md - 4, // 기존 8 느낌 유지
+        borderRadius: radius.pill,
     },
     addBtnPressed: {
-        backgroundColor: "#fb7185", // rose-400
+        backgroundColor: colors.placeholder, // rose-400 역할
     },
     addBtnText: {
-        fontSize: 12,
+        fontSize: font.small + 1, // 기존 12 느낌
         fontWeight: "900",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
-    section: {
-        marginBottom: 16,
-    },
+    section: { marginBottom: space.lg },
 
     errorText: {
-        fontSize: 12,
-        color: "#e11d48", // rose-600
-        marginBottom: 8,
-        fontWeight: "700",
-    },
-    formErrorText: {
-        marginTop: 10,
-        fontSize: 12,
-        color: "#e11d48", // rose-600
+        fontSize: font.small + 1,
+        color: "#e11d48", // 에러 토큰 없으면 유지 or colors.danger 만들기
+        marginBottom: space.sm,
         fontWeight: "700",
     },
 
-    // ✅ bottom sheet modal styles (rose)
     sheetRoot: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
+        backgroundColor: colors.overlay,
     },
     sheetBackdrop: {
         ...StyleSheet.absoluteFillObject,
@@ -231,22 +242,22 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         width: 44,
         height: 4,
-        borderRadius: 999,
-        backgroundColor: "#fecdd3", // rose-200
-        marginBottom: 10,
+        borderRadius: radius.pill,
+        backgroundColor: colors.border,
+        marginBottom: space.md,
     },
     modalCard: {
         width: "100%",
         height: "85%",
         maxHeight: "92%",
-        backgroundColor: "#fff1f2", // rose-50
-        borderTopLeftRadius: 18,
-        borderTopRightRadius: 18,
+        backgroundColor: colors.bg,
+        borderTopLeftRadius: radius.lg,
+        borderTopRightRadius: radius.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        paddingHorizontal: 16,
-        paddingTop: 10,
-        paddingBottom: 10,
+        borderColor: colors.border,
+        paddingHorizontal: space.lg,
+        paddingTop: space.md,
+        paddingBottom: space.md,
 
         shadowColor: "#000",
         shadowOpacity: 0.18,
@@ -258,22 +269,18 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 10,
+        marginBottom: space.md,
     },
     modalTitle: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "900",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     modalClose: {
         fontSize: 18,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         fontWeight: "900",
     },
-    modalBody: {
-        flex: 1,
-    },
-    modalBodyContent: {
-        paddingBottom: 60,
-    },
+    modalBody: { flex: 1 },
+    modalBodyContent: { paddingBottom: space.lg * 3 + 12 },
 });

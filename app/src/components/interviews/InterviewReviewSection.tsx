@@ -1,8 +1,8 @@
-// app/components/interviews/InterviewReviewSection.tsx
-
-import React from "react";
+import React, { memo, useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
+
+import { colors, font, radius, space } from "../../styles/theme";
 
 type Props = {
     /** 이미 '지난 면접'만 들어온다고 가정 (useInterviewPageController의 past) */
@@ -10,122 +10,146 @@ type Props = {
     loading: boolean;
 };
 
+const TITLE = "면접 회고";
+
 export function InterviewReviewSection({ items, loading }: Props) {
-    if (loading) {
-        return (
-            <View style={styles.card}>
-                <Text style={styles.title}>면접 회고</Text>
-                <View style={styles.skeletonContainer}>
-                    {[1, 2].map((i) => (
-                        <View key={i} style={styles.skeleton} />
-                    ))}
-                </View>
-            </View>
-        );
-    }
+    const isEmpty = !loading && items.length === 0;
 
-    if (items.length === 0) {
-        return (
-            <View style={styles.card}>
-                <Text style={styles.title}>면접 회고</Text>
-                <Text style={styles.emptyText}>
-                    아직 회고를 남긴 완료된 면접이 없어요.{"\n"}
-                    면접이 끝난 뒤 느낀 점과 개선점을 간단히 기록해보세요.
-                </Text>
-            </View>
-        );
-    }
+    // (선택) 혹시 정렬이 필요하면 여기서 정렬 가능
+    const list = useMemo(() => items, [items]);
 
+    return <Card title={TITLE}>{loading ? <Skeleton /> : isEmpty ? <Empty /> : <ReviewList items={list} />}</Card>;
+}
+
+/** -----------------------------
+ * Presentational components
+ * ------------------------------ */
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <View style={styles.card}>
-            <Text style={styles.title}>면접 회고</Text>
-            <View style={styles.list}>
-                {items.map((item) => (
-                    <View key={item.id} style={styles.itemCard}>
-                        <View style={styles.itemHeader}>
-                            <View style={styles.itemTitleBox}>
-                                <Text
-                                    style={styles.companyRoleText}
-                                    numberOfLines={1}
-                                    ellipsizeMode="tail"
-                                >
-                                    {item.company} · {item.role}
-                                </Text>
-                                <Text style={styles.metaText} numberOfLines={1}>
-                                    진행일: {item.scheduledAtLabel}
-                                    {item.type ? ` · ${item.type}` : ""}
-                                </Text>
-                            </View>
-
-                            {/* 완료 뱃지 */}
-                            <View style={styles.badge}>
-                                <Text style={styles.badgeText}>완료</Text>
-                            </View>
-                        </View>
-
-                        {item.note ? (
-                            <Text
-                                style={styles.noteText}
-                                numberOfLines={3}
-                                ellipsizeMode="tail"
-                            >
-                                {item.note}
-                            </Text>
-                        ) : null}
-                    </View>
-                ))}
-            </View>
+            <Text style={styles.title}>{title}</Text>
+            {children}
         </View>
     );
 }
 
+const Skeleton = memo(function Skeleton() {
+    return (
+        <View style={styles.skeletonContainer}>
+            {[0, 1].map((i) => (
+                <View key={i} style={[styles.skeleton, i > 0 && styles.skeletonSpacing]} />
+            ))}
+        </View>
+    );
+});
+
+const Empty = memo(function Empty() {
+    return (
+        <Text style={styles.emptyText}>
+            아직 회고를 남긴 완료된 면접이 없어요.{"\n"}
+            면접이 끝난 뒤 느낀 점과 개선점을 간단히 기록해보세요.
+        </Text>
+    );
+});
+
+const ReviewList = memo(function ReviewList({ items }: { items: InterviewItem[] }) {
+    return (
+        <View style={styles.list}>
+            {items.map((item) => (
+                <ReviewItem key={item.id} item={item} />
+            ))}
+        </View>
+    );
+});
+
+const ReviewItem = memo(function ReviewItem({ item }: { item: InterviewItem }) {
+    const title = `${item.company} · ${item.role}`;
+    const meta = `진행일: ${item.scheduledAtLabel ?? "일정 미정"}${item.type ? ` · ${item.type}` : ""}`;
+
+    return (
+        <View style={styles.itemCard}>
+            <View style={styles.itemHeader}>
+                <View style={styles.itemTitleBox}>
+                    <Text style={styles.companyRoleText} numberOfLines={1} ellipsizeMode="tail">
+                        {title}
+                    </Text>
+                    <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
+                        {meta}
+                    </Text>
+                </View>
+
+                <Badge label="완료" />
+            </View>
+
+            {!!item.note && (
+                <Text style={styles.noteText} numberOfLines={3} ellipsizeMode="tail">
+                    {item.note}
+                </Text>
+            )}
+        </View>
+    );
+});
+
+const Badge = memo(function Badge({ label }: { label: string }) {
+    return (
+        <View style={styles.badge}>
+            <Text style={styles.badgeText}>{label}</Text>
+        </View>
+    );
+});
+
+/** -----------------------------
+ * styles (theme tokens)
+ * ------------------------------ */
+
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#fff1f2", // rose-50
-        borderRadius: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        marginBottom: 12,
+        backgroundColor: colors.bg,
+        borderRadius: radius.md,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md,
+        marginBottom: space.md,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     title: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "700",
-        color: "#9f1239", // rose-800
-        marginBottom: 10,
+        color: colors.text,
+        marginBottom: space.md,
     },
 
-    skeletonContainer: {
-        gap: 8,
-    } as const,
+    skeletonContainer: { width: "100%" },
 
     skeleton: {
         height: 72,
-        borderRadius: 8,
-        backgroundColor: "#ffe4e6", // rose-100
+        borderRadius: radius.sm,
+        backgroundColor: colors.section,
         opacity: 0.8,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
 
+    skeletonSpacing: { marginTop: space.sm },
+
     emptyText: {
-        fontSize: 13,
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        fontSize: font.body,
+        color: colors.text,
         lineHeight: 18,
     },
 
-    list: {
-        marginTop: 4,
-    },
+    list: { marginTop: space.xs },
 
     itemCard: {
-        backgroundColor: "#fff1f2", // rose-50
-        borderRadius: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 10,
-        marginBottom: 8,
+        backgroundColor: colors.bg,
+        borderRadius: radius.sm,
+        paddingVertical: space.sm,
+        paddingHorizontal: space.md,
+        marginBottom: space.sm,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     itemHeader: {
@@ -136,38 +160,40 @@ const styles = StyleSheet.create({
 
     itemTitleBox: {
         flex: 1,
-        paddingRight: 8,
+        paddingRight: space.sm,
+        minWidth: 0,
     },
 
     companyRoleText: {
-        fontSize: 13,
+        fontSize: font.body,
         fontWeight: "700",
-        color: "#881337", // rose-900
+        color: colors.textStrong,
     },
 
     metaText: {
         marginTop: 2,
-        fontSize: 11,
-        color: "#fb7185", // rose-400
+        fontSize: font.small,
+        color: colors.placeholder, // 기존 rose-400 역할
+        fontWeight: "700",
     },
 
     badge: {
-        paddingHorizontal: 8,
+        paddingHorizontal: space.sm,
         paddingVertical: 3,
-        borderRadius: 999,
-        backgroundColor: "#f43f5e", // rose-500
+        borderRadius: radius.pill,
+        backgroundColor: colors.accent,
     },
 
     badgeText: {
         fontSize: 10,
         fontWeight: "800",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
     noteText: {
-        marginTop: 6,
+        marginTop: space.sm,
         fontSize: 12,
         lineHeight: 17,
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
 });

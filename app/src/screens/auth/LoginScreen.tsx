@@ -1,13 +1,50 @@
 // app/screens/auth/LoginScreen.tsx
-
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
+
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import { EmailAuthForm } from "../../components/auth/EmailAuthForm";
 import { useAuth } from "../../libs/auth-context";
 
+import { colors, font, radius, space } from "../../styles/theme";
+
+type RememberMeRowProps = {
+    checked: boolean;
+    onToggle: () => void;
+};
+
+const RememberMeRow = memo(function RememberMeRow({
+                                                      checked,
+                                                      onToggle,
+                                                  }: RememberMeRowProps) {
+    return (
+        <Pressable
+            style={({ pressed }) => [styles.rememberRow, pressed && styles.pressed]}
+            onPress={onToggle}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked }}
+            hitSlop={8}
+        >
+            <View style={[styles.rememberBox, checked && styles.rememberBoxChecked]}>
+                {checked ? <Text style={styles.rememberCheck}>✓</Text> : null}
+            </View>
+
+            <View style={styles.rememberTextCol}>
+                <Text style={styles.rememberLabel}>로그인 유지</Text>
+                <Text style={styles.rememberHint}>
+                    체크하지 않으면 앱을 다시 열 때 자동 로그아웃돼요.
+                </Text>
+            </View>
+        </Pressable>
+    );
+});
+
 export function LoginScreen() {
     const { rememberMe, setRememberMe } = useAuth();
+
+    const toggleRemember = useCallback(() => {
+        setRememberMe(!rememberMe);
+    }, [rememberMe, setRememberMe]);
 
     return (
         <View style={styles.container}>
@@ -17,42 +54,16 @@ export function LoginScreen() {
                     지원 현황, 이력서, 면접 기록을 한 번에 관리해요.
                 </Text>
 
-                {/* ✅ 로그인 유지 */}
-                <Pressable
-                    style={styles.rememberRow}
-                    onPress={() => void setRememberMe(!rememberMe)}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: rememberMe }}
-                >
-                    <View
-                        style={[
-                            styles.rememberBox,
-                            rememberMe && styles.rememberBoxChecked,
-                        ]}
-                    >
-                        {rememberMe ? (
-                            <Text style={styles.rememberCheck}>✓</Text>
-                        ) : null}
-                    </View>
-                    <View style={styles.rememberTextCol}>
-                        <Text style={styles.rememberLabel}>로그인 유지</Text>
-                        <Text style={styles.rememberHint}>
-                            체크하지 않으면 앱을 다시 열 때 자동 로그아웃돼요.
-                        </Text>
-                    </View>
-                </Pressable>
+                <RememberMeRow checked={rememberMe} onToggle={toggleRemember} />
 
-                {/* ✅ 이메일 로그인/회원가입 폼 */}
                 <EmailAuthForm />
 
-                {/* 구분선 */}
                 <View style={styles.dividerRow}>
                     <View style={styles.dividerLine} />
                     <Text style={styles.dividerText}>또는</Text>
                     <View style={styles.dividerLine} />
                 </View>
 
-                {/* ✅ 기존 Google 로그인 버튼 */}
                 <View style={styles.googleWrapper}>
                     <GoogleSignInButton />
                 </View>
@@ -64,104 +75,113 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
         alignItems: "center",
         justifyContent: "center",
-        paddingHorizontal: 24,
+        paddingHorizontal: 24, // 레이아웃 고정값 유지
     },
+
     card: {
         width: "100%",
         maxWidth: 400,
-        backgroundColor: "#ffe4e6", // rose-100
-        borderRadius: 16,
-        padding: 24,
+        backgroundColor: colors.section,
+        borderRadius: radius.lg,
+        padding: space.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
+
         shadowColor: "#000",
         shadowOpacity: 0.12,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 6 },
         elevation: 6,
     },
+
     title: {
-        fontSize: 22,
+        fontSize: 22, // font 토큰에 22가 없어서 고정 유지
         fontWeight: "900",
-        color: "#9f1239", // rose-800
-        marginBottom: 8,
+        color: colors.text,
+        marginBottom: space.sm,
     },
+
     description: {
-        fontSize: 13,
-        color: "#9f1239", // rose-800
+        fontSize: font.body,
+        color: colors.text,
         opacity: 0.65,
-        marginBottom: 20,
+        marginBottom: 20, // 기존 유지
     },
 
     rememberRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 12,
-        backgroundColor: "#fff1f2", // rose-50
+        paddingVertical: 10, // 기존 유지
+        paddingHorizontal: space.md,
+        borderRadius: radius.md,
+        backgroundColor: colors.bg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        marginBottom: 12,
+        borderColor: colors.border,
+        marginBottom: space.md,
     },
+
+    // gap 대체(구 RN 호환): 박스-텍스트 간격
     rememberBox: {
         width: 18,
         height: 18,
-        borderRadius: 4,
+        borderRadius: 4, // 토큰에 xs radius 없어서 유지
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "transparent",
+        marginRight: 10, // 기존 유지
     },
+
     rememberBoxChecked: {
-        borderColor: "#f43f5e", // rose-500
-        backgroundColor: "rgba(244,63,94,0.12)", // rose-500 12%
+        borderColor: colors.accent,
+        backgroundColor: colors.accentSoft,
     },
+
     rememberCheck: {
         fontSize: 12,
         fontWeight: "900",
-        color: "#f43f5e", // rose-500
+        color: colors.accent,
         lineHeight: 14,
     },
-    rememberTextCol: {
-        flex: 1,
-    },
+
+    rememberTextCol: { flex: 1 },
+
     rememberLabel: {
-        fontSize: 13,
+        fontSize: font.body,
         fontWeight: "800",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
+
     rememberHint: {
-        marginTop: 2,
-        fontSize: 11,
-        color: "#9f1239", // rose-800
+        marginTop: space.xs,
+        fontSize: font.small,
+        color: colors.text,
         opacity: 0.55,
     },
+
+    pressed: { opacity: 0.9 },
 
     dividerRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginTop: 20,
-        marginBottom: 12,
+        marginTop: 20, // 기존 유지
+        marginBottom: space.md,
     },
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: "#fecdd3", // rose-200
+        backgroundColor: colors.border,
     },
     dividerText: {
-        marginHorizontal: 8,
-        fontSize: 11,
-        color: "#fb7185", // rose-400
+        marginHorizontal: space.sm,
+        fontSize: font.small,
+        color: colors.placeholder,
         fontWeight: "700",
     },
 
-    googleWrapper: {
-        marginTop: 4,
-    },
+    googleWrapper: { marginTop: space.xs },
 });

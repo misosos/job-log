@@ -1,5 +1,4 @@
-// app/src/components/auth/GoogleSignInButton.tsx
-import React, { useEffect, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Platform,
@@ -18,23 +17,44 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 
-// ✅ 앱 전용 Firebase 모듈 사용 (web 쪽으로 의존 X)
 import { auth } from "../../libs/firebase";
+import { colors, space, radius, font } from "../../styles/theme";
 
 WebBrowser.maybeCompleteAuthSession();
 
 type GoogleSignInButtonProps = {
-    /** 헤더처럼 로그인 전에는 아무 것도 안 보이게 하고 싶을 때 true */
     hideWhenLoggedOut?: boolean;
 };
 
-export function GoogleSignInButton({
-                                       hideWhenLoggedOut = false,
-                                   }: GoogleSignInButtonProps) {
-    const [userEmail, setUserEmail] = useState<string | null>(null);
+type GoogleResponseLike = {
+    type?: string;
+    authentication?: { idToken?: string };
+    params?: { id_token?: string };
+};
+
+function useAuthEmail() {
+    const [email, setEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+        const unsub = onAuthStateChanged(auth, (user) => setEmail(user?.email ?? null));
+        return () => unsub();
+    }, []);
+
+    return email;
+}
+
+function getIdTokenFromResponse(response: unknown): string | null {
+    const r = response as GoogleResponseLike | null;
+    const idToken = r?.authentication?.idToken ?? r?.params?.id_token ?? null;
+    return typeof idToken === "string" && idToken.length > 0 ? idToken : null;
+}
+
+export const GoogleSignInButton = memo(function GoogleSignInButton({
+                                                                       hideWhenLoggedOut = false,
+                                                                   }: GoogleSignInButtonProps) {
+    const userEmail = useAuthEmail();
     const [loading, setLoading] = useState(false);
 
-    // 🔹 Expo Google OAuth 요청 훅 (네이티브용)
     const [request, response, promptAsync] = Google.useAuthRequest({
         clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -43,176 +63,152 @@ export function GoogleSignInButton({
         scopes: ["openid", "email", "profile"],
     });
 
-    // Firebase Auth 상태 구독
-    useEffect(() => {
-        const unsub = onAuthStateChanged(auth, (user) => {
-            setUserEmail(user?.email ?? null);
-        });
-        return () => unsub();
-    }, []);
-
-    // Google 로그인 응답 처리 (네이티브 전용)
-    useEffect(() => {
-        const doLogin = async () => {
-            if (!response) return;
-            if (response.type !== "success") return;
-
-            // 🔹 웹에서는 expo-auth-session 응답을 쓰지 않고, signInWithPopup을 사용하므로 여기서 무시
-            if (Platform.OS === "web") return;
-
-            try {
-                setLoading(true);
-
-                const anyResponse = response as unknown as {
-                    authentication?: { idToken?: string };
-                    params?: { id_token?: string };
-                };
-
-                const idToken =
-                    anyResponse.authentication?.idToken ??
-                    anyResponse.params?.id_token ??
-                    null;
-
-                if (!idToken) {
-                    console.log(
-                        "[Auth] no id_token in response",
-                        JSON.stringify(response),
-                    );
-                    return;
-                }
-
-                const credential = GoogleAuthProvider.credential(idToken);
-                await signInWithCredential(auth, credential);
-                console.log("[Auth] native signIn success");
-            } catch (e) {
-                console.log("[Auth] native signIn error:", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void doLogin();
-    }, [response]);
-
-    const handleSignIn = async () => {
+    const withLoading = useCallback(async (fn: () => Promise<void>) => {
+        setLoading(true);
         try {
-            setLoading(true);
-
-            // 🔹 웹: Firebase Web SDK 그대로 사용
-            if (Platform.OS === "web") {
-                const provider = new GoogleAuthProvider();
-                await signInWithPopup(auth, provider);
-                console.log("[Auth] web signInWithPopup success");
-                setLoading(false);
-                return;
-            }
-
-            // 🔹 네이티브: expo-auth-session으로 OAuth 플로우 시작
-            if (!request) {
-                console.log("[Auth] Google request not ready yet");
-                setLoading(false);
-                return;
-            }
-
-            await promptAsync();
-        } catch (e) {
-            console.log("[Auth] prompt/signIn error:", e);
-            setLoading(false);
-        }
-    };
-
-    const handleSignOut = async () => {
-        try {
-            setLoading(true);
-            await signOut(auth);
-        } catch (e) {
-            console.log("[Auth] signOut error:", e);
+            await fn();
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    // 로그인 안 했고, 숨기기 옵션이면 null
-    if (!userEmail && hideWhenLoggedOut) {
-        return null;
-    }
+    const signInWeb = useCallback(async () => {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        console.log("[Auth] web signInWithPopup success");
+    }, []);
 
-    // 로그인된 상태
+    const signInNative = useCallback(async () => {
+        if (!request) {
+            console.log("[Auth] Google request not ready yet");
+            return;
+        }
+        await promptAsync();
+    }, [request, promptAsync]);
+
+    const handleNativeResponse = useCallback(async () => {
+        if (Platform.OS === "web") return;
+        if (!response) return;
+        if ((response as { type?: string }).type !== "success") return;
+
+        const idToken = getIdTokenFromResponse(response);
+        if (!idToken) {
+            console.log("[Auth] no id_token in response", JSON.stringify(response));
+            return;
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, credential);
+        console.log("[Auth] native signIn success");
+    }, [response]);
+
+    useEffect(() => {
+        void withLoading(handleNativeResponse);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [handleNativeResponse]);
+
+    const handleSignIn = useCallback(() => {
+        return withLoading(async () => {
+            if (Platform.OS === "web") {
+                await signInWeb();
+                return;
+            }
+            await signInNative();
+        });
+    }, [withLoading, signInWeb, signInNative]);
+
+    const handleSignOut = useCallback(() => {
+        return withLoading(async () => {
+            await signOut(auth);
+        });
+    }, [withLoading]);
+
+    const isDisabled = useMemo(() => {
+        const needsRequest = Platform.OS !== "web";
+        return loading || (needsRequest && !request);
+    }, [loading, request]);
+
+    if (!userEmail && hideWhenLoggedOut) return null;
+
     if (userEmail) {
         return (
             <View style={styles.container}>
                 <Text style={styles.email} numberOfLines={1}>
                     {userEmail}
                 </Text>
+
                 <TouchableOpacity
                     style={[styles.button, styles.logoutButton]}
                     onPress={handleSignOut}
                     disabled={loading}
+                    activeOpacity={0.9}
                 >
                     {loading ? (
-                        <ActivityIndicator size="small" color="#0f172a" />
+                        <ActivityIndicator size="small" color={colors.text} />
                     ) : (
-                        <Text style={[styles.buttonText, styles.logoutText]}>
-                            로그아웃
-                        </Text>
+                        <Text style={[styles.buttonText, styles.logoutText]}>로그아웃</Text>
                     )}
                 </TouchableOpacity>
             </View>
         );
     }
 
-    // 로그인 버튼
     return (
         <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, isDisabled && styles.buttonDisabled]}
             onPress={handleSignIn}
-            disabled={loading || (!request && Platform.OS !== "web")}
+            disabled={isDisabled}
+            activeOpacity={0.9}
         >
             {loading ? (
-                <ActivityIndicator size="small" color="#0f172a" />
+                <ActivityIndicator size="small" color={colors.bg} />
             ) : (
                 <Text style={styles.buttonText}>Google로 로그인</Text>
             )}
         </TouchableOpacity>
     );
-}
+});
 
 const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
         alignItems: "center",
-        // RN gap 미지원 환경이면 margin으로 바꿔도 됨
-        gap: 8,
     },
 
     email: {
-        fontSize: 12,
-        color: "#9f1239", // rose-800 (너무 진하면 #fb7185 로 다운)
+        fontSize: font.small + 1, // 12
+        color: colors.text,
         maxWidth: 180,
     },
 
     button: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
-        backgroundColor: "#f43f5e", // rose-500
+        paddingHorizontal: space.md - 2, // 12
+        paddingVertical: space.sm - 2, // 6
+        borderRadius: radius.pill,
+        backgroundColor: colors.accent,
+        marginLeft: space.sm, // 8 (RN gap 대체)
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    buttonDisabled: {
+        opacity: 0.55,
     },
 
     buttonText: {
-        fontSize: 12,
+        fontSize: font.small + 1, // 12
         fontWeight: "800",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
-    // "로그아웃" 같은 보조 버튼이라면 연한 톤으로
     logoutButton: {
-        backgroundColor: "#ffe4e6", // rose-100
+        backgroundColor: colors.card,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     logoutText: {
-        color: "#9f1239", // rose-800
+        color: colors.text,
         fontWeight: "800",
     },
 });

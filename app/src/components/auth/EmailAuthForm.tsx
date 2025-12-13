@@ -1,5 +1,4 @@
-// app/components/auth/EmailAuthForm.tsx
-import React from "react";
+import React, { memo, useCallback } from "react";
 import {
     View,
     Text,
@@ -7,12 +6,32 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     StyleSheet,
+    TextInputProps,
 } from "react-native";
 import { useEmailAuthForm } from "../../features/auth/useEmailAuthForm";
+import { colors, space, radius, font } from "../../styles/theme";
 
 type Props = {
     onSuccess?: () => void;
 };
+
+type FieldProps = {
+    label: string;
+    inputProps: TextInputProps;
+};
+
+const Field = memo(function Field({ label, inputProps }: FieldProps) {
+    return (
+        <View style={styles.field}>
+            <Text style={styles.label}>{label}</Text>
+            <TextInput
+                style={styles.input}
+                placeholderTextColor={colors.placeholder}
+                {...inputProps}
+            />
+        </View>
+    );
+});
 
 export function EmailAuthForm({ onSuccess }: Props) {
     const {
@@ -33,100 +52,87 @@ export function EmailAuthForm({ onSuccess }: Props) {
     } = useEmailAuthForm(onSuccess);
 
     const isSignup = mode === "signup";
+    const isSubmitDisabled = !isFormValid || loading;
 
-    const handlePressSubmit = () => {
-        // RN에서는 이벤트 없으니까 그냥 호출
+    const handlePressSubmit = useCallback(() => {
         void handleSubmit();
-    };
+    }, [handleSubmit]);
 
     return (
         <View style={styles.card}>
-            <Text style={styles.title}>
-                {isSignup ? "이메일로 회원가입" : "이메일로 로그인"}
-            </Text>
+            <Text style={styles.title}>{isSignup ? "이메일로 회원가입" : "이메일로 로그인"}</Text>
 
-            {/* 이메일 */}
-            <View style={styles.field}>
-                <Text style={styles.label}>이메일</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="you@example.com"
-                    placeholderTextColor="#6b7280"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    value={email}
-                    onChangeText={setEmail}
-                />
-            </View>
+            <Field
+                label="이메일"
+                inputProps={{
+                    placeholder: "you@example.com",
+                    autoCapitalize: "none",
+                    keyboardType: "email-address",
+                    value: email,
+                    onChangeText: setEmail,
+                    editable: !loading,
+                }}
+            />
 
-            {/* 비밀번호 */}
-            <View style={styles.field}>
-                <Text style={styles.label}>비밀번호</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="비밀번호 (6자 이상)"
-                    placeholderTextColor="#6b7280"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                />
-            </View>
+            <Field
+                label="비밀번호"
+                inputProps={{
+                    placeholder: "비밀번호 (6자 이상)",
+                    secureTextEntry: true,
+                    value: password,
+                    onChangeText: setPassword,
+                    editable: !loading,
+                }}
+            />
 
-            {/* 회원가입일 때만 이름 + 비밀번호 확인 */}
             {isSignup && (
                 <>
-                    <View style={styles.field}>
-                        <Text style={styles.label}>이름</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="이름 또는 닉네임"
-                            placeholderTextColor="#6b7280"
-                            value={displayName}
-                            onChangeText={setDisplayName}
-                        />
-                    </View>
+                    <Field
+                        label="이름"
+                        inputProps={{
+                            placeholder: "이름 또는 닉네임",
+                            value: displayName,
+                            onChangeText: setDisplayName,
+                            editable: !loading,
+                        }}
+                    />
 
-                    <View style={styles.field}>
-                        <Text style={styles.label}>비밀번호 확인</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="비밀번호를 다시 입력하세요"
-                            placeholderTextColor="#6b7280"
-                            secureTextEntry
-                            value={passwordConfirm}
-                            onChangeText={setPasswordConfirm}
-                        />
-                    </View>
+                    <Field
+                        label="비밀번호 확인"
+                        inputProps={{
+                            placeholder: "비밀번호를 다시 입력하세요",
+                            secureTextEntry: true,
+                            value: passwordConfirm,
+                            onChangeText: setPasswordConfirm,
+                            editable: !loading,
+                        }}
+                    />
                 </>
             )}
 
-            {/* 에러 메시지 */}
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            {/* 제출 버튼 */}
             <TouchableOpacity
-                style={[
-                    styles.submitButton,
-                    (!isFormValid || loading) && styles.submitButtonDisabled,
-                ]}
-                disabled={!isFormValid || loading}
+                style={[styles.submitButton, isSubmitDisabled && styles.submitButtonDisabled]}
+                disabled={isSubmitDisabled}
                 onPress={handlePressSubmit}
+                activeOpacity={0.9}
             >
                 {loading ? (
-                    <ActivityIndicator size="small" color="#0f172a" />
+                    <ActivityIndicator size="small" color={colors.bg} />
                 ) : (
-                    <Text style={styles.submitButtonText}>
-                        {isSignup ? "회원가입" : "로그인"}
-                    </Text>
+                    <Text style={styles.submitButtonText}>{isSignup ? "회원가입" : "로그인"}</Text>
                 )}
             </TouchableOpacity>
 
-            {/* 모드 전환 */}
-            <TouchableOpacity style={styles.switchButton} onPress={toggleMode}>
+            <TouchableOpacity
+                style={styles.switchButton}
+                onPress={toggleMode}
+                activeOpacity={0.85}
+                disabled={loading}
+            >
                 <Text style={styles.switchButtonText}>
-                    {isSignup
-                        ? "이미 계정이 있으신가요? 로그인하기"
-                        : "아직 계정이 없나요? 회원가입하기"}
+                    {isSignup ? "이미 계정이 있으신가요? 로그인하기" : "아직 계정이 없나요? 회원가입하기"}
                 </Text>
             </TouchableOpacity>
         </View>
@@ -136,78 +142,78 @@ export function EmailAuthForm({ onSuccess }: Props) {
 const styles = StyleSheet.create({
     card: {
         width: "100%",
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 18,
-        backgroundColor: "#fff1f2", // rose-50
+        borderRadius: radius.lg,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.lg + 2, // 18
+        backgroundColor: colors.bg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     title: {
-        fontSize: 18,
+        fontSize: 18, // 디자인 유지
         fontWeight: "800",
-        color: "#881337", // rose-900
-        marginBottom: 12,
+        color: colors.textStrong,
+        marginBottom: space.lg - 4, // 12
     },
 
     field: {
-        marginBottom: 10,
+        marginBottom: space.md - 2, // 10
     },
 
     label: {
-        fontSize: 12,
-        color: "#9f1239", // rose-800
-        marginBottom: 4,
+        fontSize: font.small + 1, // 12
+        color: colors.text,
+        marginBottom: space.xs, // 4
         fontWeight: "700",
     },
 
     input: {
-        borderRadius: 10,
+        borderRadius: radius.md - 2, // 10
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        paddingHorizontal: 10,
-        paddingVertical: 8,
-        fontSize: 14,
-        color: "#881337", // rose-900
-        backgroundColor: "#fff1f2", // rose-50
+        borderColor: colors.border,
+        paddingHorizontal: space.md - 2, // 10
+        paddingVertical: space.sm, // 8
+        fontSize: font.body + 1, // 14
+        color: colors.textStrong,
+        backgroundColor: colors.bg,
     },
 
     errorText: {
-        marginTop: 4,
-        marginBottom: 8,
-        fontSize: 12,
-        color: "#e11d48", // rose-600
+        marginTop: space.xs, // 4
+        marginBottom: space.sm, // 8
+        fontSize: font.small + 1, // 12
+        color: "#e11d48", // (에러 토큰 없어서 유지)
         fontWeight: "700",
     },
 
     submitButton: {
-        marginTop: 4,
-        borderRadius: 10,
-        paddingVertical: 10,
+        marginTop: space.xs, // 4
+        borderRadius: radius.md - 2, // 10
+        paddingVertical: space.md - 2, // 10
         alignItems: "center",
-        backgroundColor: "#f43f5e", // rose-500
+        backgroundColor: colors.accent,
     },
 
     submitButtonDisabled: {
-        backgroundColor: "#fb7185", // rose-400 (disabled도 테마 유지)
+        backgroundColor: colors.placeholder,
         opacity: 0.55,
     },
 
     submitButtonText: {
-        fontSize: 14,
+        fontSize: font.body + 1, // 14
         fontWeight: "800",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
     switchButton: {
-        marginTop: 10,
+        marginTop: space.md - 2, // 10
         alignItems: "center",
     },
 
     switchButtonText: {
-        fontSize: 12,
-        color: "#f43f5e", // rose-500
+        fontSize: font.small + 1, // 12
+        color: colors.accent,
         fontWeight: "700",
     },
 });

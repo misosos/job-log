@@ -1,149 +1,188 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
+import { colors, font, radius, space } from "../../styles/theme";
 
 type Props = {
     items: InterviewItem[];
     loading: boolean;
 };
 
+const TITLE = "다가오는 면접";
+
 export function UpcomingInterviewsSection({ items, loading }: Props) {
+    const isEmpty = !loading && items.length === 0;
+
+    return <Card title={TITLE}>{loading ? <Loading /> : isEmpty ? <Empty /> : <UpcomingList items={items} />}</Card>;
+}
+
+/** -----------------------------
+ * Presentational components
+ * ------------------------------ */
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <View style={styles.card}>
-            <Text style={styles.title}>다가오는 면접</Text>
-
-            {loading ? (
-                <View style={styles.loadingBox}>
-                    <ActivityIndicator size="small" color="#22c55e" />
-                    <Text style={styles.loadingText}>면접 일정을 불러오는 중이에요…</Text>
-                </View>
-            ) : items.length === 0 ? (
-                <Text style={styles.emptyText}>
-                    아직 예정된 면접이 없어요. 새 면접을 추가해보세요.
-                </Text>
-            ) : (
-                <View style={styles.list}>
-                    {items.map((item) => (
-                        <View key={item.id} style={styles.itemRow}>
-                            <View style={styles.itemTextBox}>
-                                <Text style={styles.companyRoleText} numberOfLines={1} ellipsizeMode="tail">
-                                    {item.company} · {item.role}
-                                </Text>
-                                <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
-                                    일정: {item.scheduledAtLabel}
-                                    {item.type ? ` · ${item.type}` : ""}
-                                </Text>
-                                {item.note ? (
-                                    <Text
-                                        numberOfLines={2}
-                                        ellipsizeMode="tail"
-                                        style={styles.noteText}
-                                    >
-                                        {item.note}
-                                    </Text>
-                                ) : null}
-                            </View>
-
-                            <View style={styles.badge}>
-                                <Text style={styles.badgeText}>예정</Text>
-                            </View>
-                        </View>
-                    ))}
-                </View>
-            )}
+            <Text style={styles.title}>{title}</Text>
+            {children}
         </View>
     );
 }
 
+const Loading = memo(function Loading() {
+    return (
+        <View style={styles.loadingBox}>
+            {/* ✅ 기존 green(#22c55e) → theme accent로 통일 */}
+            <ActivityIndicator size="small" color={colors.accent} />
+            <Text style={styles.loadingText}>면접 일정을 불러오는 중이에요…</Text>
+        </View>
+    );
+});
+
+const Empty = memo(function Empty() {
+    return <Text style={styles.emptyText}>아직 예정된 면접이 없어요. 새 면접을 추가해보세요.</Text>;
+});
+
+const UpcomingList = memo(function UpcomingList({ items }: { items: InterviewItem[] }) {
+    return (
+        <View style={styles.list}>
+            {items.map((item) => (
+                <UpcomingItem key={item.id} item={item} />
+            ))}
+        </View>
+    );
+});
+
+const UpcomingItem = memo(function UpcomingItem({ item }: { item: InterviewItem }) {
+    const title = `${item.company} · ${item.role}`;
+    const meta = `일정: ${item.scheduledAtLabel ?? "일정 미정"}${item.type ? ` · ${item.type}` : ""}`;
+
+    return (
+        <View style={styles.itemRow}>
+            <View style={styles.itemTextBox}>
+                <Text style={styles.companyRoleText} numberOfLines={1} ellipsizeMode="tail">
+                    {title}
+                </Text>
+
+                <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
+                    {meta}
+                </Text>
+
+                {!!item.note && (
+                    <Text numberOfLines={2} ellipsizeMode="tail" style={styles.noteText}>
+                        {item.note}
+                    </Text>
+                )}
+            </View>
+
+            <Badge label="예정" />
+        </View>
+    );
+});
+
+const Badge = memo(function Badge({ label }: { label: string }) {
+    return (
+        <View style={styles.badge}>
+            <Text style={styles.badgeText}>{label}</Text>
+        </View>
+    );
+});
+
+/** -----------------------------
+ * styles (theme tokens)
+ * ------------------------------ */
+
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#fff1f2", // rose-50
-        borderRadius: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        marginBottom: 16,
+        backgroundColor: colors.bg,
+        borderRadius: radius.md,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md,
+        marginBottom: space.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     title: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "700",
-        color: "#9f1239", // rose-800
-        marginBottom: 10,
+        color: colors.text,
+        marginBottom: space.md,
     },
 
     loadingBox: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
-    } as any,
+    },
 
     loadingText: {
-        fontSize: 13,
-        color: "#fb7185", // rose-400
+        marginLeft: space.sm, // gap 대체
+        fontSize: font.body,
+        color: colors.placeholder,
+        fontWeight: "700",
     },
 
     emptyText: {
-        fontSize: 13,
-        color: "#fb7185", // rose-400
+        fontSize: font.body,
+        color: colors.placeholder,
+        fontWeight: "700",
     },
 
-    list: {
-        marginTop: 4,
-    },
+    list: { marginTop: space.xs },
 
     itemRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#fff1f2", // rose-50
-        borderRadius: 10,
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        marginBottom: 8,
+        alignItems: "flex-start",
+        backgroundColor: colors.bg,
+        borderRadius: radius.sm,
+        paddingHorizontal: space.md,
+        paddingVertical: space.md,
+        marginBottom: space.sm,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     itemTextBox: {
         flex: 1,
-        marginRight: 10,
+        marginRight: space.md,
+        minWidth: 0,
     },
 
     companyRoleText: {
-        fontSize: 14,
+        fontSize: font.h2,
         fontWeight: "700",
-        color: "#881337", // rose-900
+        color: colors.textStrong,
     },
 
     metaText: {
         marginTop: 2,
         fontSize: 12,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
+        fontWeight: "700",
     },
 
     noteText: {
-        marginTop: 4,
+        marginTop: space.xs,
         fontSize: 12,
         lineHeight: 17,
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        color: colors.text,
+        fontWeight: "700",
     },
 
-    // ✅ 예정 뱃지 → 로즈 포인트
     badge: {
-        paddingHorizontal: 8,
+        paddingHorizontal: space.sm,
         paddingVertical: 4,
-        borderRadius: 999,
-        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500 12%
-        alignSelf: "flex-start",
+        borderRadius: radius.pill,
+        backgroundColor: colors.accentSoft,
         borderWidth: 1,
-        borderColor: "rgba(244, 63, 94, 0.25)",
+        borderColor: "rgba(244,63,94,0.25)", // 토큰에 없어서 유지(원하면 colors.accentBorder 추가 권장)
+        alignSelf: "flex-start",
     },
 
     badgeText: {
         fontSize: 11,
         fontWeight: "800",
-        color: "#f43f5e", // rose-500
+        color: colors.accent,
     },
 });

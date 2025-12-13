@@ -1,15 +1,15 @@
 // app/screens/resumes/ResumesScreen.tsx
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ScrollView,
-    Text,
-    StyleSheet,
-    View,
-    Modal,
-    Pressable,
     KeyboardAvoidingView,
+    Modal,
     Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { SectionCard } from "../../components/common/SectionCard";
@@ -18,29 +18,128 @@ import { ResumeList } from "../../components/resumes/ResumeList";
 import { useResumesController } from "../../features/resumes/useResumesController";
 import { useAuth } from "../../libs/auth-context";
 
+// ✅ 테마 토큰 import (경로만 맞춰줘)
+import { colors, space, radius, font } from "../../styles/theme";
+
+type CreateResumeSheetProps = {
+    open: boolean;
+    saving: boolean;
+    error: string | null;
+
+    title: string;
+    target: string;
+    link: string;
+    note: string;
+    isValid: boolean;
+
+    onClose: () => void;
+    onSubmit: () => void | Promise<void>;
+
+    onChangeTitle: (v: string) => void;
+    onChangeTarget: (v: string) => void;
+    onChangeLink: (v: string) => void;
+    onChangeNote: (v: string) => void;
+};
+
+function CreateResumeSheet({
+                               open,
+                               saving,
+                               error,
+
+                               title,
+                               target,
+                               link,
+                               note,
+                               isValid,
+
+                               onClose,
+                               onSubmit,
+
+                               onChangeTitle,
+                               onChangeTarget,
+                               onChangeLink,
+                               onChangeNote,
+                           }: CreateResumeSheetProps) {
+    return (
+        <Modal
+            visible={open}
+            transparent
+            animationType="slide"
+            presentationStyle="overFullScreen"
+            statusBarTranslucent
+            onRequestClose={onClose}
+        >
+            <KeyboardAvoidingView
+                style={styles.sheetRoot}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+            >
+                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+
+                <View style={styles.modalCard}>
+                    <View style={styles.sheetHandle} />
+
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>새 이력서 버전 추가</Text>
+                        <Pressable onPress={onClose} hitSlop={10}>
+                            <Text style={styles.modalClose}>✕</Text>
+                        </Pressable>
+                    </View>
+
+                    <ScrollView
+                        style={styles.modalBody}
+                        contentContainerStyle={styles.modalBodyContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+                        nestedScrollEnabled
+                        automaticallyAdjustKeyboardInsets
+                    >
+                        <ResumeForm
+                            title={title}
+                            target={target}
+                            link={link}
+                            note={note}
+                            isValid={isValid && !saving}
+                            onSubmit={onSubmit}
+                            onChangeTitle={onChangeTitle}
+                            onChangeTarget={onChangeTarget}
+                            onChangeLink={onChangeLink}
+                            onChangeNote={onChangeNote}
+                        />
+
+                        {error ? <Text style={styles.errorInModal}>{error}</Text> : null}
+                    </ScrollView>
+                </View>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
+
 export function ResumesScreen() {
-    // 🔹 폼 입력용 로컬 상태
     const [title, setTitle] = useState("");
     const [target, setTarget] = useState("");
     const [note, setNote] = useState("");
     const [link, setLink] = useState("");
 
-    const isValid = title.trim().length > 0 && target.trim().length > 0;
+    const canSubmit = useMemo(
+        () => title.trim().length > 0 && target.trim().length > 0,
+        [title, target],
+    );
+
+    const resetForm = useCallback(() => {
+        setTitle("");
+        setTarget("");
+        setNote("");
+        setLink("");
+    }, []);
 
     const { user } = useAuth();
     const userId = user?.uid ?? "app";
 
-    // 🔹 데이터 로딩/저장/에러는 전부 훅에서 관리
-    const {
-        resumes,
-        loading,
-        saving,
-        error,
-        createResumeVersion,
-        setDefaultResumeVersion,
-    } = useResumesController(userId);
+    const { resumes, loading, saving, error, createResumeVersion, setDefaultResumeVersion } =
+        useResumesController(userId);
 
-    // ✅ Create Modal
     const [createOpen, setCreateOpen] = useState(false);
     const didSubmitRef = useRef(false);
 
@@ -48,47 +147,40 @@ export function ResumesScreen() {
     const closeCreate = useCallback(() => setCreateOpen(false), []);
 
     const handleCreate = useCallback(async () => {
-        if (!isValid || saving) return;
+        if (!canSubmit || saving) return;
 
         didSubmitRef.current = true;
+        await createResumeVersion({ title, target, note, link });
 
-        await createResumeVersion({
-            title,
-            target,
-            note,
-            link,
-        });
+        // 입력 초기화는 기존 정책 유지(성공/실패는 error로 보임)
+        resetForm();
+    }, [canSubmit, saving, createResumeVersion, title, target, note, link, resetForm]);
 
-        // 입력은 일단 초기화(성공/실패는 error로 보임)
-        setTitle("");
-        setTarget("");
-        setNote("");
-        setLink("");
-    }, [isValid, saving, createResumeVersion, title, target, note, link]);
-
-    // ✅ 저장 성공 시(=saving 종료 && error 없음)에만 모달 닫기
     useEffect(() => {
         if (!didSubmitRef.current) return;
         if (saving) return;
 
-        if (!error) {
-            setCreateOpen(false);
-        }
+        if (!error) setCreateOpen(false);
         didSubmitRef.current = false;
     }, [saving, error]);
 
-    const handleSetDefault = async (resumeId: string) => {
-        if (saving) return;
-        await setDefaultResumeVersion(resumeId);
-    };
+    const handleSetDefault = useCallback(
+        async (resumeId: string) => {
+            if (saving) return;
+            await setDefaultResumeVersion(resumeId);
+        },
+        [saving, setDefaultResumeVersion],
+    );
+
+    const isOverlayOpen = createOpen;
 
     return (
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
-            scrollEnabled={!createOpen} // ✅ 모달 열리면 배경 스크롤 차단
+            scrollEnabled={!isOverlayOpen}
+            showsVerticalScrollIndicator={false}
         >
-            {/* header */}
             <View style={styles.header}>
                 <View style={styles.headerTopRow}>
                     <Text style={styles.title}>이력서</Text>
@@ -108,7 +200,6 @@ export function ResumesScreen() {
                 </Text>
             </View>
 
-            {/* list */}
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <SectionCard title="이력서 버전 목록">
@@ -121,60 +212,22 @@ export function ResumesScreen() {
                 </View>
             </SectionCard>
 
-            {/* ✅ create modal */}
-            <Modal
-                visible={createOpen}
-                transparent
-                animationType="slide"
-                presentationStyle="overFullScreen"
-                statusBarTranslucent
-                onRequestClose={closeCreate}
-            >
-                <KeyboardAvoidingView
-                    style={styles.sheetRoot}
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-                >
-                    {/* backdrop */}
-                    <Pressable style={styles.sheetBackdrop} onPress={closeCreate} />
-
-                    {/* bottom sheet */}
-                    <View style={styles.modalCard}>
-                        <View style={styles.sheetHandle} />
-
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>새 이력서 버전 추가</Text>
-                            <Pressable onPress={closeCreate} hitSlop={10}>
-                                <Text style={styles.modalClose}>✕</Text>
-                            </Pressable>
-                        </View>
-
-                        <ScrollView
-                            style={styles.modalBody}
-                            contentContainerStyle={styles.modalBodyContent}
-                            showsVerticalScrollIndicator={false}
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-                        >
-                            <ResumeForm
-                                title={title}
-                                target={target}
-                                link={link}
-                                note={note}
-                                isValid={isValid && !saving}
-                                onSubmit={handleCreate}
-                                onChangeTitle={setTitle}
-                                onChangeTarget={setTarget}
-                                onChangeLink={setLink}
-                                onChangeNote={setNote}
-                            />
-
-                            {/* 모달 내부에서도 에러 보여주기 */}
-                            {error ? <Text style={styles.errorInModal}>{error}</Text> : null}
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+            <CreateResumeSheet
+                open={createOpen}
+                saving={saving}
+                error={error ?? null}
+                title={title}
+                target={target}
+                link={link}
+                note={note}
+                isValid={canSubmit}
+                onClose={closeCreate}
+                onSubmit={handleCreate}
+                onChangeTitle={setTitle}
+                onChangeTarget={setTarget}
+                onChangeLink={setLink}
+                onChangeNote={setNote}
+            />
         </ScrollView>
     );
 }
@@ -182,91 +235,83 @@ export function ResumesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
     },
     content: {
-        padding: 16,
-        paddingBottom: 24,
+        padding: space.lg,
+        paddingBottom: space.lg + space.md, // 기존 24 느낌
     },
 
-    header: {
-        marginBottom: 14,
-    },
+    header: { marginBottom: space.md + 2 }, // 기존 14 느낌
     headerTopRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
     title: {
-        fontSize: 20,
+        fontSize: font.h1,
         fontWeight: "800",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     description: {
-        marginTop: 6,
-        fontSize: 13,
-        color: "#9f1239", // rose-800
+        marginTop: space.sm,
+        fontSize: font.body,
+        color: colors.text,
         opacity: 0.65,
     },
 
-    // ✅ 포인트 버튼: rose-500 중심
     addBtn: {
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        backgroundColor: "#f43f5e", // rose-500
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 999,
+        borderColor: colors.border,
+        backgroundColor: colors.accent,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md - 4, // 기존 8 느낌
+        borderRadius: radius.pill,
     },
-    addBtnPressed: {
-        backgroundColor: "#fb7185", // rose-400
-    },
+    addBtnPressed: { backgroundColor: colors.placeholder },
     addBtnText: {
-        fontSize: 12,
+        fontSize: font.small + 1, // 기존 12 느낌
         fontWeight: "900",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
-    // ✅ 에러: rose 계열로 정리
     error: {
-        marginBottom: 8,
-        fontSize: 11,
-        color: "#e11d48", // rose-600
+        marginBottom: space.sm,
+        fontSize: font.small,
+        color: "#e11d48", // (토큰에 error가 없어서 유지) 원하면 colors.error로 확장 가능
         fontWeight: "700",
     },
-    listWrapper: {
-        marginTop: 4,
-    },
 
-    // ✅ modal styles
+    listWrapper: { marginTop: space.xs },
+
     sheetRoot: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
+        backgroundColor: colors.overlay,
     },
-    sheetBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
+    sheetBackdrop: { ...StyleSheet.absoluteFillObject },
+
     sheetHandle: {
         alignSelf: "center",
         width: 44,
         height: 4,
-        borderRadius: 999,
-        backgroundColor: "#fecdd3", // rose-200
-        marginBottom: 10,
+        borderRadius: radius.pill,
+        backgroundColor: colors.border,
+        marginBottom: space.md,
     },
+
     modalCard: {
         width: "100%",
         height: "80%",
         maxHeight: "92%",
-        backgroundColor: "#fff1f2", // rose-50
-        borderTopLeftRadius: 18,
-        borderTopRightRadius: 18,
+        backgroundColor: colors.bg,
+        borderTopLeftRadius: radius.lg,
+        borderTopRightRadius: radius.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        paddingHorizontal: 16,
-        paddingTop: 10,
-        paddingBottom: 10,
+        borderColor: colors.border,
+        paddingHorizontal: space.lg,
+        paddingTop: space.md,
+        paddingBottom: space.md,
 
         shadowColor: "#000",
         shadowOpacity: 0.18,
@@ -274,32 +319,31 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -6 },
         elevation: 10,
     },
+
     modalHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 10,
+        marginBottom: space.md,
     },
     modalTitle: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "900",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     modalClose: {
         fontSize: 18,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         fontWeight: "900",
     },
-    modalBody: {
-        flex: 1,
-    },
-    modalBodyContent: {
-        paddingBottom: 60,
-    },
+
+    modalBody: { flex: 1 },
+    modalBodyContent: { paddingBottom: space.lg * 3 + 12 }, // 기존 60 근사치
+
     errorInModal: {
-        marginTop: 8,
-        fontSize: 11,
-        color: "#e11d48", // rose-600
+        marginTop: space.sm,
+        fontSize: font.small,
+        color: "#e11d48",
         fontWeight: "700",
     },
 });

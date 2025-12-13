@@ -1,35 +1,34 @@
-// app/src/components/applications/ApplicationStatusBadge.tsx
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 import type { ApplicationStatus } from "../../../../shared/features/applications/types";
+import { colors,radius } from "../../styles/theme";
 
 type Props = {
     status?: ApplicationStatus;
 };
 
-type StatusConfig = {
+type StatusConfig = Readonly<{
     label: string;
     bgColor: string;
     textColor: string;
     iconName: keyof typeof MaterialIcons.glyphMap;
-};
+}>;
 
 const FALLBACK_STATUS: ApplicationStatus = "지원 예정";
 
-// ✅ shared 상태값 전체를 커버하도록 확장
-const STATUS_CONFIG: Partial<Record<ApplicationStatus, StatusConfig>> = {
+const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
     "지원 예정": {
         label: "지원 예정",
-        bgColor: "#111827",
-        textColor: "#E5E7EB",
+        bgColor: colors.textStrong,
+        textColor: colors.bg,
         iconName: "assignment",
     },
     "서류 제출": {
         label: "서류 제출",
-        bgColor: "#0EA5E9",
-        textColor: "#0B1120",
+        bgColor: colors.accent,
+        textColor: colors.bg,
         iconName: "cloud-upload",
     },
     "서류 통과": {
@@ -64,39 +63,29 @@ const STATUS_CONFIG: Partial<Record<ApplicationStatus, StatusConfig>> = {
     },
     "지원 철회": {
         label: "지원 철회",
-        bgColor: "#334155", // slate-700
+        bgColor: "#334155",
         textColor: "#E5E7EB",
         iconName: "undo",
     },
 };
 
-function getStatusConfig(status?: ApplicationStatus): StatusConfig {
-    const s = status ?? FALLBACK_STATUS;
-    return STATUS_CONFIG[s] ?? STATUS_CONFIG[FALLBACK_STATUS]!;
+function resolveStatus(status?: ApplicationStatus): ApplicationStatus {
+    return status ?? FALLBACK_STATUS;
 }
 
 function ApplicationStatusBadgeBase({ status }: Props) {
-    const config = getStatusConfig(status);
+    const cfg = useMemo(() => STATUS_CONFIG[resolveStatus(status)], [status]);
 
     return (
         <View
-            style={[styles.badge, { backgroundColor: config.bgColor }]}
+            style={[styles.badge, { backgroundColor: cfg.bgColor }]}
             accessibilityRole="text"
-            accessibilityLabel={`지원 상태: ${config.label}`}
-            testID={`application-status-${config.label}`}
+            accessibilityLabel={`지원 상태: ${cfg.label}`}
+            testID={`application-status-${cfg.label}`}
         >
-            <MaterialIcons
-                name={config.iconName}
-                size={14}
-                color={config.textColor}
-                style={styles.icon}
-            />
-            <Text
-                style={[styles.label, { color: config.textColor }]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-            >
-                {config.label}
+            <MaterialIcons name={cfg.iconName} size={14} color={cfg.textColor} style={styles.icon} />
+            <Text style={[styles.label, { color: cfg.textColor }]} numberOfLines={1} ellipsizeMode="tail">
+                {cfg.label}
             </Text>
         </View>
     );
@@ -109,17 +98,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         alignSelf: "flex-start",
-        borderRadius: 999,
+        borderRadius: radius.pill,
         paddingHorizontal: 10,
         paddingVertical: 4,
         maxWidth: "100%",
     },
-    icon: {
-        marginRight: 4,
-    },
+    icon: { marginRight: 4 },
     label: {
-        fontSize: 12,
-        fontWeight: "500",
+        fontSize: 12, // 또는 font.small 쓰고 싶으면 font.small
+        fontWeight: "600",
         flexShrink: 1,
     },
 });

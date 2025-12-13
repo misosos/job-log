@@ -59,7 +59,7 @@ export function Header() {
                 }}
                 className="dark:!text-rose-900"
             >
-                <span className="jl-logo !text-rose-900 dark:!text-rose-900">준로그</span>
+                <span className="jl-logo !text-rose-900 dark:!text-rose-900">Job-Log</span>
             </NavbarBrand>
 
             <div className="jl-header-right flex items-center gap-3 md:gap-4">

@@ -1,23 +1,139 @@
 // app/screens/ApplicationsScreen.tsx
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ScrollView,
-    View,
-    Text,
-    StyleSheet,
     Alert,
-    Modal,
-    Pressable,
     KeyboardAvoidingView,
+    Modal,
     Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { ApplicationList } from "../../components/applications/ApplicationList";
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
 import { ApplicationCreateForm } from "../../components/applications/ApplicationCreateForm";
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
-
 import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
+
+// ✅ 테마 토큰 import (경로만 맞춰줘)
+import { colors, space, radius, font } from "../../styles/theme";
+
+type CreateApplicationSheetProps = {
+    open: boolean;
+    nonce: number;
+    saving: boolean;
+    error: string | null;
+
+    company: string;
+    position: string;
+    status: any; // (기존 타입 유지. 여기 타입 명확하면 교체 가능)
+    appliedAt: any;
+    docDeadline: any;
+    interviewAt: any;
+    finalResultAt: any;
+
+    onClose: () => void;
+    onSubmit: () => void;
+
+    onCompanyChange: (v: string) => void;
+    onPositionChange: (v: string) => void;
+    onStatusChange: (v: any) => void;
+    onAppliedAtChange: (v: any) => void;
+    onDocDeadlineChange: (v: any) => void;
+    onInterviewAtChange: (v: any) => void;
+    onFinalResultAtChange: (v: any) => void;
+};
+
+function CreateApplicationSheet({
+                                    open,
+                                    nonce,
+                                    saving,
+                                    error,
+
+                                    company,
+                                    position,
+                                    status,
+                                    appliedAt,
+                                    docDeadline,
+                                    interviewAt,
+                                    finalResultAt,
+
+                                    onClose,
+                                    onSubmit,
+
+                                    onCompanyChange,
+                                    onPositionChange,
+                                    onStatusChange,
+                                    onAppliedAtChange,
+                                    onDocDeadlineChange,
+                                    onInterviewAtChange,
+                                    onFinalResultAtChange,
+                                }: CreateApplicationSheetProps) {
+    return (
+        <Modal
+            visible={open}
+            transparent
+            animationType="slide"
+            presentationStyle="overFullScreen"
+            statusBarTranslucent
+            onRequestClose={onClose}
+        >
+            <KeyboardAvoidingView
+                style={styles.sheetRoot}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+            >
+                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+
+                <View style={styles.modalCard}>
+                    <View style={styles.sheetHandle} />
+
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>새 지원 기록 추가</Text>
+                        <Pressable onPress={onClose} hitSlop={10}>
+                            <Text style={styles.modalClose}>✕</Text>
+                        </Pressable>
+                    </View>
+
+                    <ScrollView
+                        style={styles.modalBody}
+                        contentContainerStyle={styles.modalBodyContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+                        nestedScrollEnabled
+                        automaticallyAdjustKeyboardInsets
+                    >
+                        <ApplicationCreateForm
+                            key={`create-${nonce}`}
+                            variant="twoStep"
+                            company={company}
+                            position={position}
+                            status={status}
+                            appliedAt={appliedAt}
+                            docDeadline={docDeadline}
+                            interviewAt={interviewAt}
+                            finalResultAt={finalResultAt}
+                            saving={saving}
+                            error={error}
+                            onCompanyChange={onCompanyChange}
+                            onPositionChange={onPositionChange}
+                            onStatusChange={onStatusChange}
+                            onAppliedAtChange={onAppliedAtChange}
+                            onDocDeadlineChange={onDocDeadlineChange}
+                            onInterviewAtChange={onInterviewAtChange}
+                            onFinalResultAtChange={onFinalResultAtChange}
+                            onSubmit={onSubmit}
+                        />
+                    </ScrollView>
+                </View>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
 
 export function ApplicationsScreen() {
     const {
@@ -58,40 +174,40 @@ export function ApplicationsScreen() {
         handleDelete,
     } = useApplicationsPageController();
 
-    // ✅ Create Modal
     const [createOpen, setCreateOpen] = useState(false);
+    const [createNonce, setCreateNonce] = useState(0);
     const didSubmitRef = useRef(false);
 
-    // ✅ 모달 열 때마다 폼 상태(step/접기 등) 초기화하려고 key remount
-    const [createNonce, setCreateNonce] = useState(0);
+    const isOverlayOpen = !!editingTarget || createOpen;
 
     const openCreate = useCallback(() => {
         setCreateNonce((n) => n + 1);
         setCreateOpen(true);
     }, []);
 
-    const closeCreate = useCallback(() => {
-        setCreateOpen(false);
-    }, []);
+    const closeCreate = useCallback(() => setCreateOpen(false), []);
 
-    // ✅ RN confirm delete
-    const handleDeleteWithConfirm = (id: string) => {
-        Alert.alert("지원 내역 삭제", "이 지원 내역을 삭제할까요?", [
-            { text: "취소", style: "cancel" },
-            { text: "삭제", style: "destructive", onPress: () => void handleDelete(id) },
-        ]);
-    };
+    const handleDeleteWithConfirm = useCallback(
+        (id: string) => {
+            Alert.alert("지원 내역 삭제", "이 지원 내역을 삭제할까요?", [
+                { text: "취소", style: "cancel" },
+                { text: "삭제", style: "destructive", onPress: () => void handleDelete(id) },
+            ]);
+        },
+        [handleDelete],
+    );
 
-    // ✅ Create submit (모달 내)
+    const canSubmitCreate = useMemo(
+        () => newCompany.trim().length > 0 && newRole.trim().length > 0,
+        [newCompany, newRole],
+    );
+
     const handleCreateFromModal = useCallback(() => {
-        // 필수값 없으면 닫지 않음 (원래 로직 유지)
-        if (!newCompany.trim() || !newRole.trim()) return;
-
+        if (!canSubmitCreate) return;
         didSubmitRef.current = true;
         void handleCreate();
-    }, [handleCreate, newCompany, newRole]);
+    }, [canSubmitCreate, handleCreate]);
 
-    // ✅ 저장 성공 시에만 모달 자동 닫기
     useEffect(() => {
         if (!didSubmitRef.current) return;
         if (saving) return;
@@ -101,17 +217,11 @@ export function ApplicationsScreen() {
     }, [saving, saveError]);
 
     return (
-        <ScrollView
-            contentContainerStyle={styles.container}
-            // ✅ 모달/편집 모달 열린 동안 배경 스크롤 방지
-            scrollEnabled={!createOpen && !editingTarget}
-        >
-            {/* header */}
+        <ScrollView contentContainerStyle={styles.container} scrollEnabled={!isOverlayOpen}>
             <View style={styles.header}>
                 <View style={styles.headerTopRow}>
                     <Text style={styles.title}>지원 현황</Text>
 
-                    {/* ✅ 추가 버튼 */}
                     <Pressable
                         onPress={openCreate}
                         style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
@@ -122,10 +232,11 @@ export function ApplicationsScreen() {
                     </Pressable>
                 </View>
 
-                <Text style={styles.subtitle}>지원한 공고를 한눈에 정리하고, 마감 일정 위주로 관리해요.</Text>
+                <Text style={styles.subtitle}>
+                    지원한 공고를 한눈에 정리하고, 마감 일정 위주로 관리해요.
+                </Text>
             </View>
 
-            {/* summary */}
             <View style={styles.section}>
                 <ApplicationSummary
                     loading={loading}
@@ -137,13 +248,11 @@ export function ApplicationsScreen() {
                 />
             </View>
 
-            {/* list header */}
             <View style={styles.listHeader}>
                 <Text style={styles.listTitle}>지원 목록</Text>
                 <Text style={styles.listCount}>총 {totalCount}건</Text>
             </View>
 
-            {/* list */}
             <View style={styles.section}>
                 <ApplicationList
                     loading={loading}
@@ -153,73 +262,29 @@ export function ApplicationsScreen() {
                 />
             </View>
 
-            {/* ✅ create modal */}
-            <Modal
-                visible={createOpen}
-                transparent
-                animationType="slide"
-                presentationStyle="overFullScreen"
-                statusBarTranslucent
-                onRequestClose={closeCreate}
-            >
-                <KeyboardAvoidingView
-                    style={styles.sheetRoot}
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-                >
-                    {/* ✅ backdrop: 모달 열린 동안 배경 터치/스크롤 완전 차단 */}
-                    <Pressable style={styles.sheetBackdrop} onPress={closeCreate} />
+            <CreateApplicationSheet
+                open={createOpen}
+                nonce={createNonce}
+                saving={saving}
+                error={saveError ?? null}
+                company={newCompany}
+                position={newRole}
+                status={newStatus}
+                appliedAt={newAppliedAt}
+                docDeadline={newDocumentDeadline}
+                interviewAt={newInterviewAt}
+                finalResultAt={newFinalResultAt}
+                onClose={closeCreate}
+                onSubmit={handleCreateFromModal}
+                onCompanyChange={setNewCompany}
+                onPositionChange={setNewRole}
+                onStatusChange={setNewStatus}
+                onAppliedAtChange={setNewAppliedAt}
+                onDocDeadlineChange={setNewDocumentDeadline}
+                onInterviewAtChange={setNewInterviewAt}
+                onFinalResultAtChange={setNewFinalResultAt}
+            />
 
-                    {/* ✅ bottom sheet */}
-                    <View style={styles.modalCard}>
-                        {/* ✅ 손잡이 */}
-                        <View style={styles.sheetHandle} />
-
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>새 지원 기록 추가</Text>
-                            <Pressable onPress={closeCreate} hitSlop={10}>
-                                <Text style={styles.modalClose}>✕</Text>
-                            </Pressable>
-                        </View>
-
-                        <ScrollView
-                            style={styles.modalBody}
-                            contentContainerStyle={styles.modalBodyContent}
-                            showsVerticalScrollIndicator={false}
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-                            // ✅ 안드 nested scroll 안정화
-                            nestedScrollEnabled
-                            // ✅ iOS 키보드 인셋 자동 보정
-                            automaticallyAdjustKeyboardInsets
-                        >
-                            <ApplicationCreateForm
-                                key={`create-${createNonce}`}
-                                variant="twoStep"
-                                company={newCompany}
-                                position={newRole}
-                                status={newStatus}
-                                appliedAt={newAppliedAt}
-                                onAppliedAtChange={setNewAppliedAt}
-                                docDeadline={newDocumentDeadline}
-                                interviewAt={newInterviewAt}
-                                finalResultAt={newFinalResultAt}
-                                saving={saving}
-                                error={saveError}
-                                onCompanyChange={setNewCompany}
-                                onPositionChange={setNewRole}
-                                onStatusChange={setNewStatus}
-                                onDocDeadlineChange={setNewDocumentDeadline}
-                                onInterviewAtChange={setNewInterviewAt}
-                                onFinalResultAtChange={setNewFinalResultAt}
-                                onSubmit={handleCreateFromModal}
-                            />
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
-
-            {/* edit modal (그대로) */}
             <ApplicationEditModal
                 open={!!editingTarget}
                 target={editingTarget ?? null}
@@ -234,75 +299,69 @@ export function ApplicationsScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
-        paddingBottom: 32,
-        backgroundColor: "#fff1f2", // rose-50 (화면 배경이 여기서 결정된다면)
+        padding: space.lg,
+        paddingBottom: space.lg * 2, // 기존 32 느낌
+        backgroundColor: colors.bg,
     },
 
-    header: {
-        marginBottom: 16,
-    },
+    header: { marginBottom: space.lg },
     headerTopRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
     title: {
-        fontSize: 20,
+        fontSize: font.h1,
         fontWeight: "800",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     subtitle: {
-        marginTop: 6,
-        fontSize: 13,
-        color: "#9f1239", // rose-800
+        marginTop: space.sm,
+        fontSize: font.body,
+        color: colors.text,
         opacity: 0.65,
     },
 
-    // ✅ 버튼/포인트: rose-400~500
+    // ✅ 여기 화면은 outline 버튼 느낌이라 section/border/accent 조합 유지
     addBtn: {
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        backgroundColor: "#ffe4e6", // rose-100
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 999,
+        borderColor: colors.border,
+        backgroundColor: colors.section,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md - 4, // 8 느낌
+        borderRadius: radius.pill,
     },
-    addBtnPressed: {
-        backgroundColor: "#fecdd3", // rose-200
-    },
+    addBtnPressed: { backgroundColor: colors.border },
     addBtnText: {
-        fontSize: 12,
+        fontSize: font.small + 1, // 12 느낌
         fontWeight: "800",
-        color: "#f43f5e", // rose-500
+        color: colors.accent,
     },
 
-    section: {
-        marginBottom: 18,
-    },
+    section: { marginBottom: space.lg + 2 }, // 기존 18 근사
 
     listHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "flex-end",
-        marginBottom: 10,
+        marginBottom: space.md - 2, // 기존 10 근사
     },
     listTitle: {
-        fontSize: 13,
+        fontSize: font.body,
         fontWeight: "800",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     listCount: {
-        fontSize: 12,
-        color: "#9f1239", // rose-800
+        fontSize: font.small + 1, // 12 느낌
+        color: colors.text,
         opacity: 0.55,
     },
 
-    // ✅ 시트 오버레이: 로즈 틴트
+    // ✅ sheet styles
     sheetRoot: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
+        backgroundColor: colors.overlay,
     },
     sheetBackdrop: {
         ...StyleSheet.absoluteFillObject,
@@ -312,24 +371,23 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         width: 44,
         height: 4,
-        borderRadius: 999,
-        backgroundColor: "#fecdd3", // rose-200
-        marginBottom: 10,
+        borderRadius: radius.pill,
+        backgroundColor: colors.border,
+        marginBottom: space.md,
     },
 
-    // ✅ 모달 카드: rose-50~100 + rose-200 라인
     modalCard: {
         width: "100%",
         height: "85%",
         maxHeight: "92%",
-        backgroundColor: "#fff1f2", // rose-50
-        borderTopLeftRadius: 18,
-        borderTopRightRadius: 18,
+        backgroundColor: colors.bg,
+        borderTopLeftRadius: radius.lg,
+        borderTopRightRadius: radius.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        paddingHorizontal: 16,
-        paddingTop: 10,
-        paddingBottom: 10,
+        borderColor: colors.border,
+        paddingHorizontal: space.lg,
+        paddingTop: space.md,
+        paddingBottom: space.md,
 
         shadowColor: "#000",
         shadowOpacity: 0.18,
@@ -337,26 +395,23 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -6 },
         elevation: 10,
     },
+
     modalHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 10,
-    },
-    modalBody: {
-        flex: 1,
-    },
-    modalBodyContent: {
-        paddingBottom: 60,
+        marginBottom: space.md,
     },
     modalTitle: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "900",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     modalClose: {
         fontSize: 18,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         fontWeight: "900",
     },
+    modalBody: { flex: 1 },
+    modalBodyContent: { paddingBottom: space.lg * 3 + 12 }, // 기존 60 근사
 });

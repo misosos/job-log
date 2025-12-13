@@ -1,111 +1,99 @@
-// app/components/dashboard/DashboardUpcomingSection.tsx
-
-import React, { useMemo } from "react";
-import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import React, { memo } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-
 import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
 import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 import { useAuth } from "../../libs/auth-context";
+import { SectionCard } from "../common/SectionCard";
+import { colors, font, radius } from "../../styles/theme";
+
+const MAX_ITEMS = 3;
+
+const LoadingRow = memo(function LoadingRow() {
+    return (
+        <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.accent} />
+            <Text style={styles.loadingText}>면접 일정을 불러오는 중...</Text>
+        </View>
+    );
+});
+
+const EmptyState = memo(function EmptyState() {
+    return (
+        <Text style={styles.emptyText}>
+            앞으로 예정된 면접이 없어요.{"\n"}인터뷰 페이지에서 새로운 면접 일정을 추가해보세요.
+        </Text>
+    );
+});
+
+const InterviewRow = memo(function InterviewRow({ item }: { item: InterviewItem }) {
+    const timeLabel = item.scheduledAtLabel ?? "일정 미정";
+    const title = item.company || "회사 미입력";
+    const role = item.role ? ` · ${item.role}` : "";
+    const sub = item.type ? `${item.type} 면접` : "면접 유형 미입력";
+
+    return (
+        <View style={styles.itemRow}>
+            <View style={styles.iconWrapper}>
+                <MaterialIcons name="event" size={18} color={colors.accent} />
+            </View>
+
+            <View style={styles.itemContent}>
+                <Text style={styles.timeText} numberOfLines={1}>
+                    {timeLabel}
+                </Text>
+
+                <Text style={styles.titleText} numberOfLines={1}>
+                    {title}
+                    {role}
+                </Text>
+
+                <Text style={styles.subText} numberOfLines={1}>
+                    {sub}
+                </Text>
+            </View>
+        </View>
+    );
+});
 
 export function DashboardUpcomingSection() {
-    // 현재 로그인 유저
     const { user } = useAuth();
     const userId = user?.uid ?? "web";
 
-    // ✅ 공용 컨트롤러 훅 사용 (이미 Firestore + API 재활용 중)
     const { upcoming, loading, listError } = useInterviewPageController(userId);
 
-    // 대시보드에서는 상위 3개까지만 보여주기
-    const items: InterviewItem[] = useMemo(
-        () => upcoming.slice(0, 3),
-        [upcoming],
-    );
-
-    const renderItem = (item: InterviewItem) => (
-        <View style={styles.itemRow}>
-            <View style={styles.iconWrapper}>
-                <MaterialIcons name="event" size={18} color="#22c55e" />
-            </View>
-            <View style={styles.itemContent}>
-                <Text style={styles.timeText} numberOfLines={1}>
-                    {item.scheduledAtLabel ?? "일정 미정"}
-                </Text>
-                <Text style={styles.titleText} numberOfLines={1}>
-                    {item.company || "회사 미입력"}
-                    {item.role ? ` · ${item.role}` : ""}
-                </Text>
-                <Text style={styles.subText} numberOfLines={1}>
-                    {item.type ? `${item.type} 면접` : "면접 유형 미입력"}
-                </Text>
-            </View>
-        </View>
-    );
+    const items = upcoming.slice(0, MAX_ITEMS);
 
     return (
-        <View style={styles.card}>
-            <Text style={styles.cardTitle}>다가오는 면접</Text>
-
-            {/* 에러가 있다면 한 줄 표시 (선택사항) */}
-            {listError ? (
-                <Text style={styles.errorText}>{listError}</Text>
-            ) : null}
+        <SectionCard title="다가오는 면접">
+            {!!listError && <Text style={styles.errorText}>{listError}</Text>}
 
             {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color="#22c55e" />
-                    <Text style={styles.loadingText}>면접 일정을 불러오는 중...</Text>
-                </View>
+                <LoadingRow />
             ) : items.length === 0 ? (
-                <Text style={styles.emptyText}>
-                    앞으로 예정된 면접이 없어요.
-                    {"\n"}
-                    인터뷰 페이지에서 새로운 면접 일정을 추가해보세요.
-                </Text>
+                <EmptyState />
             ) : (
-                <View>
+                <View style={styles.list}>
                     {items.map((item, idx) => (
-                        <React.Fragment key={item.id}>
-                            {renderItem(item)}
-                            {idx !== items.length - 1 ? (
-                                <View style={styles.separator} />
-                            ) : null}
-                        </React.Fragment>
+                        <View key={item.id} style={[idx !== 0 && styles.rowGap]}>
+                            <InterviewRow item={item} />
+                        </View>
                     ))}
                 </View>
             )}
-        </View>
+        </SectionCard>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        borderRadius: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        backgroundColor: "#fff1f2", // rose-50
-        borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        marginBottom: 16,
-    },
-
-    cardTitle: {
-        fontSize: 14,
-        fontWeight: "700",
-        color: "#9f1239", // rose-800
-        marginBottom: 10,
-    },
+    list: { width: "100%" },
+    rowGap: { marginTop: 10 },
 
     errorText: {
-        fontSize: 11,
-        color: "#e11d48", // rose-600
-        marginBottom: 4,
-        fontWeight: "700",
+        fontSize: font.small,
+        color: "#e11d48", // (에러 컬러 토큰 따로 없어서 유지)
+        marginBottom: 6,
+        fontWeight: "800",
     },
 
     loadingContainer: {
@@ -116,16 +104,16 @@ const styles = StyleSheet.create({
 
     loadingText: {
         fontSize: 12,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         marginLeft: 8,
-        fontWeight: "600",
+        fontWeight: "700",
     },
 
     emptyText: {
         fontSize: 12,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         lineHeight: 18,
-        fontWeight: "600",
+        fontWeight: "700",
     },
 
     itemRow: {
@@ -138,39 +126,34 @@ const styles = StyleSheet.create({
         height: 28,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: "#f43f5e", // rose-500
-        backgroundColor: "rgba(251, 113, 133, 0.12)", // rose-400 12%
+        borderColor: colors.border,
+        backgroundColor: "rgba(244, 63, 94, 0.10)", // ✅ colors.accentSoft는 0.12라서 기존 0.10 유지(원하면 colors.accentSoft로 교체)
         alignItems: "center",
         justifyContent: "center",
         marginRight: 10,
         marginTop: 2,
     },
 
-    itemContent: {
-        flex: 1,
-    },
+    itemContent: { flex: 1 },
 
     timeText: {
         fontSize: 11,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         marginBottom: 2,
-        fontWeight: "600",
+        fontWeight: "800",
     },
 
     titleText: {
-        fontSize: 13,
-        fontWeight: "700",
-        color: "#881337", // rose-900
+        fontSize: font.body,
+        fontWeight: "800",
+        color: colors.textStrong,
     },
 
     subText: {
         fontSize: 11,
-        color: "#9f1239", // rose-800 (너무 진하면 rose-400으로 바꿔도 됨)
+        color: colors.text,
         marginTop: 2,
         opacity: 0.85,
-    },
-
-    separator: {
-        height: 10,
+        fontWeight: "700",
     },
 });

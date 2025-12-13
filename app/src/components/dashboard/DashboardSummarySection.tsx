@@ -1,82 +1,59 @@
-import React, { useMemo } from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-
 import { SectionCard } from "../common/SectionCard";
 import { useApplications } from "../../features/applications/useApplications";
 import { usePlanner } from "../../features/planner/usePlanner";
 import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 import { useAuth } from "../../libs/auth-context";
 
-export function DashboardSummarySection() {
-  const { user } = useAuth();
-  // 지원 현황: 공통 useApplications 훅 재사용
-  const {
-    loading: applicationsLoading,
-    totalCount,
-    inProgressCount,
-  } = useApplications();
+import { colors, font, radius } from "../../styles/theme";
 
-  // 플래너: 오늘 할 일 / 이번 주 계획 훅 재사용
-  const {
-    todayTasks,
-    loading: plannerLoading,
-  } = usePlanner();
+type SummaryTileProps = {
+    label: string;
+    value?: number;
+    loading?: boolean;
+};
 
-  // 면접: 다가오는 면접 목록 훅 재사용
-  const {
-    upcoming,
-    loading: interviewsLoading,
-  } = useInterviewPageController(user ? user.uid : null);
-
-  // 로딩 상태 통합
-  const loading = applicationsLoading || plannerLoading || interviewsLoading;
-
-  // 요약 데이터 메모이즈
-  const summary = useMemo(
-    () => ({
-      totalApplications: totalCount,
-      inProgressApplications: inProgressCount,
-      todayTasks: todayTasks.length,
-      upcomingInterviews: upcoming.length,
-    }),
-    [totalCount, inProgressCount, todayTasks.length, upcoming.length],
-  );
-
-  return (
-    <SectionCard title="오늘의 취준 요약">
-      {loading ? (
-        <View style={styles.grid}>
-          {[1, 2, 3, 4].map((i) => (
-            <View key={i} style={styles.skeletonCard}>
-              <ActivityIndicator size="small" color="#64748b" />
+const SummaryTile = memo(function SummaryTile({
+                                                  label,
+                                                  value = 0,
+                                                  loading = false,
+                                              }: SummaryTileProps) {
+    return (
+        <View style={styles.tileWrap}>
+            <View style={styles.tile}>
+                {loading ? (
+                    <ActivityIndicator size="small" color={colors.accent} />
+                ) : (
+                    <>
+                        <Text style={styles.label}>{label}</Text>
+                        <Text style={styles.value}>{value}</Text>
+                    </>
+                )}
             </View>
-          ))}
         </View>
-      ) : (
-        <View style={styles.grid}>
-          <View style={styles.card}>
-            <Text style={styles.label}>전체 지원</Text>
-            <Text style={styles.value}>{summary.totalApplications}</Text>
-          </View>
+    );
+});
 
-          <View style={styles.card}>
-            <Text style={styles.label}>진행 중 공고</Text>
-            <Text style={styles.value}>{summary.inProgressApplications}</Text>
-          </View>
+export function DashboardSummarySection() {
+    const { user } = useAuth();
 
-          <View style={styles.card}>
-            <Text style={styles.label}>오늘 할 일</Text>
-            <Text style={styles.value}>{summary.todayTasks}</Text>
-          </View>
+    const { loading: applicationsLoading, totalCount, inProgressCount } = useApplications();
+    const { todayTasks, loading: plannerLoading } = usePlanner();
+    const { upcoming, loading: interviewsLoading } = useInterviewPageController(user?.uid ?? null);
 
-          <View style={styles.card}>
-            <Text style={styles.label}>다가오는 면접</Text>
-            <Text style={styles.value}>{summary.upcomingInterviews}</Text>
-          </View>
-        </View>
-      )}
-    </SectionCard>
-  );
+    const loading = applicationsLoading || plannerLoading || interviewsLoading;
+
+    return (
+        <SectionCard title="오늘의 취준 요약">
+            <View style={styles.grid}>
+                <SummaryTile label="전체 지원" value={totalCount} loading={loading} />
+                <SummaryTile label="진행 중 공고" value={inProgressCount} loading={loading} />
+                <SummaryTile label="오늘 할 일" value={todayTasks.length} loading={loading} />
+                <SummaryTile label="다가오는 면접" value={upcoming.length} loading={loading} />
+            </View>
+        </SectionCard>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -86,35 +63,33 @@ const styles = StyleSheet.create({
         marginHorizontal: -4,
     },
 
-    skeletonCard: {
+    tileWrap: {
         width: "50%",
         paddingHorizontal: 4,
         marginBottom: 8,
+    },
+
+    tile: {
         height: 80,
-        borderRadius: 12,
-        backgroundColor: "#fff1f2", // rose-50
+        borderRadius: radius.md,
+        backgroundColor: colors.bg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        alignItems: "center",
+        borderColor: colors.border,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         justifyContent: "center",
     },
 
-    card: {
-        width: "50%",
-        paddingHorizontal: 4,
-        marginBottom: 8,
-    },
-
     label: {
-        fontSize: 11,
-        color: "#fb7185", // rose-400 (포인트)
-        fontWeight: "600",
+        fontSize: font.small,
+        color: colors.placeholder,
+        fontWeight: "700",
     },
 
     value: {
         marginTop: 4,
         fontSize: 22,
-        fontWeight: "800",
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        fontWeight: "900",
+        color: colors.text,
     },
 });

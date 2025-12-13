@@ -1,118 +1,112 @@
-import React, { useMemo } from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-
 import { SectionCard } from "../common/SectionCard";
 import { usePlanner } from "../../features/planner/usePlanner";
+import { colors, font, radius } from "../../styles/theme";
+
+type Task = {
+    id: string;
+    title: string;
+    done?: boolean;
+    ddayLabel?: string | null;
+};
+
+const SkeletonRow = memo(function SkeletonRow({ isFirst }: { isFirst: boolean }) {
+    return <View style={[styles.skeletonItem, !isFirst && styles.rowGap]} />;
+});
+
+const TaskRow = memo(function TaskRow({ task, isLast }: { task: Task; isLast: boolean }) {
+    return (
+        <View style={[styles.taskRow, !isLast && styles.rowGap]}>
+            <Text style={[styles.taskText, task.done && styles.taskTextDone]} numberOfLines={1}>
+                {task.title}
+            </Text>
+
+            {!!task.ddayLabel && (
+                <Text style={styles.ddayText} numberOfLines={1}>
+                    {task.ddayLabel}
+                </Text>
+            )}
+        </View>
+    );
+});
 
 export function DashboardTodayTasksSection() {
-  const { todayTasks, loading } = usePlanner();
+    const { todayTasks, loading } = usePlanner();
+    const tasks = todayTasks.slice(0, 3) as Task[];
 
-  const tasks = useMemo(
-    () => todayTasks.slice(0, 3),
-    [todayTasks],
-  );
-
-  return (
-    <SectionCard title="오늘 할 일">
-      {loading ? (
-        <View style={styles.skeletonContainer}>
-          {[1, 2, 3].map((i, index) => (
-            <View
-              key={i}
-              style={[
-                styles.skeletonItem,
-                index > 0 && styles.skeletonItemSpacing,
-              ]}
-            />
-          ))}
-        </View>
-      ) : tasks.length === 0 ? (
-        <Text style={styles.emptyText}>
-          오늘은 아직 등록된 할 일이 없어요. 플래너에서 할 일을 추가해 보세요.
-        </Text>
-      ) : (
-        <View style={styles.list}>
-          {tasks.map((task, index) => {
-            const isLast = index === tasks.length - 1;
-            return (
-              <View
-                key={task.id}
-                style={[styles.taskRow, !isLast && styles.taskRowSpacing]}
-              >
-                <Text style={task.done ? styles.taskTextDone : styles.taskText}>
-                  {task.title}
+    return (
+        <SectionCard title="오늘 할 일">
+            {loading ? (
+                <View style={styles.block}>
+                    {[0, 1, 2].map((i) => (
+                        <SkeletonRow key={i} isFirst={i === 0} />
+                    ))}
+                </View>
+            ) : tasks.length === 0 ? (
+                <Text style={styles.emptyText}>
+                    오늘은 아직 등록된 할 일이 없어요. 플래너에서 할 일을 추가해 보세요.
                 </Text>
-                {!!task.ddayLabel && (
-                  <Text style={styles.ddayText}>{task.ddayLabel}</Text>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      )}
-    </SectionCard>
-  );
+            ) : (
+                <View style={styles.block}>
+                    {tasks.map((t, idx) => (
+                        <TaskRow key={t.id} task={t} isLast={idx === tasks.length - 1} />
+                    ))}
+                </View>
+            )}
+        </SectionCard>
+    );
 }
 
 const styles = StyleSheet.create({
-    skeletonContainer: {
-        width: "100%",
-    },
+    block: { width: "100%" },
+
+    rowGap: { marginTop: 6 },
 
     skeletonItem: {
         height: 36,
         width: "100%",
-        borderRadius: 8,
-        backgroundColor: "#ffe4e6", // rose-100
+        borderRadius: radius.sm,
+        backgroundColor: colors.section,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-    },
-
-    skeletonItemSpacing: {
-        marginTop: 6,
+        borderColor: colors.border,
     },
 
     emptyText: {
-        fontSize: 14,
-        color: "#fb7185", // rose-400 (포인트 톤)
-        fontWeight: "600",
-    },
-
-    list: {
-        width: "100%",
+        fontSize: font.body,
+        color: colors.placeholder,
+        fontWeight: "700",
     },
 
     taskRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        borderRadius: 8,
+        borderRadius: radius.sm,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-    },
-
-    taskRowSpacing: {
-        marginBottom: 8,
+        borderColor: colors.border,
     },
 
     taskText: {
+        flex: 1,
+        paddingRight: 10,
         fontSize: 14,
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
-        fontWeight: "700",
+        color: colors.text,
+        fontWeight: "800",
     },
 
     taskTextDone: {
-        fontSize: 14,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         textDecorationLine: "line-through",
+        fontWeight: "700",
     },
 
     ddayText: {
         fontSize: 12,
-        color: "#f43f5e", // rose-500 (포인트)
-        fontWeight: "700",
+        color: colors.accent,
+        fontWeight: "900",
     },
 });

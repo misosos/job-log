@@ -1,138 +1,143 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, Linking } from "react-native";
-
 import { SectionCard } from "../common/SectionCard";
 import { useAuth } from "../../libs/auth-context";
 import { useResumesController } from "../../features/resumes/useResumesController";
 import type { ResumeVersion } from "../../../../shared/features/resumes/types";
 
-/**
- * 대시보드에서 사용할 최소한의 이력서 정보 타입
- */
-type DashboardResume = {
-    id: string;
-    title: string;
-    target: string;
-    note?: string;
-    link?: string;
-};
+import { colors, radius, font } from "../../styles/theme";
 
-export function DashboardDefaultResumeSection() {
-    const { user } = useAuth();
-    const userId = user?.uid ?? "web";
+type DashboardResume = Pick<ResumeVersion, "id" | "title" | "target" | "note" | "link">;
 
-    const { resumes, loading, error } = useResumesController(userId);
-
-    const defaultResume = useMemo<DashboardResume | null>(() => {
-        if (!resumes || resumes.length === 0) return null;
-
-        // 1순위: isDefault === true
-        const picked: ResumeVersion | undefined =
-            resumes.find((r) => r.isDefault) ?? resumes[0];
-
-        if (!picked) return null;
-
-        return {
+function pickDefaultResume(resumes?: ResumeVersion[] | null): DashboardResume | null {
+    if (!resumes?.length) return null;
+    const picked = resumes.find((r) => r.isDefault) ?? resumes[0];
+    return picked
+        ? {
             id: picked.id,
             title: picked.title,
             target: picked.target,
             note: picked.note,
             link: picked.link,
-        };
-    }, [resumes]);
+        }
+        : null;
+}
 
-    const handleOpenLink = async (link?: string) => {
-        if (!link) return;
+async function openExternalLink(url: string) {
+    const v = url.trim();
+    if (!v) return;
+
+    if (!/^https?:\/\//i.test(v)) {
+        console.warn("[DashboardDefaultResumeSection] invalid url:", v);
+        return;
+    }
+
+    const can = await Linking.canOpenURL(v);
+    if (!can) {
+        console.warn("[DashboardDefaultResumeSection] cannot open url:", v);
+        return;
+    }
+    await Linking.openURL(v);
+}
+
+export function DashboardDefaultResumeSection() {
+    const { user } = useAuth();
+    const userId = user?.uid ?? "app";
+
+    const { resumes, loading, error } = useResumesController(userId);
+    const defaultResume = useMemo(() => pickDefaultResume(resumes), [resumes]);
+
+    const handlePressLink = useCallback(async () => {
+        if (!defaultResume?.link) return;
         try {
-            await Linking.openURL(link);
+            await openExternalLink(defaultResume.link);
         } catch (e) {
             console.warn("[DashboardDefaultResumeSection] 링크 열기 실패:", e);
         }
-    };
+    }, [defaultResume?.link]);
 
-    return (
-        <SectionCard title="기본 이력서">
-            {loading ? (
-                // ⏳ 로딩 스켈레톤
-                <View style={styles.skeleton} />
-            ) : error ? (
-                // ⚠️ 에러
-                <Text style={styles.errorText}>{error}</Text>
-            ) : !defaultResume ? (
-                // 📭 기본 이력서 없음
-                <Text style={styles.emptyText}>
-                    아직 기본 이력서가 설정되지 않았어요. 이력서 페이지에서 하나를
-                    기본으로 설정해 보세요.
+    let content: React.ReactNode;
+
+    if (loading) {
+        content = <View style={styles.skeleton} />;
+    } else if (error) {
+        content = <Text style={styles.errorText}>{error}</Text>;
+    } else if (!defaultResume) {
+        content = (
+            <Text style={styles.emptyText}>
+                아직 기본 이력서가 설정되지 않았어요. 이력서 페이지에서 하나를 기본으로 설정해 보세요.
+            </Text>
+        );
+    } else {
+        content = (
+            <View>
+                <Text style={styles.title} numberOfLines={1}>
+                    {defaultResume.title}
                 </Text>
-            ) : (
-                // ✅ 기본 이력서 정보
-                <View>
-                    <Text style={styles.title}>{defaultResume.title}</Text>
-                    <Text style={styles.target}>{defaultResume.target}</Text>
+                <Text style={styles.target} numberOfLines={1}>
+                    {defaultResume.target}
+                </Text>
 
-                    {defaultResume.note ? (
-                        <Text style={styles.note} numberOfLines={2}>
-                            {defaultResume.note}
-                        </Text>
-                    ) : null}
+                {!!defaultResume.note && (
+                    <Text style={styles.note} numberOfLines={2}>
+                        {defaultResume.note}
+                    </Text>
+                )}
 
-                    {defaultResume.link ? (
-                        <Text
-                            style={styles.link}
-                            numberOfLines={1}
-                            onPress={() => handleOpenLink(defaultResume.link)}
-                        >
-                            {defaultResume.link}
-                        </Text>
-                    ) : null}
-                </View>
-            )}
-        </SectionCard>
-    );
+                {!!defaultResume.link && (
+                    <Text style={styles.link} numberOfLines={1} onPress={handlePressLink}>
+                        {defaultResume.link}
+                    </Text>
+                )}
+            </View>
+        );
+    }
+
+    return <SectionCard title="기본 이력서">{content}</SectionCard>;
 }
 
 const styles = StyleSheet.create({
     skeleton: {
         height: 64,
-        borderRadius: 12,
-        backgroundColor: "#fff1f2", // rose-50
+        borderRadius: radius.md,
+        backgroundColor: colors.bg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     errorText: {
         fontSize: 12,
-        color: "#e11d48", // rose-600
+        color: "#e11d48",
         fontWeight: "700",
     },
 
     emptyText: {
-        fontSize: 13,
-        color: "#fb7185", // rose-400
+        fontSize: font.body,
+        color: colors.placeholder,
     },
 
     title: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "700",
-        color: "#9f1239", // rose-800
+        color: colors.text,
         marginBottom: 2,
     },
 
     target: {
         fontSize: 12,
-        color: "#f43f5e", // rose-500
+        color: colors.accent,
         marginBottom: 6,
     },
 
     note: {
         fontSize: 12,
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        color: colors.text,
         marginBottom: 4,
     },
 
     link: {
         fontSize: 12,
-        color: "#f43f5e", // rose-500
+        color: colors.accent,
         textDecorationLine: "underline",
     },
 });

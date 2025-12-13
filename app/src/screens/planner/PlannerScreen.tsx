@@ -1,16 +1,15 @@
 // app/screens/planner/PlannerScreen.tsx
-
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-    ScrollView,
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    Pressable,
-    KeyboardAvoidingView,
-    Platform,
     Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
@@ -23,177 +22,245 @@ import { useApplications } from "../../features/applications/useApplications";
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
 import type { PlannerTaskWithLabel } from "../../components/planner/PlannerTaskItem";
 
-// ✅ deadline 파싱 (YYYY-MM-DD -> ms)
-function parseDeadlineMs(deadline?: string | null): number | null {
-    if (!deadline) return null;
-    const [y, m, d] = deadline.split("-").map((v) => Number(v));
-    if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d).getTime();
-}
-
-// ✅ 오늘 00:00(ms)
-function getStartOfTodayMs(): number {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-}
+// ✅ 테마 토큰 import (경로만 맞춰줘)
+import { colors, space, radius, font } from "../../styles/theme";
 
 type PlannerTaskMaybeDeadline = PlannerTask & { deadline?: string | null };
 type ApplicationRowMaybePosition = ApplicationRow & { position?: string };
 
+function parseDeadlineMs(deadline?: string | null): number | null {
+    if (!deadline) return null;
+    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+}
+
+function getStartOfTodayMs(): number {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+}
+
+function buildApplicationLabelMap(applications?: ApplicationRow[]): Record<string, string> {
+    const map: Record<string, string> = {};
+    (applications ?? []).forEach((raw) => {
+        const app = raw as ApplicationRowMaybePosition;
+        const company = app.company ?? "";
+        const position = app.position ?? app.role ?? "";
+        map[app.id] = position ? `${company} · ${position}` : company;
+    });
+    return map;
+}
+
+function buildApplicationOptions(applications: ApplicationRow[] | undefined, labelMap: Record<string, string>) {
+    return (applications ?? []).map((raw) => {
+        const app = raw as ApplicationRowMaybePosition;
+        const position = app.position ?? app.role ?? "";
+        return {
+            value: app.id,
+            label: labelMap[app.id] ?? (position ? `${app.company} · ${position}` : app.company) ?? "",
+        };
+    });
+}
+
+function bucketTasksByDeadlineOrScope(params: {
+    todayTasks?: PlannerTask[];
+    weekTasks?: PlannerTask[];
+    labelMap: Record<string, string>;
+}) {
+    const { todayTasks, weekTasks, labelMap } = params;
+
+    const all: PlannerTaskMaybeDeadline[] = [...(todayTasks ?? []), ...(weekTasks ?? [])] as PlannerTaskMaybeDeadline[];
+
+    const startOfTodayMs = getStartOfTodayMs();
+
+    const todayBucket: PlannerTaskWithLabel[] = [];
+    const futureBucket: PlannerTaskWithLabel[] = [];
+
+    for (const t of all) {
+        const deadline = t.deadline ?? null;
+        const dueMs = parseDeadlineMs(deadline);
+
+        const applicationLabel = t.applicationId ? labelMap[t.applicationId] ?? null : null;
+
+        const withLabel: PlannerTaskWithLabel = {
+            ...(t as PlannerTask),
+            deadline,
+            applicationLabel,
+        };
+
+        if (dueMs !== null) {
+            if (dueMs > startOfTodayMs) futureBucket.push(withLabel);
+            else todayBucket.push(withLabel);
+        } else {
+            if (t.scope === "week") futureBucket.push(withLabel);
+            else todayBucket.push(withLabel);
+        }
+    }
+
+    return { todayTasksWithLabel: todayBucket, futureTasksWithLabel: futureBucket };
+}
+
+type CreateTaskSheetProps = {
+    open: boolean;
+    saving: boolean;
+    onClose: () => void;
+    onSubmit: () => void;
+
+    title: string;
+    scope: PlannerScope;
+    deadline: string | null;
+    applicationId: string;
+    applicationOptions: { value: string; label: string }[];
+
+    onTitleChange: (v: string) => void;
+    onScopeChange: (v: PlannerScope) => void;
+    onDeadlineChange: (v: string | null) => void;
+    onApplicationChange: (id: string) => void;
+};
+
+function CreateTaskSheet({
+                             open,
+                             saving,
+                             onClose,
+                             onSubmit,
+
+                             title,
+                             scope,
+                             deadline,
+                             applicationId,
+                             applicationOptions,
+
+                             onTitleChange,
+                             onScopeChange,
+                             onDeadlineChange,
+                             onApplicationChange,
+                         }: CreateTaskSheetProps) {
+    return (
+        <Modal
+            visible={open}
+            transparent
+            animationType="slide"
+            presentationStyle="overFullScreen"
+            statusBarTranslucent
+            onRequestClose={onClose}
+        >
+            <KeyboardAvoidingView
+                style={styles.sheetRoot}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+            >
+                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+
+                <View style={styles.modalCard}>
+                    <View style={styles.sheetHandle} />
+
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>새 할 일 추가</Text>
+                        <Pressable onPress={onClose} hitSlop={10}>
+                            <Text style={styles.modalClose}>✕</Text>
+                        </Pressable>
+                    </View>
+
+                    <ScrollView
+                        style={styles.modalBody}
+                        contentContainerStyle={styles.modalBodyContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+                        nestedScrollEnabled
+                        automaticallyAdjustKeyboardInsets
+                    >
+                        <PlannerNewTaskForm
+                            title={title}
+                            scope={scope}
+                            deadline={deadline}
+                            saving={saving}
+                            applicationId={applicationId}
+                            applicationOptions={applicationOptions}
+                            onTitleChange={onTitleChange}
+                            onScopeChange={onScopeChange}
+                            onDeadlineChange={onDeadlineChange}
+                            onApplicationChange={onApplicationChange}
+                            onSubmit={onSubmit}
+                        />
+                    </ScrollView>
+                </View>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
+
 export function PlannerScreen() {
-    // 폼 입력용 로컬 상태
     const [newTitle, setNewTitle] = useState("");
     const [newScope, setNewScope] = useState<PlannerScope>("today");
-
-    // ✅ 신규: 마감일(YYYY-MM-DD). null이면 마감일 없음
     const [newDeadline, setNewDeadline] = useState<string | null>(null);
-
-    // 공고 선택: "" = 선택 안 함
     const [newApplicationId, setNewApplicationId] = useState<string>("");
 
-    // ✅ Create Modal
     const [createOpen, setCreateOpen] = useState(false);
-
     const openCreate = useCallback(() => setCreateOpen(true), []);
     const closeCreate = useCallback(() => setCreateOpen(false), []);
 
-    // 플래너 비즈니스 로직
-    const {
-        todayTasks,
-        weekTasks,
-        loading,
-        saving,
-        createTask,
-        toggleTask,
-        deleteTaskById,
-    } = usePlanner();
-
-    // 지원 내역 공통 훅
+    const { todayTasks, weekTasks, loading, saving, createTask, toggleTask, deleteTaskById } = usePlanner();
     const { applications } = useApplications();
 
-    // 공고 id → "회사 · 직무" 라벨 맵
-    const applicationLabelMap = useMemo<Record<string, string>>(() => {
-        const map: Record<string, string> = {};
+    const applicationLabelMap = useMemo(() => buildApplicationLabelMap(applications), [applications]);
 
-        (applications ?? []).forEach((raw) => {
-            const app = raw as ApplicationRowMaybePosition;
-            const company = app.company ?? "";
-            const position = app.position ?? app.role ?? "";
-            map[app.id] = position ? `${company} · ${position}` : company;
-        });
-
-        return map;
-    }, [applications]);
-
-    // 셀렉트용 옵션
     const applicationOptions = useMemo(
-        () =>
-            (applications ?? []).map((raw) => {
-                const app = raw as ApplicationRowMaybePosition;
-                const position = app.position ?? app.role ?? "";
-                return {
-                    value: app.id,
-                    label:
-                        applicationLabelMap[app.id] ??
-                        (position ? `${app.company} · ${position}` : app.company) ??
-                        "",
-                };
-            }),
+        () => buildApplicationOptions(applications, applicationLabelMap),
         [applications, applicationLabelMap],
     );
 
-    /**
-     * ✅ 화면 표시용 버킷 재분류
-     * - deadline이 있으면: 미래(>오늘 00:00)면 앞으로의 계획, 아니면 오늘 할 일
-     * - deadline이 없으면: 기존 scope로 판단 (week=앞으로, today=오늘)
-     */
     const { todayTasksWithLabel, futureTasksWithLabel } = useMemo(() => {
-        const all: PlannerTaskMaybeDeadline[] = [
-            ...(todayTasks ?? []),
-            ...(weekTasks ?? []),
-        ] as PlannerTaskMaybeDeadline[];
-
-        const startOfTodayMs = getStartOfTodayMs();
-
-        const todayBucket: PlannerTaskWithLabel[] = [];
-        const futureBucket: PlannerTaskWithLabel[] = [];
-
-        for (const t of all) {
-            const deadline = t.deadline ?? null;
-            const dueMs = parseDeadlineMs(deadline);
-
-            const applicationLabel = t.applicationId
-                ? applicationLabelMap[t.applicationId] ?? null
-                : null;
-
-            const withLabel: PlannerTaskWithLabel = {
-                ...(t as PlannerTask),
-                ...(deadline !== null ? { deadline } : { deadline: null }),
-                applicationLabel,
-            } as PlannerTaskWithLabel;
-
-            if (dueMs !== null) {
-                if (dueMs > startOfTodayMs) futureBucket.push(withLabel);
-                else todayBucket.push(withLabel);
-            } else {
-                if (t.scope === "week") futureBucket.push(withLabel);
-                else todayBucket.push(withLabel);
-            }
-        }
-
-        return {
-            todayTasksWithLabel: todayBucket,
-            futureTasksWithLabel: futureBucket,
-        };
+        return bucketTasksByDeadlineOrScope({
+            todayTasks,
+            weekTasks,
+            labelMap: applicationLabelMap,
+        });
     }, [todayTasks, weekTasks, applicationLabelMap]);
 
-    // 추가
-    const handleAddTask = useCallback(async (): Promise<void> => {
-        const trimmed = newTitle.trim();
-        if (!trimmed) return;
-
-        await createTask({
-            title: trimmed,
-            scope: newScope,
-            deadline: newDeadline,
-            applicationId: newApplicationId || undefined,
-        });
-
+    const resetForm = useCallback(() => {
         setNewTitle("");
         setNewScope("today");
         setNewDeadline(null);
         setNewApplicationId("");
-    }, [newTitle, newScope, newDeadline, newApplicationId, createTask]);
+    }, []);
 
-    // ✅ 모달에서 저장 → 성공하면 닫기
-    const handleAddTaskFromModal = useCallback(async () => {
-        const trimmed = newTitle.trim();
-        if (!trimmed) return;
+    const canSubmit = useMemo(() => newTitle.trim().length > 0, [newTitle]);
+
+    const handleSubmit = useCallback(async () => {
+        if (!canSubmit) return;
 
         try {
-            await handleAddTask();
+            await createTask({
+                title: newTitle.trim(),
+                scope: newScope,
+                deadline: newDeadline,
+                applicationId: newApplicationId || undefined,
+            });
+
+            resetForm();
             setCreateOpen(false);
         } catch (e) {
             console.error(e);
             Alert.alert("저장 실패", "할 일을 저장하는 중 문제가 발생했습니다.");
         }
-    }, [handleAddTask, newTitle]);
+    }, [canSubmit, createTask, newTitle, newScope, newDeadline, newApplicationId, resetForm]);
 
-    const handleToggleTask = async (id: string): Promise<void> => {
+    const handleToggleTask = useCallback(async (id: string) => {
         await toggleTask(id);
-    };
+    }, [toggleTask]);
 
-    const handleDeleteTask = async (id: string): Promise<void> => {
+    const handleDeleteTask = useCallback(async (id: string) => {
         await deleteTaskById(id);
-    };
+    }, [deleteTaskById]);
 
     return (
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
-            scrollEnabled={!createOpen} // ✅ 모달 열리면 배경 스크롤 차단
+            scrollEnabled={!createOpen}
+            showsVerticalScrollIndicator={false}
         >
-            {/* header */}
             <View style={styles.header}>
                 <View style={styles.headerTopRow}>
                     <Text style={styles.title}>플래너</Text>
@@ -208,12 +275,9 @@ export function PlannerScreen() {
                     </Pressable>
                 </View>
 
-                <Text style={styles.subtitle}>
-                    오늘 할 일과 앞으로의 계획을 마감일 기준으로 정리해요.
-                </Text>
+                <Text style={styles.subtitle}>오늘 할 일과 앞으로의 계획을 마감일 기준으로 정리해요.</Text>
             </View>
 
-            {/* 오늘 */}
             <View style={styles.section}>
                 <PlannerTaskSection
                     title="오늘 할 일"
@@ -225,7 +289,6 @@ export function PlannerScreen() {
                 />
             </View>
 
-            {/* 앞으로 */}
             <View style={styles.section}>
                 <PlannerTaskSection
                     title="앞으로의 계획"
@@ -237,58 +300,21 @@ export function PlannerScreen() {
                 />
             </View>
 
-            {/* ✅ create modal */}
-            <Modal
-                visible={createOpen}
-                transparent
-                animationType="slide"
-                presentationStyle="overFullScreen"
-                statusBarTranslucent
-                onRequestClose={closeCreate}
-            >
-                <KeyboardAvoidingView
-                    style={styles.sheetRoot}
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-                >
-                    {/* backdrop */}
-                    <Pressable style={styles.sheetBackdrop} onPress={closeCreate} />
-
-                    {/* bottom sheet */}
-                    <View style={styles.modalCard}>
-                        <View style={styles.sheetHandle} />
-
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>새 할 일 추가</Text>
-                            <Pressable onPress={closeCreate} hitSlop={10}>
-                                <Text style={styles.modalClose}>✕</Text>
-                            </Pressable>
-                        </View>
-
-                        <ScrollView
-                            style={styles.modalBody}
-                            contentContainerStyle={styles.modalBodyContent}
-                            showsVerticalScrollIndicator={false}
-                            keyboardShouldPersistTaps="handled"
-                            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-                        >
-                            <PlannerNewTaskForm
-                                title={newTitle}
-                                scope={newScope}
-                                deadline={newDeadline}
-                                applicationId={newApplicationId}
-                                applicationOptions={applicationOptions}
-                                saving={saving}
-                                onTitleChange={setNewTitle}
-                                onScopeChange={setNewScope}
-                                onDeadlineChange={setNewDeadline}
-                                onApplicationChange={(id) => setNewApplicationId(id ?? "")} // ✅ null 방어
-                                onSubmit={handleAddTaskFromModal}
-                            />
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+            <CreateTaskSheet
+                open={createOpen}
+                saving={saving}
+                onClose={closeCreate}
+                onSubmit={handleSubmit}
+                title={newTitle}
+                scope={newScope}
+                deadline={newDeadline}
+                applicationId={newApplicationId}
+                applicationOptions={applicationOptions}
+                onTitleChange={setNewTitle}
+                onScopeChange={setNewScope}
+                onDeadlineChange={setNewDeadline}
+                onApplicationChange={(id) => setNewApplicationId(id ?? "")}
+            />
         </ScrollView>
     );
 }
@@ -296,83 +322,77 @@ export function PlannerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
     },
     content: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.lg,
     },
     section: {
-        marginBottom: 16,
+        marginBottom: space.lg,
     },
 
-    header: {
-        marginBottom: 16,
-    },
+    header: { marginBottom: space.lg },
     headerTopRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
     title: {
-        fontSize: 20,
+        fontSize: font.h1,
         fontWeight: "800",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     subtitle: {
-        marginTop: 6,
-        fontSize: 13,
-        color: "#9f1239", // rose-800
+        marginTop: space.sm,
+        fontSize: font.body,
+        color: colors.text,
         opacity: 0.65,
     },
 
-    // ✅ 포인트 버튼: rose-500
     addBtn: {
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        backgroundColor: "#f43f5e", // rose-500
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 999,
+        borderColor: colors.border,
+        backgroundColor: colors.accent,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md - 4, // 기존 8 느낌 유지
+        borderRadius: radius.pill,
     },
-    addBtnPressed: {
-        backgroundColor: "#fb7185", // rose-400
-    },
+    addBtnPressed: { backgroundColor: colors.placeholder },
     addBtnText: {
-        fontSize: 12,
+        fontSize: font.small + 1,
         fontWeight: "900",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
-    // modal
     sheetRoot: {
         flex: 1,
         justifyContent: "flex-end",
-        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
+        backgroundColor: colors.overlay,
     },
-    sheetBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
+    sheetBackdrop: { ...StyleSheet.absoluteFillObject },
+
     sheetHandle: {
         alignSelf: "center",
         width: 44,
         height: 4,
-        borderRadius: 999,
-        backgroundColor: "#fecdd3", // rose-200
-        marginBottom: 10,
+        borderRadius: radius.pill,
+        backgroundColor: colors.border,
+        marginBottom: space.md,
     },
+
     modalCard: {
         width: "100%",
         height: "80%",
         maxHeight: "92%",
-        backgroundColor: "#fff1f2", // rose-50
-        borderTopLeftRadius: 18,
-        borderTopRightRadius: 18,
+        backgroundColor: colors.bg,
+        borderTopLeftRadius: radius.lg,
+        borderTopRightRadius: radius.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        paddingHorizontal: 16,
-        paddingTop: 10,
-        paddingBottom: 10,
+        borderColor: colors.border,
+        paddingHorizontal: space.lg,
+        paddingTop: space.md,
+        paddingBottom: space.md,
 
         shadowColor: "#000",
         shadowOpacity: 0.18,
@@ -384,22 +404,18 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 10,
+        marginBottom: space.md,
     },
     modalTitle: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "900",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
     modalClose: {
         fontSize: 18,
-        color: "#fb7185", // rose-400
+        color: colors.placeholder,
         fontWeight: "900",
     },
-    modalBody: {
-        flex: 1,
-    },
-    modalBodyContent: {
-        paddingBottom: 60,
-    },
+    modalBody: { flex: 1 },
+    modalBodyContent: { paddingBottom: space.lg * 3 + 12 },
 });

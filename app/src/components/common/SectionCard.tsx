@@ -1,6 +1,4 @@
-// app/src/components/common/SectionCard.tsx
-import type { ReactNode } from "react";
-import React from "react";
+import React, { type ReactNode } from "react";
 import {
     View,
     Text,
@@ -10,20 +8,34 @@ import {
     type ViewStyle,
 } from "react-native";
 
+import { colors, radius, space } from "../../styles/theme";
+
 type SectionCardProps = {
     title: string;
     children: ReactNode;
-    /** 카드 전체 스타일 커스터마이즈용 */
     style?: StyleProp<ViewStyle>;
-    /** 우측 상단 액션 버튼/필터 등 */
     actions?: ReactNode;
 };
+
+const CARD_SHADOW = Platform.select({
+    ios: {
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 6 },
+    },
+    android: { elevation: 2 },
+    default: {},
+});
 
 export function SectionCard({ title, children, style, actions }: SectionCardProps) {
     return (
         <View style={[styles.card, style]}>
             <View style={styles.header}>
-                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.title} numberOfLines={1}>
+                    {title}
+                </Text>
+
                 {actions ? <View style={styles.actions}>{actions}</View> : null}
             </View>
 
@@ -34,46 +46,36 @@ export function SectionCard({ title, children, style, actions }: SectionCardProp
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#fff1f2", // rose-50
-        borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        marginBottom: 16,
         width: "100%",
-        ...Platform.select({
-            ios: {
-                shadowColor: "#000",
-                shadowOpacity: 0.10,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 6 },
-            },
-            android: {
-                elevation: 2,
-            },
-            default: {},
-        }),
+
+        backgroundColor: colors.bg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: radius.lg,
+
+        paddingHorizontal: space.lg,
+        paddingVertical: space.lg,
+        marginBottom: space.lg,
+
+        ...(CARD_SHADOW as object),
     },
 
     header: {
-        marginBottom: 8,
+        marginBottom: space.sm,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        gap: space.sm,
     },
 
     title: {
+        flex: 1,
         fontSize: 16,
         fontWeight: "700",
-        color: "#9f1239", // rose-800 (필요할 때만 진하게)
+        color: colors.text,
     },
 
-    actions: {
-        marginLeft: 8,
-    },
+    actions: { flexShrink: 0 },
 
-    body: {
-        marginTop: 4,
-    },
+    body: { marginTop: space.xs },
 });

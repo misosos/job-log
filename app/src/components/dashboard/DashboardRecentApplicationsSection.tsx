@@ -1,104 +1,130 @@
-// app/src/components/dashboard/DashboardRecentApplicationsSection.tsx
 import React, { useMemo } from "react";
-import {
-    View,
-    Text,
-    StyleSheet,
-    ActivityIndicator,
-    Pressable,
-} from "react-native";
-import type { Timestamp } from "firebase/firestore";
-
+import { View, Text, StyleSheet, ActivityIndicator, Pressable } from "react-native";
 import { SectionCard } from "../common/SectionCard";
 import { useApplications } from "../../features/applications/useApplications";
-import type {
-    ApplicationRow,
-    ApplicationStatus,
-} from "../../../../shared/features/applications/types";
+import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
+import type { ApplicationRow } from "../../../../shared/features/applications/types";
+import { colors, font, radius } from "../../styles/theme";
 
-// 마감일 라벨 포맷
-function formatDeadlineLabel(deadline?: Timestamp | null): string {
-    if (!deadline) return "마감일 없음";
-    const date = deadline.toDate();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${month}.${day} 마감`;
+// -----------------------------
+// date utils (Timestamp/Date/string 모두 지원)
+// -----------------------------
+type DateLike = unknown;
+type TimestampLike = { toDate: () => Date };
+
+function isTimestampLike(v: unknown): v is TimestampLike {
+    return (
+        typeof v === "object" &&
+        v !== null &&
+        "toDate" in v &&
+        typeof (v as { toDate?: unknown }).toDate === "function"
+    );
 }
 
-// 상태별 색상
-function getStatusColor(status: ApplicationStatus): string {
-    switch (status) {
-        case "지원 예정":
-            return "#9ca3af";
-        case "서류 제출":
-            return "#38bdf8";
-        case "서류 통과":
-            return "#a855f7";
-        case "면접 진행":
-            return "#f97316";
-        case "최종 합격":
-            return "#22c55e";
-        case "불합격":
-            return "#f87171";
-        default:
-            return "#9ca3af";
+function toDate(value: DateLike): Date | null {
+    if (!value) return null;
+
+    if (value instanceof Date) return value;
+    if (isTimestampLike(value)) return value.toDate();
+
+    if (typeof value === "string") {
+        const v = value.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+        const [y, m, d] = v.split("-").map(Number);
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
     }
+
+    return null;
+}
+
+function formatMd(value: DateLike): string {
+    const d = toDate(value);
+    if (!d) return "";
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${mm}.${dd}`;
+}
+
+// -----------------------------
+// row helpers
+// -----------------------------
+type ApplicationRowExtended = ApplicationRow & {
+    position?: string;
+    role?: string;
+
+    docDeadline?: unknown; // 신규
+    interviewAt?: unknown; // 신규
+    finalResultAt?: unknown; // 신규
+
+    deadline?: unknown; // 레거시(=서류마감 취급)
+};
+
+type ScheduleKind = "서류" | "면접" | "최종";
+
+function pickMainSchedule(ext: ApplicationRowExtended): { kind: ScheduleKind; date: DateLike } | null {
+    const doc = ext.docDeadline ?? ext.deadline ?? null;
+    const interview = ext.interviewAt ?? null;
+    const finalR = ext.finalResultAt ?? null;
+
+    if (toDate(doc)) return { kind: "서류", date: doc };
+    if (toDate(interview)) return { kind: "면접", date: interview };
+    if (toDate(finalR)) return { kind: "최종", date: finalR };
+    return null;
+}
+
+function getPositionLabel(ext: ApplicationRowExtended): string {
+    return (ext.position ?? "").trim() || (ext.role ?? "").trim() || "직무 미입력";
+}
+
+function getCompanyLabel(company?: string): string {
+    return (company ?? "").trim() || "회사명 미입력";
 }
 
 export function DashboardRecentApplicationsSection() {
-    // ✅ 훅이 0인자라서 인자 없이 호출
     const { applications, loading } = useApplications();
 
-    const items: ApplicationRow[] = useMemo(
-        () => applications.slice(0, 5),
-        [applications],
-    );
+    const items = useMemo(() => applications.slice(0, 5), [applications]);
 
     return (
         <SectionCard title="최근 지원 내역">
             {loading ? (
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator color="#10b981" />
+                    <ActivityIndicator color={colors.accent} />
                 </View>
             ) : items.length === 0 ? (
-                <Text style={styles.emptyText}>
-                    아직 최근 지원 내역이 없어요. 첫 지원을 기록해 보세요.
-                </Text>
+                <Text style={styles.emptyText}>아직 최근 지원 내역이 없어요. 첫 지원을 기록해 보세요.</Text>
             ) : (
                 <View style={styles.listContainer}>
-                    {items.map((item) => {
-                        const deadlineTs =
-                            (item.deadline as Timestamp | null | undefined) ?? null;
-                        const deadlineLabel = formatDeadlineLabel(deadlineTs);
+                    {items.map((row) => {
+                        const ext = row as ApplicationRowExtended;
+
+                        const mainSchedule = pickMainSchedule(ext);
+                        const dateText = mainSchedule ? formatMd(mainSchedule.date) : "";
+                        const scheduleLabel = mainSchedule ? `${mainSchedule.kind} ${dateText}` : "일정 없음";
 
                         return (
                             <Pressable
-                                key={item.id}
-                                style={({ pressed }) => [
-                                    styles.itemRow,
-                                    pressed && styles.itemRowPressed,
-                                ]}
+                                key={row.id}
+                                style={({ pressed }) => [styles.itemRow, pressed && styles.itemRowPressed]}
                             >
                                 <View style={styles.itemMain}>
                                     <Text style={styles.companyText} numberOfLines={1}>
-                                        {item.company || "회사명 미입력"}
+                                        {getCompanyLabel(row.company)}
                                     </Text>
+
                                     <Text style={styles.roleText} numberOfLines={1}>
-                                        {item.role || "직무 미입력"}
+                                        {getPositionLabel(ext)}
                                     </Text>
-                                    <Text
-                                        style={[
-                                            styles.statusText,
-                                            { color: getStatusColor(item.status) },
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {item.status}
-                                    </Text>
+
+                                    <View style={styles.badgeRow}>
+                                        <ApplicationStatusBadge status={row.status as any} />
+                                    </View>
                                 </View>
+
                                 <View style={styles.deadlineBox}>
                                     <Text style={styles.deadlineText} numberOfLines={1}>
-                                        {deadlineLabel}
+                                        {scheduleLabel}
                                     </Text>
                                 </View>
                             </Pressable>
@@ -118,8 +144,8 @@ const styles = StyleSheet.create({
     },
 
     emptyText: {
-        fontSize: 13,
-        color: "#fb7185", // rose-400
+        fontSize: font.body,
+        color: colors.placeholder,
     },
 
     listContainer: { marginTop: 4 },
@@ -130,10 +156,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 12,
         paddingVertical: 10,
-        borderRadius: 10,
-        backgroundColor: "#fff1f2", // rose-50
+        borderRadius: radius.md,
+        backgroundColor: colors.bg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
         marginBottom: 8,
     },
 
@@ -143,37 +169,36 @@ const styles = StyleSheet.create({
 
     companyText: {
         fontSize: 14,
-        fontWeight: "700",
-        color: "#9f1239", // rose-800
+        fontWeight: "800",
+        color: colors.text,
     },
 
     roleText: {
         marginTop: 2,
         fontSize: 12,
-        color: "#be123c", // rose-700
+        color: colors.textSub,
+        fontWeight: "700",
     },
 
-    statusText: {
-        marginTop: 4,
-        fontSize: 11,
-        fontWeight: "600",
-        color: "#f43f5e", // rose-500 (포인트)
+    badgeRow: {
+        marginTop: 6,
+        flexDirection: "row",
     },
 
     deadlineBox: {
         paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: 999,
-        backgroundColor: "#ffe4e6", // rose-100
+        borderRadius: radius.pill,
+        backgroundColor: colors.section,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        maxWidth: 90,
+        borderColor: colors.border,
+        maxWidth: 110,
     },
 
     deadlineText: {
-        fontSize: 11,
-        color: "#f43f5e", // rose-500
+        fontSize: font.small,
+        color: colors.accent,
         textAlign: "right",
-        fontWeight: "700",
+        fontWeight: "800",
     },
 });

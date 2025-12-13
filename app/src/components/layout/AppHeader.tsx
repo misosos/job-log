@@ -1,25 +1,17 @@
-// app/src/components/layout/AppHeader.tsx
-import React, { useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    Platform,
-    ScrollView,
-    Modal,
-    TouchableWithoutFeedback,
-} from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { signOut } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 
-// ✅ 앱 전용 Firebase / AuthContext 사용 (web 폴더 참조 X)
 import { auth } from "../../libs/firebase";
 import { useAuth } from "../../libs/auth-context";
+import { colors,space } from "../../styles/theme";
 
-// App.tsx 에서 쓰는 스택 이름과 맞춰야 함
+import { NavTab, type NavItem } from "./NavTab";
+import { AccountMenuModal } from "./AccountMenuModal";
+
 type RootStackParamList = {
     Dashboard: undefined;
     Applications: undefined;
@@ -30,13 +22,9 @@ type RootStackParamList = {
 };
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
+type RouteName = keyof RootStackParamList;
 
-type NavItem = {
-    label: string;
-    routeName: keyof RootStackParamList;
-};
-
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: NavItem<RouteName>[] = [
     { label: "지원 현황", routeName: "Applications" },
     { label: "플래너", routeName: "Planner" },
     { label: "이력서", routeName: "Resumes" },
@@ -46,121 +34,84 @@ const NAV_ITEMS: NavItem[] = [
 export function AppHeader() {
     const navigation = useNavigation<NavProp>();
     const route = useRoute();
-    const { user } = useAuth(); // ✅ 컨텍스트에서 로그인 유저 읽기
-    const [menuVisible, setMenuVisible] = useState(false);
+    const { user } = useAuth();
 
-    // 유저가 없어지면(로그아웃) 메뉴 자동 닫기
+    const [menuVisible, setMenuVisible] = useState(false);
+    const currentRouteName = route.name as RouteName;
+
     useEffect(() => {
-        if (!user) {
-            setMenuVisible(false);
-        }
+        if (!user) setMenuVisible(false);
     }, [user]);
 
-    const currentRouteName = route.name as keyof RootStackParamList;
+    const closeMenu = useCallback(() => setMenuVisible(false), []);
+    const toggleMenu = useCallback(() => setMenuVisible((prev) => !prev), []);
 
-    const toggleMenu = () => {
-        setMenuVisible((prev) => !prev);
-    };
+    const handleLogoPress = useCallback(() => {
+        navigation.navigate("Dashboard");
+    }, [navigation]);
 
-    const closeMenu = () => {
-        setMenuVisible(false);
-    };
+    const handleNavigate = useCallback(
+        (name: RouteName) => {
+            navigation.navigate(name);
+        },
+        [navigation],
+    );
 
-    const handleSignOut = async () => {
+    const handleSignOut = useCallback(async () => {
         try {
             await signOut(auth);
             setMenuVisible(false);
-            navigation.reset({
-                index: 0,
-                routes: [{ name: "Login" }],
-            });
+            navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         } catch (error) {
             console.error("로그아웃 실패:", error);
         }
-    };
+    }, [navigation]);
 
-    const handleLogoPress = () => {
-        navigation.navigate("Dashboard");
-    };
-
-    const renderNavItem = (item: NavItem) => {
-        const isActive = currentRouteName === item.routeName;
-
-        return (
-            <TouchableOpacity
-                key={item.routeName}
-                onPress={() => navigation.navigate(item.routeName)}
-                style={styles.navItem}
-            >
-                <Text style={[styles.navText, isActive && styles.navTextActive]}>
-                    {item.label}
-                </Text>
-                {isActive && <View style={styles.navUnderline} />}
-            </TouchableOpacity>
-        );
-    };
+    const navItems = useMemo(() => NAV_ITEMS, []);
 
     return (
         <View style={styles.container}>
-            {/* 상단: 로고 + 유저정보/아바타 */}
+            {/* 상단: 로고 + 프로필 */}
             <View style={styles.topRow}>
-                <TouchableOpacity onPress={handleLogoPress}>
-                    <Text style={styles.logoText}>준로그</Text>
+                <TouchableOpacity onPress={handleLogoPress} accessibilityRole="button">
+                    <Text style={styles.logoText}>Job-Log</Text>
                 </TouchableOpacity>
 
-                {user && (
+                {!!user && (
                     <View style={styles.rightContainer}>
                         <TouchableOpacity
                             onPress={toggleMenu}
                             style={styles.profileButton}
                             activeOpacity={0.8}
+                            accessibilityRole="button"
+                            accessibilityLabel="계정 메뉴 열기"
                         >
-                            <Ionicons name="person" size={18} color="#e5e7eb" />
+                            <Ionicons name="person" size={18} color={colors.section} />
                         </TouchableOpacity>
                     </View>
                 )}
             </View>
 
-            {/* 하단: 네비게이션 탭 (가로 스크롤 가능) */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.navScroll}
-            >
-                {NAV_ITEMS.map(renderNavItem)}
+            {/* 하단: 네비 탭 */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navScroll}>
+                {navItems.map((item) => (
+                    <NavTab
+                        key={item.routeName}
+                        item={item}
+                        active={currentRouteName === item.routeName}
+                        onPress={handleNavigate}
+                    />
+                ))}
             </ScrollView>
 
-            {user && (
-                <Modal
+            {!!user && (
+                <AccountMenuModal
                     visible={menuVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={closeMenu}
-                >
-                    <TouchableWithoutFeedback onPress={closeMenu}>
-                        <View style={styles.menuOverlay}>
-                            <TouchableWithoutFeedback>
-                                <View style={styles.menuContainer}>
-                                    <View style={styles.menuHeader}>
-                                        <Text style={styles.menuName} numberOfLines={1}>
-                                            {user.displayName ?? "로그인 계정"}
-                                        </Text>
-                                        <Text style={styles.menuEmail} numberOfLines={1}>
-                                            {user.email}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.menuDivider} />
-                                    <TouchableOpacity
-                                        onPress={handleSignOut}
-                                        style={styles.menuItem}
-                                    >
-                                        <Text style={styles.menuItemText}>로그아웃</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </TouchableWithoutFeedback>
-                        </View>
-                    </TouchableWithoutFeedback>
-                </Modal>
+                    onClose={closeMenu}
+                    onLogout={handleSignOut}
+                    displayName={user.displayName ?? "로그인 계정"}
+                    email={user.email ?? ""}
+                />
             )}
         </View>
     );
@@ -169,12 +120,12 @@ export function AppHeader() {
 const styles = StyleSheet.create({
     container: {
         paddingTop: Platform.select({ ios: 32, android: 16 }),
-        paddingBottom: 6,
-        paddingHorizontal: 16,
-        backgroundColor: "#fff1f2", // rose-50
+        paddingBottom: space.sm - 2,
+        paddingHorizontal: space.lg,
+        backgroundColor: colors.bg,
         zIndex: 20,
         borderBottomWidth: 1,
-        borderBottomColor: "#fecdd3", // rose-200
+        borderBottomColor: colors.border,
     },
 
     topRow: {
@@ -186,7 +137,7 @@ const styles = StyleSheet.create({
     logoText: {
         fontSize: 18,
         fontWeight: "800",
-        color: "#f43f5e", // rose-500 (포인트)
+        color: colors.accent,
     },
 
     rightContainer: {
@@ -198,98 +149,16 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: "#fb7185", // rose-100
+        backgroundColor: colors.placeholder,
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        marginTop: Platform.select({ ios: 4, android: 8, default: 4 }),
+        borderColor: colors.border,
+        marginTop: Platform.select({ ios: space.xs, android: space.sm, default: space.xs }),
     },
 
     navScroll: {
-        marginTop: 8,
-        paddingBottom: 4,
-    },
-
-    navItem: {
-        marginRight: 16,
-        alignItems: "center",
-        paddingBottom: 2,
-    },
-
-    navText: {
-        fontSize: 13,
-        color: "#fb7185", // rose-400
-    },
-
-    navTextActive: {
-        color: "#f43f5e", // rose-500
-        fontWeight: "800",
-    },
-
-    navUnderline: {
-        marginTop: 2,
-        height: 2,
-        width: "100%",
-        backgroundColor: "#f43f5e", // rose-500
-        borderRadius: 999,
-    },
-
-    menuOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(244, 63, 94, 0.18)", // rose-500 overlay
-        alignItems: "flex-end",
-        justifyContent: "flex-start",
-        paddingTop: Platform.select({ ios: 72, android: 56, default: 56 }),
-        paddingRight: 16,
-    },
-
-    menuContainer: {
-        width: 220,
-        borderRadius: 12,
-        backgroundColor: "#fff1f2", // rose-50
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        marginRight: 4,
-        marginTop: 4,
-        borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        shadowColor: "#000",
-        shadowOpacity: 0.14,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 6,
-    },
-
-    menuHeader: {
-        paddingVertical: 4,
-    },
-
-    menuName: {
-        fontSize: 13,
-        fontWeight: "800",
-        color: "#9f1239", // rose-800
-    },
-
-    menuEmail: {
-        marginTop: 2,
-        fontSize: 11,
-        color: "#fb7185", // rose-400
-    },
-
-    menuDivider: {
-        height: 1,
-        backgroundColor: "#fecdd3", // rose-200
-        marginVertical: 8,
-    },
-
-    menuItem: {
-        paddingVertical: 6,
-    },
-
-    menuItemText: {
-        fontSize: 13,
-        color: "#9f1239", // rose-800
-        fontWeight: "600",
+        marginTop: space.sm,
+        paddingBottom: space.xs,
     },
 });

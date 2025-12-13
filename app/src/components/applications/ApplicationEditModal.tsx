@@ -1,18 +1,12 @@
-// app/src/components/applications/ApplicationEditModal.tsx
-import React, { useEffect, useState, useCallback } from "react";
-import {
-    Modal,
-    View,
-    Text,
-    Pressable,
-    StyleSheet,
-    TouchableOpacity,
-    Platform,
-} from "react-native";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { Modal, View, Text, Pressable, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import type { ApplicationStatus, ApplicationRow } from "../../../../shared/features/applications/types";
+
+// theme tokens (경로만 맞춰줘)
+import { colors, space, radius, font } from "../../styles/theme";
 
 type Props = {
     open: boolean;
@@ -46,16 +40,12 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
 // ---- Timestamp-like guard (no any) ----
 type TimestampLike = { toDate: () => Date };
 function isTimestampLike(v: unknown): v is TimestampLike {
-    return (
-        typeof v === "object" &&
-        v !== null &&
-        "toDate" in v &&
-        typeof (v as { toDate?: unknown }).toDate === "function"
-    );
+    return typeof v === "object" && v !== null && "toDate" in v && typeof (v as any).toDate === "function";
 }
 
 type DateLike = unknown;
 
+/** Date/Timestamp/string -> YYYY-MM-DD | null */
 function toYmd(value: DateLike): string | null {
     if (!value) return null;
 
@@ -64,9 +54,7 @@ function toYmd(value: DateLike): string | null {
         return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
     }
 
-    const date =
-        value instanceof Date ? value : isTimestampLike(value) ? value.toDate() : null;
-
+    const date = value instanceof Date ? value : isTimestampLike(value) ? value.toDate() : null;
     if (!date) return null;
 
     const yyyy = date.getFullYear();
@@ -75,11 +63,11 @@ function toYmd(value: DateLike): string | null {
     return `${yyyy}-${mm}-${dd}`;
 }
 
-function ymdToDate(ymd?: string | null): Date | null {
+function ymdToDateOrNow(ymd?: string | null): Date {
     const v = (ymd ?? "").trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return new Date();
     const [y, m, d] = v.split("-").map(Number);
-    if (!y || !m || !d) return null;
+    if (!y || !m || !d) return new Date();
     return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
@@ -90,7 +78,7 @@ function dateToYmd(date: Date): string {
     return `${y}-${m}-${d}`;
 }
 
-// ✅ 레거시/확장 필드도 안전하게 읽기 위한 확장 타입
+// 레거시/확장 필드도 안전하게 읽기 위한 확장 타입
 type ApplicationRowExtended = ApplicationRow & {
     position?: unknown;
 
@@ -108,14 +96,7 @@ type ApplicationRowExtended = ApplicationRow & {
 
 type PickerField = "appliedAt" | "docDeadline" | "interviewAt" | "finalResultAt";
 
-export function ApplicationEditModal({
-                                         open,
-                                         target,
-                                         saving,
-                                         error,
-                                         onClose,
-                                         onSave,
-                                     }: Props) {
+export function ApplicationEditModal({ open, target, saving, error, onClose, onSave }: Props) {
     const [status, setStatus] = useState<ApplicationStatus>("지원 예정");
 
     const [appliedAt, setAppliedAt] = useState<string | null>(null);
@@ -123,21 +104,94 @@ export function ApplicationEditModal({
     const [interviewAt, setInterviewAt] = useState<string | null>(null);
     const [finalResultAt, setFinalResultAt] = useState<string | null>(null);
 
-    // ✅ DatePicker controller
+    // DatePicker controller
     const [openField, setOpenField] = useState<PickerField | null>(null);
     const [tempDate, setTempDate] = useState<Date>(new Date());
 
+    const ext = target as ApplicationRowExtended | null;
+
+    // -----------------------------
+    //  init from target
+    // -----------------------------
     useEffect(() => {
-        const t = target as ApplicationRowExtended | null;
+        setStatus((ext?.status as ApplicationStatus) ?? "지원 예정");
 
-        setStatus((t?.status as ApplicationStatus) ?? "지원 예정");
+        setAppliedAt(toYmd(ext?.appliedAt ?? null));
+        setDocDeadline(toYmd(ext?.docDeadline ?? ext?.documentDeadline ?? ext?.deadline ?? null));
+        setInterviewAt(toYmd(ext?.interviewAt ?? ext?.interviewDate ?? null));
+        setFinalResultAt(toYmd(ext?.finalResultAt ?? ext?.finalResultDate ?? null));
+    }, [ext]);
 
-        setAppliedAt(toYmd(t?.appliedAt ?? null));
-        setDocDeadline(toYmd(t?.docDeadline ?? t?.documentDeadline ?? t?.deadline ?? null));
-        setInterviewAt(toYmd(t?.interviewAt ?? t?.interviewDate ?? null));
-        setFinalResultAt(toYmd(t?.finalResultAt ?? t?.finalResultDate ?? null));
-    }, [target]);
+    const positionLabel = useMemo(() => {
+        const p = typeof ext?.position === "string" ? ext?.position : "";
+        return (p ?? "").trim() || (target?.position ?? "").trim() || (target?.role ?? "").trim() || "";
+    }, [ext?.position, target?.position, target?.role]);
 
+    // -----------------------------
+    //  field value getter/setter
+    // -----------------------------
+    const getFieldValue = useCallback(
+        (field: PickerField) => {
+            if (field === "appliedAt") return appliedAt;
+            if (field === "docDeadline") return docDeadline;
+            if (field === "interviewAt") return interviewAt;
+            return finalResultAt;
+        },
+        [appliedAt, docDeadline, interviewAt, finalResultAt],
+    );
+
+    const setFieldValue = useCallback((field: PickerField, value: string | null) => {
+        if (field === "appliedAt") setAppliedAt(value);
+        if (field === "docDeadline") setDocDeadline(value);
+        if (field === "interviewAt") setInterviewAt(value);
+        if (field === "finalResultAt") setFinalResultAt(value);
+    }, []);
+
+    const clearFieldValue = useCallback(
+        (field: PickerField) => {
+            if (saving) return;
+            setFieldValue(field, null);
+        },
+        [saving, setFieldValue],
+    );
+
+    // -----------------------------
+    // picker open/close/commit
+    // -----------------------------
+    const openPicker = useCallback(
+        (field: PickerField) => {
+            if (saving) return;
+            setTempDate(ymdToDateOrNow(getFieldValue(field)));
+            setOpenField(field);
+        },
+        [saving, getFieldValue],
+    );
+
+    const closePicker = useCallback(() => setOpenField(null), []);
+
+    const commitDate = useCallback(
+        (field: PickerField, date: Date) => {
+            setFieldValue(field, dateToYmd(date));
+        },
+        [setFieldValue],
+    );
+
+    const onAndroidChange = useCallback(
+        (event: DateTimePickerEvent, selected?: Date) => {
+            if (event.type === "dismissed") {
+                closePicker();
+                return;
+            }
+            if (!openField) return;
+            commitDate(openField, selected ?? tempDate);
+            closePicker();
+        },
+        [openField, tempDate, commitDate, closePicker],
+    );
+
+    // -----------------------------
+    //  submit
+    // -----------------------------
     const handleSubmit = useCallback(() => {
         if (!target || saving) return;
 
@@ -149,92 +203,47 @@ export function ApplicationEditModal({
         });
     }, [target, saving, onSave, status, appliedAt, docDeadline, interviewAt, finalResultAt]);
 
-    const t = target as ApplicationRowExtended | null;
-    const positionLabel =
-        (typeof t?.position === "string" ? t.position : "") ||
-        target?.position ||
-        target?.role ||
-        "";
+    // -----------------------------
+    //  DateField component
+    // -----------------------------
+    const DateField = useCallback(
+        ({ label, field }: { label: string; field: PickerField }) => {
+            const display = (getFieldValue(field) ?? "").trim();
 
-    const openPicker = useCallback(
-        (field: PickerField) => {
-            if (saving) return;
+            return (
+                <View style={styles.gridItem}>
+                    <View style={styles.dateLabelRow}>
+                        <Text style={styles.label}>{label}</Text>
+                        {!!display && (
+                            <Pressable onPress={() => clearFieldValue(field)} disabled={saving} hitSlop={8}>
+                                <Text style={styles.clearText}>지우기</Text>
+                            </Pressable>
+                        )}
+                    </View>
 
-            const currentYmd =
-                field === "appliedAt"
-                    ? appliedAt
-                    : field === "docDeadline"
-                        ? docDeadline
-                        : field === "interviewAt"
-                            ? interviewAt
-                            : finalResultAt;
-
-            setTempDate(ymdToDate(currentYmd) ?? new Date());
-            setOpenField(field);
-        },
-        [saving, appliedAt, docDeadline, interviewAt, finalResultAt],
-    );
-
-    const closePicker = useCallback(() => setOpenField(null), []);
-
-    const commitDate = useCallback((field: PickerField, date: Date) => {
-        const ymd = dateToYmd(date);
-        if (field === "appliedAt") setAppliedAt(ymd);
-        if (field === "docDeadline") setDocDeadline(ymd);
-        if (field === "interviewAt") setInterviewAt(ymd);
-        if (field === "finalResultAt") setFinalResultAt(ymd);
-    }, []);
-
-    const clearDate = useCallback((field: PickerField) => {
-        if (saving) return;
-        if (field === "appliedAt") setAppliedAt(null);
-        if (field === "docDeadline") setDocDeadline(null);
-        if (field === "interviewAt") setInterviewAt(null);
-        if (field === "finalResultAt") setFinalResultAt(null);
-    }, [saving]);
-
-    const onAndroidChange = useCallback(
-        (event: DateTimePickerEvent, selected?: Date) => {
-            if (event.type === "dismissed") {
-                closePicker();
-                return;
-            }
-            if (!openField) return;
-            const picked = selected ?? tempDate;
-            commitDate(openField, picked);
-            closePicker();
-        },
-        [openField, tempDate, commitDate, closePicker],
-    );
-
-    const renderDateField = (label: string, field: PickerField, value: string | null) => {
-        const display = (value ?? "").trim();
-        return (
-            <View style={styles.gridItem}>
-                <View style={styles.dateLabelRow}>
-                    <Text style={styles.label}>{label}</Text>
-                    {!!display && (
-                        <Pressable onPress={() => clearDate(field)} disabled={saving}>
-                            <Text style={styles.clearText}>지우기</Text>
-                        </Pressable>
-                    )}
+                    <Pressable
+                        onPress={() => openPicker(field)}
+                        disabled={saving}
+                        style={({ pressed }) => [styles.dateButton, pressed && !saving && styles.dateButtonPressed]}
+                    >
+                        <Text style={styles.dateButtonText}>{display || "선택 (YYYY-MM-DD)"}</Text>
+                    </Pressable>
                 </View>
+            );
+        },
+        [getFieldValue, clearFieldValue, openPicker, saving],
+    );
 
-                <Pressable
-                    onPress={() => openPicker(field)}
-                    disabled={saving}
-                    style={({ pressed }) => [
-                        styles.dateButton,
-                        pressed && !saving && styles.dateButtonPressed,
-                    ]}
-                >
-                    <Text style={styles.dateButtonText}>
-                        {display || "선택 (YYYY-MM-DD)"}
-                    </Text>
-                </Pressable>
-            </View>
-        );
-    };
+    const dateFields = useMemo(
+        () =>
+            [
+                { label: "지원일", field: "appliedAt" as const },
+                { label: "서류 마감일", field: "docDeadline" as const },
+                { label: "면접일", field: "interviewAt" as const },
+                { label: "최종 발표일", field: "finalResultAt" as const },
+            ] as const,
+        [],
+    );
 
     return (
         <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
@@ -268,23 +277,22 @@ export function ApplicationEditModal({
                                 selectedValue={status}
                                 enabled={!saving}
                                 onValueChange={(value) => setStatus(value as ApplicationStatus)}
-                                dropdownIconColor="#be123c"
+                                dropdownIconColor={colors.textSub}
                                 style={styles.picker}
                                 itemStyle={styles.pickerItem}
                             >
                                 {STATUS_OPTIONS.map((s) => (
-                                    <Picker.Item key={s} label={s} value={s} color="#881337" />
+                                    <Picker.Item key={s} label={s} value={s} color={colors.textStrong} />
                                 ))}
                             </Picker>
                         </View>
                     </View>
 
-                    {/* ✅ 날짜 4종: 캘린더 선택 */}
+                    {/* 날짜 4종 */}
                     <View style={styles.grid}>
-                        {renderDateField("지원일", "appliedAt", appliedAt)}
-                        {renderDateField("서류 마감일", "docDeadline", docDeadline)}
-                        {renderDateField("면접일", "interviewAt", interviewAt)}
-                        {renderDateField("최종 발표일", "finalResultAt", finalResultAt)}
+                        {dateFields.map((f) => (
+                            <DateField key={f.field} label={f.label} field={f.field} />
+                        ))}
                     </View>
 
                     {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -293,11 +301,7 @@ export function ApplicationEditModal({
                     <View style={styles.footer}>
                         <Pressable
                             onPress={onClose}
-                            style={({ pressed }) => [
-                                styles.button,
-                                styles.buttonGray,
-                                pressed && styles.buttonGrayPressed,
-                            ]}
+                            style={({ pressed }) => [styles.button, styles.buttonGray, pressed && styles.buttonGrayPressed]}
                         >
                             <Text style={styles.buttonGrayText}>취소</Text>
                         </Pressable>
@@ -316,14 +320,9 @@ export function ApplicationEditModal({
                         </Pressable>
                     </View>
 
-                    {/* ✅ DateTimePicker */}
+                    {/* DateTimePicker */}
                     {openField && Platform.OS === "android" && (
-                        <DateTimePicker
-                            value={tempDate}
-                            mode="date"
-                            display="calendar"
-                            onChange={onAndroidChange}
-                        />
+                        <DateTimePicker value={tempDate} mode="date" display="calendar" onChange={onAndroidChange} />
                     )}
 
                     {openField && Platform.OS === "ios" && (
@@ -331,10 +330,12 @@ export function ApplicationEditModal({
                             <Pressable style={styles.iosBackdrop} onPress={closePicker}>
                                 <Pressable style={styles.iosSheet} onPress={() => {}}>
                                     <View style={styles.iosHeader}>
-                                        <Pressable onPress={closePicker}>
+                                        <Pressable onPress={closePicker} hitSlop={8}>
                                             <Text style={styles.iosHeaderText}>취소</Text>
                                         </Pressable>
+
                                         <Pressable
+                                            hitSlop={8}
                                             onPress={() => {
                                                 if (openField) commitDate(openField, tempDate);
                                                 closePicker();
@@ -349,8 +350,8 @@ export function ApplicationEditModal({
                                         mode="date"
                                         display="inline"
                                         themeVariant="light"
-                                        accentColor="#f43f5e"
-                                        textColor="#881337"
+                                        accentColor={colors.accent}
+                                        textColor={colors.textStrong}
                                         style={styles.iosPicker}
                                         onChange={(_, d) => d && setTempDate(d)}
                                     />
@@ -367,21 +368,22 @@ export function ApplicationEditModal({
 const styles = StyleSheet.create({
     backdrop: {
         flex: 1,
-        backgroundColor: "rgba(159, 18, 57, 0.25)", // rose-800 overlay
+        backgroundColor: colors.overlay,
         justifyContent: "center",
         alignItems: "center",
-        paddingHorizontal: 16,
+        paddingHorizontal: space.lg,
     },
 
     container: {
         width: "100%",
         maxWidth: 420,
-        borderRadius: 18,
-        backgroundColor: "#fff1f2", // rose-50
-        paddingHorizontal: 18,
-        paddingVertical: 20,
+        borderRadius: radius.lg + 2, // 18 느낌
+        backgroundColor: colors.bg,
+        paddingHorizontal: space.lg + 2, // 18 느낌
+        paddingVertical: space.lg + 4, // 20 느낌
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
+
         shadowColor: "#000",
         shadowOpacity: 0.12,
         shadowRadius: 10,
@@ -393,206 +395,188 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: 14,
+        marginBottom: space.lg - 2, // 14 느낌
     },
 
     title: {
-        fontSize: 17,
+        fontSize: 17, // token에 17 없음 → 유지(원하면 font.modalTitle 추가)
         fontWeight: "800",
-        color: "#881337", // rose-900 (필요할 때만 진하게)
+        color: colors.textStrong,
     },
 
     closeText: {
-        color: "#f43f5e", // rose-500 (포인트)
+        color: colors.accent,
         fontSize: 20,
         fontWeight: "900",
     },
 
-    targetInfo: {
-        marginBottom: 14,
-    },
+    targetInfo: { marginBottom: space.lg - 2 },
 
     companyText: {
-        fontSize: 15,
+        fontSize: font.h2, // 15
         fontWeight: "800",
-        color: "#881337", // rose-900
+        color: colors.textStrong,
     },
 
     roleText: {
-        fontSize: 13,
-        color: "#be123c", // rose-700
-        marginTop: 4,
+        fontSize: font.body, // 13
+        color: colors.textSub,
+        marginTop: space.xs,
         fontWeight: "700",
     },
 
-    field: {
-        marginBottom: 14,
-    },
+    field: { marginBottom: space.lg - 2 },
 
     label: {
-        fontSize: 12,
-        color: "#be123c", // rose-700
-        marginBottom: 6,
+        fontSize: font.small + 1, // 12 느낌
+        color: colors.textSub,
+        marginBottom: space.sm - 2, // 6 느낌
         fontWeight: "700",
     },
 
     pickerWrapper: {
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        borderRadius: 10,
-        backgroundColor: "#fff1f2", // rose-50
+        borderColor: colors.border,
+        borderRadius: radius.sm + 2, // 10 느낌
+        backgroundColor: colors.bg,
         overflow: "hidden",
     },
 
     picker: {
         height: Platform.select({ ios: 180, android: 44 }),
-        color: "#881337", // rose-900
-        backgroundColor: "#fff1f2", // rose-50
+        color: colors.textStrong,
+        backgroundColor: colors.bg,
     },
 
     pickerItem: {
-        color: "#881337", // rose-900
-        fontSize: 14,
+        color: colors.textStrong,
+        fontSize: 14, // token에 14 없음 → 유지(원하면 font.input 추가)
         fontWeight: "700",
     },
 
     grid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 10,
+        gap: space.md - 2, // 10 느낌
     },
 
     gridItem: {
         flexBasis: "48%",
         flexGrow: 1,
-        marginBottom: 10,
+        marginBottom: space.md - 2, // 10 느낌
     },
 
     dateLabelRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: 4,
+        marginBottom: space.xs,
     },
 
     clearText: {
-        fontSize: 11,
-        color: "#f43f5e", // rose-500
+        fontSize: font.small,
+        color: colors.accent,
         fontWeight: "800",
     },
 
     dateButton: {
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 11,
-        backgroundColor: "#fff1f2", // rose-50
+        borderColor: colors.border,
+        borderRadius: radius.sm + 2,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md - 1, // 11 느낌
+        backgroundColor: colors.bg,
     },
 
-    dateButtonPressed: {
-        borderColor: "#fb7185", // rose-400
-    },
+    dateButtonPressed: { borderColor: colors.placeholder },
 
     dateButtonText: {
-        color: "#9f1239", // rose-800
+        color: colors.text,
         fontSize: 14,
         fontWeight: "700",
     },
 
     errorText: {
-        marginTop: 6,
-        fontSize: 11,
-        color: "#e11d48", // rose-600
+        marginTop: space.sm - 2, // 6 느낌
+        fontSize: font.small,
+        color: colors.textSub, // 에러 전용 토큰 없어서 textSub로 연결
         fontWeight: "800",
     },
 
     footer: {
-        marginTop: 18,
+        marginTop: space.lg + 2, // 18 느낌
         flexDirection: "row",
         justifyContent: "flex-end",
     },
 
     button: {
-        paddingHorizontal: 16,
-        paddingVertical: 9,
-        borderRadius: 999,
+        paddingHorizontal: space.lg, // 16
+        paddingVertical: space.md - 3, // 9 느낌
+        borderRadius: radius.pill,
         minWidth: 84,
         alignItems: "center",
     },
 
-    // ✅ 취소 버튼도 로즈-서브 톤
     buttonGray: {
-        backgroundColor: "#ffe4e6", // rose-100
+        backgroundColor: colors.section,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        marginRight: 8,
+        borderColor: colors.border,
+        marginRight: space.md - 4, // 8
     },
 
-    buttonGrayPressed: {
-        backgroundColor: "#fecdd3", // rose-200
-    },
+    buttonGrayPressed: { backgroundColor: colors.border },
 
     buttonGrayText: {
-        fontSize: 13,
-        color: "#be123c", // rose-700
+        fontSize: font.body,
+        color: colors.textSub,
         fontWeight: "900",
     },
 
-    // ✅ 저장 버튼: 포인트 로즈
-    buttonPrimary: {
-        backgroundColor: "#f43f5e", // rose-500
-    },
+    buttonPrimary: { backgroundColor: colors.accent },
 
-    buttonPrimaryPressed: {
-        backgroundColor: "#fb7185", // rose-400
-    },
+    buttonPrimaryPressed: { backgroundColor: colors.placeholder },
 
     buttonPrimaryText: {
-        fontSize: 13,
+        fontSize: font.body,
         fontWeight: "900",
-        color: "#fff1f2", // rose-50
+        color: colors.bg,
     },
 
-    buttonDisabled: {
-        opacity: 0.65,
-    },
+    buttonDisabled: { opacity: 0.65 },
 
     iosBackdrop: {
         flex: 1,
-        backgroundColor: "rgba(15, 23, 42, 0.55)", // darken for contrast
+        backgroundColor: "rgba(15, 23, 42, 0.55)", //  (원하면 tokens에 추가 가능)
         justifyContent: "flex-end",
     },
 
     iosSheet: {
-        backgroundColor: "#ffe4e6", // rose-100
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
+        backgroundColor: colors.section,
+        borderTopLeftRadius: radius.lg,
+        borderTopRightRadius: radius.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
-        paddingBottom: 16,
+        borderColor: colors.border,
+        paddingBottom: space.lg,
     },
 
-    iosPicker: {
-        backgroundColor: "#ffe4e6", // rose-100
-    },
+    iosPicker: { backgroundColor: colors.section },
 
     iosHeader: {
-        paddingHorizontal: 14,
-        paddingTop: 12,
-        paddingBottom: 8,
+        paddingHorizontal: space.lg - 2, // 14 느낌
+        paddingTop: space.lg - 4, // 12 느낌
+        paddingBottom: space.md - 4, // 8 느낌
         flexDirection: "row",
         justifyContent: "space-between",
     },
 
     iosHeaderText: {
-        color: "#be123c", // rose-700
+        color: colors.textSub,
         fontSize: 14,
         fontWeight: "800",
     },
 
     iosDone: {
-        color: "#f43f5e", // rose-500
+        color: colors.accent,
         fontWeight: "900",
     },
 });

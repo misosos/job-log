@@ -1,6 +1,5 @@
 // app/screens/dashboard/DashboardScreen.tsx
-
-import React from "react";
+import React, { memo, type PropsWithChildren } from "react";
 import { ScrollView, View, StyleSheet } from "react-native";
 
 import { DashboardRecentApplicationsSection } from "../../components/dashboard/DashboardRecentApplicationsSection";
@@ -9,33 +8,34 @@ import { DashboardDefaultResumeSection } from "../../components/dashboard/Dashbo
 import { DashboardUpcomingSection } from "../../components/dashboard/DashboardUpcomingSection";
 import { DashboardSummarySection } from "../../components/dashboard/DashboardSummarySection";
 
+import { colors, radius, space } from "../../styles/theme";
+
+const Section = memo(function Section({ children }: PropsWithChildren) {
+    return <View style={styles.section}>{children}</View>;
+});
+
 export function DashboardScreen() {
     return (
         <View style={styles.root}>
-            {/* 아래 내용 스크롤 영역 */}
             <ScrollView
-                style={styles.container}
                 contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
             >
-                <View style={styles.section}>
+                <Section>
                     <DashboardSummarySection />
-                </View>
-
-                <View style={styles.section}>
+                </Section>
+                <Section>
                     <DashboardUpcomingSection />
-                </View>
-
-                <View style={styles.section}>
+                </Section>
+                <Section>
                     <DashboardRecentApplicationsSection />
-                </View>
-
-                <View style={styles.section}>
+                </Section>
+                <Section>
                     <DashboardTodayTasksSection />
-                </View>
-
-                <View style={styles.section}>
+                </Section>
+                <Section>
                     <DashboardDefaultResumeSection />
-                </View>
+                </Section>
             </ScrollView>
         </View>
     );
@@ -44,22 +44,18 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
     root: {
         flex: 1,
-        backgroundColor: "#fff1f2", // rose-50 (전체 배경)
-    },
-    container: {
-        flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
     },
     content: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.lg,
     },
     section: {
-        marginBottom: 16,
-        backgroundColor: "#ffe4e6", // rose-100 (섹션 톤)
+        marginBottom: space.lg,
+        backgroundColor: colors.section,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200 (라인/보더)
-        borderRadius: 14,
-        padding: 14,
+        borderColor: colors.border,
+        borderRadius: radius.md, // 기존 14면 radius에 lg/md 중 하나로 통일(원하면 14 유지해도 됨)
+        padding: space.lg,
     },
 });

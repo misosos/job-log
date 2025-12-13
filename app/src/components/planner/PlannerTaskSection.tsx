@@ -1,47 +1,72 @@
 import React, { memo, useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { PlannerTaskItem, type PlannerTaskWithLabel } from "./PlannerTaskItem";
+import { colors, font, radius, space } from "../../styles/theme";
 
-/** YYYY-MM-DD → 해당 날짜 00:00(ms) */
-function deadlineToStartOfDayMs(deadline?: string | null): number | null {
-    if (!deadline) return null;
-    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+const SKELETON_COUNT = [1, 2, 3] as const;
+
+type Ms = number;
+
+/** YYYY-MM-DD → 로컬 타임존 기준 해당 날짜 00:00(ms) */
+function toStartOfDayMsFromYmd(ymd?: string | null): Ms | null {
+    if (!ymd) return null;
+    const [y, m, d] = ymd.split("-").map(Number);
     if (!y || !m || !d) return null;
-    // ✅ 로컬 타임존의 '날짜 00:00'으로 고정
     return new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
 }
 
-function getCreatedAtMs(createdAt: unknown): number {
+function toCreatedAtMs(createdAt: unknown): Ms {
     if (!createdAt) return 0;
-    // Firestore Timestamp has toMillis()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyVal = createdAt as any;
-    if (typeof anyVal.toMillis === "function") return anyVal.toMillis();
-    if (typeof anyVal === "number") return anyVal;
+    const v = createdAt as { toMillis?: () => number } | number;
+    if (typeof (v as any).toMillis === "function") return (v as any).toMillis();
+    if (typeof v === "number") return v;
     return 0;
+}
+
+function getLegacyDdayLabel(task: PlannerTaskWithLabel): string {
+    return ((task as unknown as { ddayLabel?: string }).ddayLabel ?? "").trim();
+}
+
+function compareBoolFalseFirst(a: boolean, b: boolean): number {
+    // false(미완료) 먼저
+    if (a === b) return 0;
+    return a ? 1 : -1;
+}
+
+function compareNullableAsc(a: Ms | null, b: Ms | null): number {
+    // a,b 둘 다 있으면 오름차순
+    if (a !== null && b !== null) return a - b;
+    // 정책: deadline 있는 게 먼저
+    if (a !== null && b === null) return -1;
+    if (a === null && b !== null) return 1;
+    return 0;
+}
+
+function compareDesc(a: Ms, b: Ms): number {
+    return b - a;
+}
+
+function compareStringAsc(a?: string, b?: string): number {
+    return (a ?? "").localeCompare(b ?? "");
 }
 
 function sortTasks(a: PlannerTaskWithLabel, b: PlannerTaskWithLabel): number {
     // 1) 미완료 먼저
-    if (a.done !== b.done) return a.done ? 1 : -1;
+    const c1 = compareBoolFalseFirst(a.done, b.done);
+    if (c1) return c1;
 
-    // 2) deadline(있으면) 오름차순(빠른 마감이 위로)
-    const aDue = deadlineToStartOfDayMs(a.deadline ?? null);
-    const bDue = deadlineToStartOfDayMs(b.deadline ?? null);
-
-    if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
-
-    // ✅ 정책: deadline 있는 게 먼저, 없는 게 뒤
-    if (aDue !== null && bDue === null) return -1;
-    if (aDue === null && bDue !== null) return 1;
+    // 2) deadline 오름차순(빠른 마감 위)
+    const aDue = toStartOfDayMsFromYmd(a.deadline);
+    const bDue = toStartOfDayMsFromYmd(b.deadline);
+    const c2 = compareNullableAsc(aDue, bDue);
+    if (c2) return c2;
 
     // 3) createdAt 최신순
-    const aCreated = getCreatedAtMs(a.createdAt);
-    const bCreated = getCreatedAtMs(b.createdAt);
-    if (aCreated !== bCreated) return bCreated - aCreated;
+    const c3 = compareDesc(toCreatedAtMs(a.createdAt), toCreatedAtMs(b.createdAt));
+    if (c3) return c3;
 
-    // 4) title fallback
-    return (a.title ?? "").localeCompare(b.title ?? "");
+    // 4) title
+    return compareStringAsc(a.title, b.title);
 }
 
 type PlannerTaskRowProps = {
@@ -68,22 +93,24 @@ function PlannerTaskRowBase({ task, onToggle, onDelete }: PlannerTaskRowProps) {
     );
 }
 
-// ✅ memo 비교: 렌더링에 영향을 주는 값들을 충분히 포함
-const PlannerTaskRow = memo(
-    PlannerTaskRowBase,
-    (prev, next) =>
+function areRowPropsEqual(prev: PlannerTaskRowProps, next: PlannerTaskRowProps) {
+    // 렌더에 영향을 주는 필드들만 비교
+    return (
         prev.task.id === next.task.id &&
         prev.task.title === next.task.title &&
         prev.task.done === next.task.done &&
         (prev.task.deadline ?? null) === (next.task.deadline ?? null) &&
-        // 구데이터 fallback: ddayLabel이 바뀌면 뱃지 표시가 바뀔 수 있음
-        ((prev.task as any).ddayLabel ?? null) === ((next.task as any).ddayLabel ?? null) &&
         (prev.task.applicationLabel ?? null) === (next.task.applicationLabel ?? null) &&
-        // 정렬/표시에 영향 줄 수 있으니 포함
-        getCreatedAtMs(prev.task.createdAt) === getCreatedAtMs(next.task.createdAt) &&
+        // 레거시 ddayLabel: badge 표시가 바뀔 수 있음
+        getLegacyDdayLabel(prev.task) === getLegacyDdayLabel(next.task) &&
+        // 정렬 안정성(섹션 내부 정렬이 createdAt을 사용)
+        toCreatedAtMs(prev.task.createdAt) === toCreatedAtMs(next.task.createdAt) &&
         prev.onToggle === next.onToggle &&
-        prev.onDelete === next.onDelete,
-);
+        prev.onDelete === next.onDelete
+    );
+}
+
+const PlannerTaskRow = memo(PlannerTaskRowBase, areRowPropsEqual);
 
 type PlannerTaskSectionProps = {
     title: string;
@@ -103,21 +130,20 @@ function PlannerTaskSectionBase({
                                     onDelete,
                                 }: PlannerTaskSectionProps) {
     const sortedTasks = useMemo(() => {
-        // ✅ 방어 + 정렬 안정화
-        const safe = Array.isArray(tasks) ? tasks : [];
-        return [...safe].sort(sortTasks);
+        const safeTasks = Array.isArray(tasks) ? tasks : [];
+        return safeTasks.slice().sort(sortTasks);
     }, [tasks]);
 
     return (
         <View style={styles.card}>
             <View style={styles.headerRow}>
                 <Text style={styles.title}>{title}</Text>
-                {loading && <ActivityIndicator size="small" color="#6ee7b7" />}
+                {loading ? <ActivityIndicator size="small" color={colors.accent} /> : null}
             </View>
 
             {loading ? (
                 <View style={styles.loadingWrapper}>
-                    {[1, 2, 3].map((i) => (
+                    {SKELETON_COUNT.map((i) => (
                         <View key={i} style={styles.skeleton} />
                     ))}
                 </View>
@@ -138,53 +164,47 @@ export const PlannerTaskSection = memo(PlannerTaskSectionBase);
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#fff1f2", // rose-50
-        borderRadius: 14,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        marginBottom: 16,
+        backgroundColor: colors.bg,
+        borderRadius: radius.lg,
+        paddingHorizontal: space.lg,
+        paddingVertical: space.md,
+        marginBottom: space.lg,
         borderWidth: 1,
-        borderColor: "#fecdd3", // rose-200
+        borderColor: colors.border,
     },
 
     headerRow: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: 8,
+        marginBottom: space.sm,
     },
 
     title: {
-        fontSize: 15,
+        fontSize: font.h2,
         fontWeight: "700",
-        color: "#9f1239", // rose-800
+        color: colors.text,
     },
 
-    loadingWrapper: {
-        marginTop: 4,
-    },
+    loadingWrapper: { marginTop: space.xs },
 
     skeleton: {
         height: 40,
-        borderRadius: 10,
-        backgroundColor: "rgba(244, 63, 94, 0.12)", // rose-500/12
-        marginTop: 8,
+        borderRadius: radius.md,
+        backgroundColor: colors.accentSoft,
+        marginTop: space.sm,
         borderWidth: 1,
-        borderColor: "rgba(244, 63, 94, 0.18)", // rose-500/18
+        borderColor: colors.overlay, // 테두리 톤을 통일(원래 0.18 대신)
     },
 
     emptyText: {
-        fontSize: 13,
-        color: "#9f1239", // rose-800
+        fontSize: font.body,
+        color: colors.text,
         opacity: 0.7,
-        marginTop: 4,
+        marginTop: space.xs,
     },
 
-    listContent: {
-        paddingVertical: 4,
-    },
+    listContent: { paddingVertical: space.xs },
 
-    itemWrapper: {
-        marginBottom: 6,
-    },
+    itemWrapper: { marginBottom: 6 },
 });

@@ -1,73 +1,78 @@
-// src/components/layout/PageLayout.tsx
-import React, { type ReactNode } from "react";
+import React, { type ReactNode, memo } from "react";
 import {
-    View,
     ScrollView,
     StyleSheet,
     Platform,
     KeyboardAvoidingView,
+    type ScrollViewProps,
+    type StyleProp,
+    type ViewStyle,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context"; // ✅ 여기로 변경
-
+import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { AppHeader } from "./AppHeader";
+import { colors, space } from "../../styles/theme";
 
 type Props = {
     children: ReactNode;
+    hideHeader?: boolean;
+    edges?: readonly Edge[];
+    contentStyle?: StyleProp<ViewStyle>;
+    scrollProps?: Omit<ScrollViewProps, "contentContainerStyle" | "children">;
+    statusBarStyle?: "auto" | "inverted" | "light" | "dark";
 };
 
-export function PageLayout({ children }: Props) {
+export const PageLayout = memo(function PageLayout({
+                                                       children,
+                                                       hideHeader = false,
+                                                       edges = ["top"],
+                                                       contentStyle,
+                                                       scrollProps,
+                                                       statusBarStyle = "light",
+                                                   }: Props) {
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <StatusBar style="light" />
+        <SafeAreaView style={styles.safeArea} edges={edges}>
+            <StatusBar style={statusBarStyle} />
 
-            <View style={styles.container}>
-                <AppHeader />
+            {!hideHeader && <AppHeader />}
 
-                <KeyboardAvoidingView
-                    style={styles.flex}
-                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+            <KeyboardAvoidingView
+                style={styles.flex}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                keyboardVerticalOffset={Platform.select({ ios: 0, android: 0, default: 0 })}
+            >
+                <ScrollView
+                    style={styles.scroll}
+                    contentContainerStyle={[styles.content, contentStyle]}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    {...scrollProps}
                 >
-                    <ScrollView
-                        style={styles.scroll}
-                        contentContainerStyle={styles.content}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator={false}
-                    >
-                        {children}
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </View>
+                    {children}
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
-}
+});
 
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
-    },
-    container: {
-        flex: 1,
-        backgroundColor: "#fff1f2", // rose-50
+        backgroundColor: colors.bg,
     },
     flex: {
         flex: 1,
+        backgroundColor: colors.bg,
     },
     scroll: {
         flex: 1,
     },
     content: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 24,
+        paddingHorizontal: space.lg, // 16
+        paddingTop: space.lg,        // 16
+        paddingBottom: space.lg + space.sm, // 24
         width: "100%",
         maxWidth: 960,
         alignSelf: "center",
-        // 섹션 느낌 살짝(선택)
-        // backgroundColor: "#ffe4e6", // rose-100
-        // borderRadius: 16,
-        // borderWidth: 1,
-        // borderColor: "#fecdd3", // rose-200
     },
 });
