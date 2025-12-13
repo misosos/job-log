@@ -8,6 +8,12 @@ import type { PlannerTask as BasePlannerTask } from "../../../../shared/features
 // 앱처럼: shared PlannerTask에 표시용 라벨만 확장
 export type PlannerTaskWithLabel = BasePlannerTask & {
     applicationLabel?: string | null;
+
+    // ✅ deadline 기반으로 D-day를 계산하기 위한 필드 (shared 타입이 아직 없을 수 있어 앱/웹 호환용으로 둠)
+    deadline?: string | null; // YYYY-MM-DD
+
+    // ✅ (호환) 예전 데이터는 ddayLabel만 있을 수 있음
+    ddayLabel?: string;
 };
 
 type Props = {
@@ -16,8 +22,28 @@ type Props = {
     onDelete?: () => void;
 };
 
+function computeDdayLabelFromDeadline(deadline?: string | null): string {
+    if (!deadline) return "";
+
+    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return "";
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const due = new Date(y, m - 1, d).getTime();
+
+    const diffDays = Math.round((due - startOfToday) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "D-day";
+    if (diffDays > 0) return `D-${diffDays}`;
+    return `D+${Math.abs(diffDays)}`;
+}
+
 export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
     const Icon = task.done ? HiCheckCircle : HiOutlineCheckCircle;
+    const badgeText = task.deadline
+        ? computeDdayLabelFromDeadline(task.deadline)
+        : (task.ddayLabel ?? "");
 
     return (
         <div className="flex w-full items-center justify-between rounded-lg bg-slate-900/80 px-3 py-2.5">
@@ -60,11 +86,11 @@ export function PlannerTaskItem({ task, onToggle, onDelete }: Props) {
 
             {/* 오른쪽: D-day + 삭제 버튼 */}
             <div className="flex items-center gap-2">
-                {task.ddayLabel && (
+                {badgeText ? (
                     <span className="rounded-full border border-emerald-400/40 px-2 py-0.5 text-[10px] text-emerald-300">
-            {task.ddayLabel}
-          </span>
-                )}
+                        {badgeText}
+                    </span>
+                ) : null}
 
                 {onDelete && (
                     <button

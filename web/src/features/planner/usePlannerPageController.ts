@@ -3,16 +3,19 @@ import { useCallback, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { PlannerScope } from "../../../../shared/features/planner/types";
-import { usePlanner} from "./usePlanner";
+import { usePlanner } from "./usePlanner";
 
 // 지원 공고 재사용
 import { useApplications } from "../applications/useApplications";
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
-import type { CreatePlannerTaskInput } from "./usePlanner"; // 이미 export 되어 있다면 사용
+import type { CreatePlannerTaskInput } from "./usePlanner";
 
-// PlannerNewTaskForm에서 사용할 옵션 타입
+// PlannerNewTaskForm에서 사용할 옵션 타입 (웹/앱 호환)
 export type PlannerApplicationOption = {
-    id: string;
+    /** 권장: value */
+    value?: string;
+    /** 호환: id */
+    id?: string;
     label: string;
 };
 
@@ -20,7 +23,10 @@ export function usePlannerPageController() {
     // ✅ 폼 상태
     const [newTitle, setNewTitle] = useState("");
     const [newScope, setNewScope] = useState<PlannerScope>("today");
-    const [newDdayLabel, setNewDdayLabel] = useState("오늘");
+
+    /** ✅ 신규: 마감일(YYYY-MM-DD). 입력은 date picker로 받고, ddayLabel은 자동 생성 */
+    const [newDeadline, setNewDeadline] = useState<string | null>(null);
+
     // 🔥 새로 추가: 연결할 공고 ID
     const [newApplicationId, setNewApplicationId] = useState<string>("");
 
@@ -41,6 +47,7 @@ export function usePlannerPageController() {
     const applicationOptions: PlannerApplicationOption[] = useMemo(
         () =>
             applications.map((app: ApplicationRow) => ({
+                value: app.id,
                 id: app.id,
                 label: app.role ? `${app.company} · ${app.role}` : app.company,
             })),
@@ -51,13 +58,22 @@ export function usePlannerPageController() {
     const handleCreate = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
+
             const trimmedTitle = newTitle.trim();
             if (!trimmedTitle) return;
 
             const payload: CreatePlannerTaskInput = {
                 title: trimmedTitle,
                 scope: newScope,
-                ddayLabel: newDdayLabel,
+
+                // ✅ 신규: 마감일(YYYY-MM-DD)
+                deadline: newDeadline ?? null,
+
+                // ✅ (호환) deadline을 안 쓰는 경우에만 간단 표시(수동 입력 제거)
+                ddayLabel: newDeadline
+                    ? undefined
+                    : (newScope === "today" ? "D-day" : "예정"),
+
                 // 🔥 선택한 공고가 있으면 함께 저장
                 applicationId: newApplicationId || undefined,
             };
@@ -67,10 +83,10 @@ export function usePlannerPageController() {
             // 폼 초기화
             setNewTitle("");
             setNewScope("today");
-            setNewDdayLabel("오늘");
+            setNewDeadline(null);
             setNewApplicationId("");
         },
-        [newTitle, newScope, newDdayLabel, newApplicationId, createTask],
+        [newTitle, newScope, newDeadline, newApplicationId, createTask],
     );
 
     // ✅ 토글 / 삭제 핸들러 래핑
@@ -92,12 +108,15 @@ export function usePlannerPageController() {
         // 폼 상태 + setter
         newTitle,
         newScope,
-        newDdayLabel,
-        newApplicationId,          // 🔥 추가
+
+        /** ✅ 신규 권장 */
+        newDeadline,
+        setNewDeadline,
+
+        newApplicationId,
         setNewTitle,
         setNewScope,
-        setNewDdayLabel,
-        setNewApplicationId,       // 🔥 추가
+        setNewApplicationId,
 
         // 목록/상태
         todayTasks,
@@ -110,7 +129,7 @@ export function usePlannerPageController() {
         handleToggleTask,
         handleDeleteTask,
 
-        // 🔥 지원 공고 셀렉트 옵션
-        applicationOptions,        // 🔥 추가
+        // 지원 공고 셀렉트 옵션
+        applicationOptions,
     };
 }

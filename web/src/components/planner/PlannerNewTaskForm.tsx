@@ -13,11 +13,18 @@ type RelatedApplicationOption = {
 type PlannerNewTaskFormProps = {
     title: string;
     scope: PlannerScope;
-    ddayLabel: string;
+
+    /** ✅ 신규 권장: 마감일(YYYY-MM-DD). D-day는 화면에서 자동 계산 */
+    deadline?: string | null;
+    onDeadlineChange?: (value: string | null) => void;
+
+    /** (호환용) 기존 D-day 라벨 직접 입력 방식 */
+    ddayLabel?: string;
+    onDdayLabelChange?: (value: string) => void;
+
     saving: boolean;
     onTitleChange: (value: string) => void;
     onScopeChange: (value: PlannerScope) => void;
-    onDdayLabelChange: (value: string) => void;
     onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 
     // ✅ 추가: 관련 공고 연결용 (선택)
@@ -26,9 +33,46 @@ type PlannerNewTaskFormProps = {
     onApplicationChange?: (id: string | null) => void;
 };
 
+function computeDdayLabel(deadline?: string | null): string {
+    if (!deadline) return "";
+
+    // deadline: YYYY-MM-DD (local)
+    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return "";
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const due = new Date(y, m - 1, d).getTime();
+
+    const diffDays = Math.round((due - startOfToday) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "D-day";
+    if (diffDays > 0) return `D-${diffDays}`;
+    return `D+${Math.abs(diffDays)}`;
+}
+
+function inferScopeFromDeadline(deadline: string): PlannerScope {
+    // deadline: YYYY-MM-DD (local)
+    const [y, m, d] = deadline.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return "today";
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const due = new Date(y, m - 1, d).getTime();
+
+    // 오늘(또는 지남) => today, 내일 이후 => week
+    return due <= startOfToday ? "today" : "week";
+}
+
+function scopeLabel(scope: PlannerScope): string {
+    return scope === "today" ? "오늘 할 일" : "앞으로의 계획";
+}
+
 export function PlannerNewTaskForm({
                                        title,
                                        scope,
+                                       deadline,
+                                       onDeadlineChange,
                                        ddayLabel,
                                        saving,
                                        onTitleChange,
@@ -42,6 +86,8 @@ export function PlannerNewTaskForm({
                                        onApplicationChange,
                                    }: PlannerNewTaskFormProps) {
     const isSubmitDisabled = saving || title.trim().length === 0;
+
+    const autoScope = deadline ? inferScopeFromDeadline(deadline) : scope;
 
     const handleApplicationChange = (value: string) => {
         if (!onApplicationChange) return;
@@ -66,33 +112,71 @@ export function PlannerNewTaskForm({
                 </div>
 
                 <div className="flex flex-wrap gap-3 text-sm">
-                    {/* 범위 선택 */}
+                    {/* 범위 선택 (deadline이 있으면 자동 분류) */}
                     <div className="flex items-center gap-2">
                         <span className="text-slate-400">범위</span>
-                        <select
-                            value={scope}
-                            onChange={(e) => onScopeChange(e.target.value as PlannerScope)}
-                            className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                            aria-label="할 일 범위 선택"
-                        >
-                            <option value="today">오늘 할 일</option>
-                            <option value="week">이번 주 계획</option>
-                        </select>
+
+                        {onDeadlineChange && deadline ? (
+                            <span
+                                className="rounded-full border border-emerald-400/40 px-2 py-0.5 text-[10px] text-emerald-300"
+                                aria-label="자동 분류 범위"
+                                title="마감일 기준으로 자동 분류됩니다."
+                            >
+                                {scopeLabel(autoScope)}
+                            </span>
+                        ) : (
+                            <select
+                                value={scope}
+                                onChange={(e) => onScopeChange(e.target.value as PlannerScope)}
+                                className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                aria-label="할 일 범위 선택"
+                            >
+                                <option value="today">오늘 할 일</option>
+                                <option value="week">앞으로의 계획</option>
+                            </select>
+                        )}
                     </div>
 
-                    {/* D-Day 라벨 */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-slate-400">D-Day 라벨</span>
-                        <input
-                            type="text"
-                            value={ddayLabel}
-                            onChange={(e) => onDdayLabelChange(e.target.value)}
-                            className="w-24 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                            placeholder="D-3, 오늘"
-                            aria-label="D-Day 라벨"
-                            autoComplete="off"
-                        />
-                    </div>
+                    {/* ✅ 마감일(권장): 날짜만 선택 → D-day 자동 계산 */}
+                    {onDeadlineChange ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-slate-400">마감일</span>
+                            <input
+                                type="date"
+                                value={deadline ?? ""}
+                                onChange={(e) => {
+                                    const value = e.target.value ? e.target.value : null;
+                                    onDeadlineChange(value);
+
+                                    // deadline이 선택되면 범위를 자동 업데이트
+                                    if (value) {
+                                        onScopeChange(inferScopeFromDeadline(value));
+                                    }
+                                }}
+                                className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                aria-label="마감일"
+                            />
+                            {deadline ? (
+                                <span className="text-[11px] text-slate-400">
+                  {computeDdayLabel(deadline)}
+                </span>
+                            ) : null}
+                        </div>
+                    ) : (
+                        /* (호환용) 기존 D-Day 라벨 직접 입력 */
+                        <div className="flex items-center gap-2">
+                            <span className="text-slate-400">D-Day 라벨</span>
+                            <input
+                                type="text"
+                                value={ddayLabel ?? ""}
+                                onChange={(e) => onDdayLabelChange?.(e.target.value)}
+                                className="w-24 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                placeholder="D-3, 오늘"
+                                aria-label="D-Day 라벨"
+                                autoComplete="off"
+                            />
+                        </div>
+                    )}
 
                     {/* ✅ 관련 공고 선택 (옵션이 있을 때만 렌더링) */}
                     {applicationOptions && applicationOptions.length > 0 && (
