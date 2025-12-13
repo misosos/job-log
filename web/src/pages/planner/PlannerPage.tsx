@@ -1,41 +1,91 @@
-// src/pages/planner/PlannerPage.tsx
-import { useMemo, useState, useCallback, type ReactNode } from "react";
+import {
+    useCallback,
+    useMemo,
+    useState,
+    type FormEvent,
+    type ReactNode,
+} from "react";
+
 import { PlannerNewTaskForm } from "../../components/planner/PlannerNewTaskForm";
 import { PlannerTaskSection } from "../../components/planner/PlannerTaskSection";
 import { usePlannerPageController } from "../../features/planner/usePlannerPageController";
-import { SectionCard } from "../../components/common/SectionCard";
+
+// -----------------------------
+// helpers
+// -----------------------------
+type RelatedApplicationOption = {
+    value?: string;
+    id?: string;
+    label: string;
+};
+
+function ymdToMs(ymd?: string | null): number | null {
+    if (!ymd) return null;
+    const [y, m, d] = ymd.split("-").map((v) => Number(v));
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d).getTime();
+}
+
+function buildLabelMap(options?: RelatedApplicationOption[] | null) {
+    const map = new Map<string, string>();
+    for (const opt of options ?? []) {
+        if (!opt?.label) continue;
+        if (opt.value) map.set(opt.value, opt.label);
+        if (opt.id) map.set(opt.id, opt.label);
+    }
+    return map;
+}
+
+// -----------------------------
+// Modal
+// -----------------------------
+type ModalProps = {
+    open: boolean;
+    title: string;
+    disabledClose?: boolean;
+    onClose: () => void;
+    children: ReactNode;
+};
 
 function Modal({
                    open,
                    title,
+                   disabledClose = false,
                    onClose,
                    children,
-               }: {
-    open: boolean;
-    title: string;
-    onClose: () => void;
-    children: ReactNode;
-}) {
+               }: ModalProps) {
     if (!open) return null;
 
+    const closeIfAllowed = () => {
+        if (disabledClose) return;
+        onClose();
+    };
+
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-rose-900/20 p-4 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            aria-label={title}
-            onClick={onClose}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            {/* backdrop */}
+            <button
+                type="button"
+                className="absolute inset-0 bg-rose-900/20 backdrop-blur-sm"
+                onClick={closeIfAllowed}
+                aria-label="닫기"
+                disabled={disabledClose}
+            />
+
+            {/* panel */}
             <div
-                className="w-full max-w-xl rounded-2xl border border-rose-200 bg-rose-50 shadow-xl"
-                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-xl rounded-2xl border border-rose-200 bg-rose-50 shadow-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label={title}
             >
                 <div className="flex items-center justify-between border-b border-rose-200 px-5 py-4">
                     <h2 className="text-sm font-semibold text-rose-900">{title}</h2>
                     <button
                         type="button"
-                        onClick={onClose}
-                        className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-100 hover:text-rose-700"
+                        onClick={closeIfAllowed}
+                        disabled={disabledClose}
+                        className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-100 hover:text-rose-700 disabled:opacity-50"
                         aria-label="닫기"
                     >
                         ✕
@@ -48,6 +98,9 @@ function Modal({
     );
 }
 
+// -----------------------------
+// Page
+// -----------------------------
 export function PlannerPage() {
     const {
         newTitle,
@@ -58,91 +111,74 @@ export function PlannerPage() {
         setNewScope,
         setNewDeadline,
         setNewApplicationId,
+
         todayTasks,
         weekTasks,
         loading,
         saving,
+
         handleCreate,
         handleToggleTask,
         handleDeleteTask,
+
         applicationOptions,
     } = usePlannerPageController();
 
     const [createOpen, setCreateOpen] = useState(false);
 
-    // ✅ 앱처럼: 연결된 공고는 id가 아니라 라벨(공고명)로 표시
-    const applicationLabelById = useMemo(() => {
-        const map = new Map<string, string>();
+    const openCreate = useCallback(() => setCreateOpen(true), []);
+    const closeCreate = useCallback(() => {
+        if (saving) return; // 저장 중 닫힘 방지
+        setCreateOpen(false);
+    }, [saving]);
 
-        for (const opt of applicationOptions ?? []) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const value = (opt as any).value as string | undefined;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const id = (opt as any).id as string | undefined;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const label = (opt as any).label as string | undefined;
-
-            if (!label) continue;
-            if (value) map.set(value, label);
-            if (id) map.set(id, label);
-        }
-
-        return map;
-    }, [applicationOptions]);
-
-    const allTasks = useMemo(
-        () => [...(todayTasks ?? []), ...(weekTasks ?? [])],
-        [todayTasks, weekTasks],
+    const labelMap = useMemo(
+        () => buildLabelMap(applicationOptions as RelatedApplicationOption[] | undefined),
+        [applicationOptions],
     );
 
-    const allTasksWithLabel = useMemo(() => {
-        return allTasks.map((t) => ({
-            ...t,
-            applicationLabel: t.applicationId
-                ? applicationLabelById.get(t.applicationId) ?? null
-                : null,
-        }));
-    }, [allTasks, applicationLabelById]);
-
     const { todayBucket, futureBucket } = useMemo(() => {
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        const startOfTodayMs = start.getTime();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const startOfTodayMs = startOfToday.getTime();
 
-        const parseDeadlineMs = (deadline?: string | null): number | null => {
-            if (!deadline) return null;
-            const [y, m, d] = deadline.split("-").map((v) => Number(v));
-            if (!y || !m || !d) return null;
-            return new Date(y, m - 1, d).getTime();
-        };
+        const all = [...(todayTasks ?? []), ...(weekTasks ?? [])].map((t) => ({
+            ...t,
+            applicationLabel: t.applicationId ? labelMap.get(t.applicationId) ?? null : null,
+        }));
 
-        const today: typeof allTasksWithLabel = [];
-        const future: typeof allTasksWithLabel = [];
+        const today: typeof all = [];
+        const future: typeof all = [];
 
-        for (const t of allTasksWithLabel) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const dueMs = parseDeadlineMs((t as any).deadline);
+        for (const t of all) {
+            const dueMs = ymdToMs((t as { deadline?: string | null }).deadline ?? null);
 
             if (dueMs !== null) {
-                if (dueMs <= startOfTodayMs) today.push(t);
-                else future.push(t);
+                (dueMs <= startOfTodayMs ? today : future).push(t);
                 continue;
             }
 
-            if (t.scope === "today") today.push(t);
-            else future.push(t);
+            (t.scope === "today" ? today : future).push(t);
         }
 
         return { todayBucket: today, futureBucket: future };
-    }, [allTasksWithLabel]);
+    }, [todayTasks, weekTasks, labelMap]);
 
-    const openCreate = useCallback(() => setCreateOpen(true), []);
-    const closeCreate = useCallback(() => setCreateOpen(false), []);
+    const handleCreateFromModal = useCallback(
+        async (e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            if (saving) return;
 
-    const handleCreateFromModal = useCallback(async () => {
-        await handleCreate(); // 컨트롤러가 내부에서 폼 초기화한다는 전제
-        setCreateOpen(false);
-    }, [handleCreate]);
+            try {
+                // 컨트롤러가 내부 state 기반으로 생성한다는 전제
+                await handleCreate();
+                setCreateOpen(false);
+            } catch {
+                // 실패 시 모달 유지
+            }
+        },
+        [handleCreate, saving],
+    );
 
     return (
         <div className="space-y-6">
@@ -165,9 +201,14 @@ export function PlannerPage() {
                 </button>
             </div>
 
-            {/* ✅ 추가 폼: 모달로 이동 */}
-            <Modal open={createOpen} title="새 할 일 추가" onClose={closeCreate}>
-                <SectionCard>
+            {/* Create Modal */}
+            <Modal
+                open={createOpen}
+                title="새 할 일 추가"
+                onClose={closeCreate}
+                disabledClose={saving}
+            >
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
                     <PlannerNewTaskForm
                         title={newTitle}
                         scope={newScope}
@@ -181,7 +222,7 @@ export function PlannerPage() {
                         onApplicationChange={(id) => setNewApplicationId(id ?? "")}
                         onSubmit={handleCreateFromModal}
                     />
-                </SectionCard>
+                </div>
             </Modal>
 
             <PlannerTaskSection

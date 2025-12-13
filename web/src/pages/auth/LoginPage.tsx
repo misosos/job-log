@@ -1,10 +1,14 @@
-// src/pages/auth/LoginPage.tsx
-import { useEffect, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import { auth, applyWebAuthPersistence } from "../../libs/firebase";
 import { useAuth } from "../../libs/auth-context";
 import { useEmailAuthForm } from "../../features/auth/useEmailAuthForm";
+
+type LocationState = {
+    from?: { pathname?: string };
+} | null;
 
 export function LoginPage() {
     const navigate = useNavigate();
@@ -12,8 +16,10 @@ export function LoginPage() {
 
     const { rememberMe, setRememberMe } = useAuth();
 
-    const state = location.state as { from?: { pathname?: string } } | null;
-    const fromPath = state?.from?.pathname ?? "/";
+    const fromPath = useMemo(() => {
+        const state = location.state as LocationState;
+        return state?.from?.pathname ?? "/";
+    }, [location.state]);
 
     const {
         mode,
@@ -32,20 +38,29 @@ export function LoginPage() {
         handleSubmit,
     } = useEmailAuthForm();
 
+    const isSignup = mode === "signup";
+
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) navigate(fromPath, { replace: true });
         });
-        return () => unsubscribe();
+        return unsubscribe;
     }, [navigate, fromPath]);
 
-    const isSignup = mode === "signup";
+    const onSubmit = useCallback(
+        async (e: FormEvent<HTMLFormElement>) => {
+            await applyWebAuthPersistence(rememberMe);
+            await handleSubmit(e);
+        },
+        [rememberMe, handleSubmit],
+    );
 
-    // ✅ 이메일 로그인/회원가입 전에 persistence 적용 (local/session)
-    const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        await applyWebAuthPersistence(rememberMe);
-        await handleSubmit(e);
-    };
+    const onRememberMeChange = useCallback(
+        (checked: boolean) => {
+            void setRememberMe(checked);
+        },
+        [setRememberMe],
+    );
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-rose-50 px-4">
@@ -59,21 +74,26 @@ export function LoginPage() {
                 <form onSubmit={onSubmit} className="mb-6 space-y-3">
                     {isSignup && (
                         <div>
-                            <label className="mb-1 block text-xs text-rose-700">
+                            <label htmlFor="displayName" className="mb-1 block text-xs text-rose-700">
                                 이름 / 닉네임
                             </label>
                             <input
+                                id="displayName"
                                 type="text"
                                 value={displayName}
                                 onChange={(e) => setDisplayName(e.target.value)}
                                 className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
+                                autoComplete="name"
                             />
                         </div>
                     )}
 
                     <div>
-                        <label className="mb-1 block text-xs text-rose-700">이메일</label>
+                        <label htmlFor="email" className="mb-1 block text-xs text-rose-700">
+                            이메일
+                        </label>
                         <input
+                            id="email"
                             type="email"
                             value={email}
                             autoComplete="email"
@@ -84,8 +104,11 @@ export function LoginPage() {
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs text-rose-700">비밀번호</label>
+                        <label htmlFor="password" className="mb-1 block text-xs text-rose-700">
+                            비밀번호
+                        </label>
                         <input
+                            id="password"
                             type="password"
                             value={password}
                             autoComplete={isSignup ? "new-password" : "current-password"}
@@ -97,10 +120,11 @@ export function LoginPage() {
                     {/* 회원가입 모드일 때만 비밀번호 확인 표시 */}
                     {isSignup && (
                         <div>
-                            <label className="mb-1 block text-xs text-rose-700">
+                            <label htmlFor="passwordConfirm" className="mb-1 block text-xs text-rose-700">
                                 비밀번호 확인
                             </label>
                             <input
+                                id="passwordConfirm"
                                 type="password"
                                 value={passwordConfirm}
                                 autoComplete="new-password"
@@ -112,20 +136,20 @@ export function LoginPage() {
 
                     {error && <p className="text-xs text-rose-600">{error}</p>}
 
-                    {/* ✅ 로그인 유지 */}
+                    {/* 로그인 유지 */}
                     <label className="mt-1 flex cursor-pointer items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2">
                         <input
                             type="checkbox"
                             checked={rememberMe}
-                            onChange={(e) => void setRememberMe(e.target.checked)}
+                            onChange={(e) => onRememberMeChange(e.target.checked)}
                             className="mt-0.5 h-4 w-4 accent-rose-500"
                         />
                         <span className="text-xs text-rose-800">
-              로그인 유지
-              <span className="mt-0.5 block text-[11px] text-rose-700/70">
-                체크하지 않으면 브라우저를 닫을 때 자동 로그아웃돼요.
-              </span>
-            </span>
+                            로그인 유지
+                            <span className="mt-0.5 block text-[11px] text-rose-700/70">
+                                체크하지 않으면 브라우저를 닫을 때 자동 로그아웃돼요.
+                            </span>
+                        </span>
                     </label>
 
                     <button
@@ -169,7 +193,7 @@ export function LoginPage() {
                     <div className="h-px flex-1 bg-rose-200" />
                 </div>
 
-                {/* ✅ 구글 로그인도 rememberMe 전달 */}
+                {/* 구글 로그인도 rememberMe 전달 */}
                 <GoogleSignInButton rememberMe={rememberMe} />
             </div>
         </div>

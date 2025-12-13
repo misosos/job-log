@@ -1,7 +1,5 @@
 // App.tsx
-
-import React from "react";
-import { ActivityIndicator, View, Text, StyleSheet } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as AuthSession from "expo-auth-session";
@@ -23,16 +21,7 @@ import { initApplicationsApi } from "../shared/features/applications/api";
 import { initPlannerApi } from "../shared/features/planner/api";
 import { initInterviewsApi } from "../shared/features/interviews/api";
 import { initResumesApi } from "../shared/features/resumes/api";
-// 이메일 로그인/회원가입용 API 초기화 (공통)
 import { initEmailAuthApi } from "../shared/features/auth/emailAuthApi";
-
-// 앱에서도 한 번만 초기화해서 web/app 공용으로 사용
-initApplicationsApi({ db, auth });
-initPlannerApi(db, auth);      // 현재 시그니처가 (db, auth)
-initInterviewsApi(db);
-initResumesApi(db);
-// 🔹 이메일 인증용 Auth도 주입
-initEmailAuthApi(auth);
 
 export type RootStackParamList = {
     Login: undefined;
@@ -45,17 +34,81 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const redirectUri = AuthSession.makeRedirectUri();
-console.log("redirectUri >>>", redirectUri);
+const UI = {
+    bg: "#020617",
+    spinner: "#22C55E",
+    text: "#E5E7EB",
+} as const;
 
-//  로그인 상태에 따라 네비게이션 분기하는 컴포넌트
+// Fast Refresh에서도 1회만 init 되도록 가드
+let _apisInited = false;
+function initSharedApisOnce() {
+    if (_apisInited) return;
+    _apisInited = true;
+
+    initApplicationsApi({ db, auth });
+    initPlannerApi(db, auth); // 현재 시그니처가 (db, auth)
+    initInterviewsApi(db);
+    initResumesApi(db);
+    initEmailAuthApi(auth);
+}
+
+initSharedApisOnce();
+
+const redirectUri = AuthSession.makeRedirectUri();
+if (__DEV__) console.log("redirectUri >>>", redirectUri);
+
+// Screen에 PageLayout을 깔끔하게 감싸는 래퍼(렌더 안에서 함수 생성 X)
+function withPageLayout<TProps extends object>(
+    Screen: React.ComponentType<TProps>,
+) {
+    return function Wrapped(props: TProps) {
+        return (
+            <PageLayout>
+                <Screen {...props} />
+            </PageLayout>
+        );
+    };
+}
+
+const DashboardWithLayout = withPageLayout(DashboardScreen);
+const ApplicationsWithLayout = withPageLayout(ApplicationsScreen);
+const PlannerWithLayout = withPageLayout(PlannerScreen);
+const ResumesWithLayout = withPageLayout(ResumesScreen);
+const InterviewsWithLayout = withPageLayout(InterviewsScreen);
+
+function AppNavigator() {
+    return (
+        <Stack.Navigator
+            initialRouteName="Dashboard"
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: UI.bg } }}
+        >
+            <Stack.Screen name="Dashboard" component={DashboardWithLayout} />
+            <Stack.Screen name="Applications" component={ApplicationsWithLayout} />
+            <Stack.Screen name="Planner" component={PlannerWithLayout} />
+            <Stack.Screen name="Resumes" component={ResumesWithLayout} />
+            <Stack.Screen name="Interviews" component={InterviewsWithLayout} />
+        </Stack.Navigator>
+    );
+}
+
+function AuthNavigator() {
+    return (
+        <Stack.Navigator
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: UI.bg } }}
+        >
+            <Stack.Screen name="Login" component={LoginScreen} />
+        </Stack.Navigator>
+    );
+}
+
 function RootNavigator() {
     const { user, loading } = useAuth();
 
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#22C55E" />
+                <ActivityIndicator size="large" color={UI.spinner} />
                 <Text style={styles.loadingText}>로그인 상태 확인 중...</Text>
             </View>
         );
@@ -63,78 +116,7 @@ function RootNavigator() {
 
     return (
         <NavigationContainer>
-            {user ? (
-                <Stack.Navigator
-                    initialRouteName="Dashboard"
-                    screenOptions={{
-                        contentStyle: { backgroundColor: "#020617" },
-                    }}
-                >
-                    <Stack.Screen
-                        name="Dashboard"
-                        options={{ title: "대시보드", headerShown: false }}
-                    >
-                        {() => (
-                            <PageLayout>
-                                <DashboardScreen />
-                            </PageLayout>
-                        )}
-                    </Stack.Screen>
-
-                    <Stack.Screen
-                        name="Applications"
-                        options={{ title: "지원 현황", headerShown: false }}
-                    >
-                        {() => (
-                            <PageLayout>
-                                <ApplicationsScreen />
-                            </PageLayout>
-                        )}
-                    </Stack.Screen>
-
-                    <Stack.Screen
-                        name="Planner"
-                        options={{ title: "플래너", headerShown: false }}
-                    >
-                        {() => (
-                            <PageLayout>
-                                <PlannerScreen />
-                            </PageLayout>
-                        )}
-                    </Stack.Screen>
-
-                    <Stack.Screen
-                        name="Resumes"
-                        options={{ title: "이력서 관리", headerShown: false }}
-                    >
-                        {() => (
-                            <PageLayout>
-                                <ResumesScreen />
-                            </PageLayout>
-                        )}
-                    </Stack.Screen>
-
-                    <Stack.Screen
-                        name="Interviews"
-                        options={{ title: "면접 기록", headerShown: false }}
-                    >
-                        {() => (
-                            <PageLayout>
-                                <InterviewsScreen />
-                            </PageLayout>
-                        )}
-                    </Stack.Screen>
-                </Stack.Navigator>
-            ) : (
-                <Stack.Navigator
-                    screenOptions={{
-                        headerShown: false,
-                        contentStyle: { backgroundColor: "#020617" },
-                    }}
-                >
-                    <Stack.Screen name="Login" component={LoginScreen} />
-                </Stack.Navigator>
-            )}
+            {user ? <AppNavigator /> : <AuthNavigator />}
         </NavigationContainer>
     );
 }
@@ -150,13 +132,13 @@ export default function App() {
 const styles = StyleSheet.create({
     center: {
         flex: 1,
-        backgroundColor: "#020617",
+        backgroundColor: UI.bg,
         alignItems: "center",
         justifyContent: "center",
     },
     loadingText: {
         marginTop: 8,
-        color: "#E5E7EB",
+        color: UI.text,
         fontSize: 13,
     },
 });

@@ -1,56 +1,62 @@
-// src/components/dashboard/DashboardTodayTasksSection.tsx (웹 버전)
-
 import { useMemo } from "react";
 import { SectionCard } from "../common/SectionCard";
-import { usePlanner } from "../../features/planner/usePlanner.ts";
+import { usePlanner } from "../../features/planner/usePlanner";
+
+const SKELETON_ROWS = [0, 1, 2];
+
+function TaskSkeleton() {
+    return (
+        <div className="w-full space-y-1.5">
+            {SKELETON_ROWS.map((i) => (
+                <div
+                    key={i}
+                    className="h-9 w-full animate-pulse rounded-lg border border-rose-200 bg-rose-100"
+                />
+            ))}
+        </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <p className="text-sm text-rose-700">
+            오늘은 아직 등록된 할 일이 없어요. 플래너에서 할 일을 추가해 보세요.
+        </p>
+    );
+}
+
+type TaskItem = {
+    id: string;
+    title: string;
+    done?: boolean;
+    ddayLabel?: string | null;
+};
+
+function TaskRow({ task }: { task: TaskItem }) {
+    const titleClassName = task.done
+        ? "text-sm text-rose-400 line-through"
+        : "text-sm text-rose-900";
+
+    return (
+        <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-3 py-2">
+            <p className={titleClassName}>{task.title}</p>
+
+            {!!task.ddayLabel && <span className="text-xs text-rose-600">{task.ddayLabel}</span>}
+        </div>
+    );
+}
 
 export function DashboardTodayTasksSection() {
     const { todayTasks, loading } = usePlanner();
 
-    // 오늘 할 일 상위 3개만 표시 (앱과 동일)
-    const tasks = useMemo(
-        () => todayTasks.slice(0, 3),
-        [todayTasks],
-    );
+    const tasks = useMemo(() => todayTasks.slice(0, 3), [todayTasks]);
 
     return (
         <SectionCard title="오늘 할 일">
-            {loading ? (
-                <div className="w-full space-y-1.5">
-                    {[1, 2, 3].map((i) => (
-                        <div
-                            key={i}
-                            className="h-9 w-full animate-pulse rounded-lg bg-rose-100 border border-rose-200"
-                        />
-                    ))}
-                </div>
-            ) : tasks.length === 0 ? (
-                <p className="text-sm text-rose-700">
-                    오늘은 아직 등록된 할 일이 없어요. 플래너에서 할 일을 추가해 보세요.
-                </p>
-            ) : (
+            {loading ? <TaskSkeleton /> : tasks.length === 0 ? <EmptyState /> : (
                 <div className="w-full space-y-2">
                     {tasks.map((task) => (
-                        <div
-                            key={task.id}
-                            className="flex items-center justify-between rounded-lg bg-rose-50 px-3 py-2 border border-rose-200"
-                        >
-                            <p
-                                className={
-                                    task.done
-                                        ? "text-sm text-rose-400 line-through"
-                                        : "text-sm text-rose-900"
-                                }
-                            >
-                                {task.title}
-                            </p>
-
-                            {task.ddayLabel && (
-                                <span className="text-xs text-rose-600">
-                  {task.ddayLabel}
-                </span>
-                            )}
-                        </div>
+                        <TaskRow key={task.id} task={task as TaskItem} />
                     ))}
                 </div>
             )}

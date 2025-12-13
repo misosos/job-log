@@ -1,4 +1,3 @@
-// src/App.tsx
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 
@@ -10,14 +9,14 @@ import { ResumesPage } from "./pages/resumes/ResumesPage";
 import { InterviewsPage } from "./pages/interviews/InterviewsPage";
 import { LoginPage } from "./pages/auth/LoginPage";
 
-import { useAuth } from "./libs/auth-context"; // ✅ 공통 Auth 훅
+import { useAuth } from "./libs/auth-context";
 
 type RequireAuthProps = {
     children: ReactNode;
 };
 
 function RequireAuth({ children }: RequireAuthProps) {
-    const { user, loading } = useAuth();          // ✅ 커스텀 훅 재사용
+    const { user, loading } = useAuth();
     const location = useLocation();
 
     if (loading) {

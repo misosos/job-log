@@ -1,5 +1,4 @@
-// src/pages/applications/ApplicationsPage.tsx
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
 
 import { ApplicationList } from "../../components/applications/ApplicationList";
 import { ApplicationSummary } from "../../components/applications/ApplicationSummary";
@@ -7,19 +6,21 @@ import { ApplicationCreateForm } from "../../components/applications/Application
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
 import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
 
-function CreateModal({
-                         open,
-                         title = "지원 기록 추가",
-                         disabledClose,
-                         onClose,
-                         children,
-                     }: {
+type CreateModalProps = {
     open: boolean;
     title?: string;
     disabledClose?: boolean;
     onClose: () => void;
-    children: React.ReactNode;
-}) {
+    children: ReactNode;
+};
+
+function CreateModal({
+                         open,
+                         title = "지원 기록 추가",
+                         disabledClose = false,
+                         onClose,
+                         children,
+                     }: CreateModalProps) {
     if (!open) return null;
 
     return (
@@ -36,16 +37,18 @@ function CreateModal({
             <div className="relative mx-auto mt-16 w-[min(560px,calc(100%-24px))] rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-xl">
                 <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-rose-900">{title}</h2>
+
                     <button
                         type="button"
                         onClick={disabledClose ? undefined : onClose}
-                        className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-100 hover:text-rose-600 disabled:opacity-50"
                         disabled={disabledClose}
+                        className="rounded-lg px-2 py-1 text-rose-500 hover:bg-rose-100 hover:text-rose-600 disabled:opacity-50"
                         aria-label="닫기"
                     >
                         ✕
                     </button>
                 </div>
+
                 {children}
             </div>
         </div>
@@ -53,68 +56,34 @@ function CreateModal({
 }
 
 export function ApplicationsPage() {
-    const {
-        newCompany,
-        newRole,
-        newStatus,
-        newAppliedAt,
-        newDocumentDeadline,
-        newInterviewAt,
-        newFinalResultAt,
-        setNewCompany,
-        setNewRole,
-        setNewStatus,
-        setNewAppliedAt,
-        setNewDocumentDeadline,
-        setNewInterviewAt,
-        setNewFinalResultAt,
+    const c = useApplicationsPageController();
 
-        saving,
-        saveError,
-        handleCreate,
-
-        applications,
-        loading,
-        totalCount,
-        inProgressCount,
-
-        docDueSoonCount,
-        interviewSoonCount,
-        finalSoonCount,
-
-        editingTarget,
-        editSaving,
-        editError,
-        handleOpenEdit,
-        handleSaveEdit,
-        handleCloseEdit,
-        handleDelete,
-    } = useApplicationsPageController();
-
-    // ✅ CreateForm 모달 상태
+    // CreateForm 모달 상태
     const [createOpen, setCreateOpen] = useState(false);
+
+    const canCloseCreate = !c.saving;
 
     const openCreate = useCallback(() => setCreateOpen(true), []);
     const closeCreate = useCallback(() => {
-        // 저장 중에는 닫힘 방지(원하면 제거 가능)
-        if (saving) return;
+        if (!canCloseCreate) return;
         setCreateOpen(false);
-    }, [saving]);
+    }, [canCloseCreate]);
 
-    // ✅ 제출 시 저장 후 모달 닫기(유효성 통과했을 때만)
+    const isCreateValid = useMemo(
+        () => Boolean(c.newCompany.trim() && c.newRole.trim()),
+        [c.newCompany, c.newRole],
+    );
+
     const handleCreateAndClose = useCallback(
-        async (e?: React.FormEvent<HTMLFormElement>) => {
-            // 폼 유효성(현재 페이지 상태 기준)
-            const ok = newCompany.trim() && newRole.trim();
-            if (!ok) return;
+        async (e: FormEvent<HTMLFormElement>) => {
+            if (!isCreateValid) return;
 
-            await handleCreate(e);
+            await c.handleCreate(e);
 
-            // 실패 시 모달 유지하고 싶으면 여기서 saveError 상태를 보고 판단하도록 훅을 boolean 리턴으로 바꾸는게 베스트.
-            // 일단은 UX 상 "저장 시도 후 닫기"로 처리.
+            // 저장 시도 후 닫기(실패 시 유지하고 싶으면 controller가 boolean을 리턴하도록 바꾸는게 베스트)
             setCreateOpen(false);
         },
-        [handleCreate, newCompany, newRole],
+        [c, isCreateValid],
     );
 
     return (
@@ -131,72 +100,71 @@ export function ApplicationsPage() {
                 <button
                     type="button"
                     onClick={openCreate}
+                    disabled={c.saving}
                     className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-400 disabled:opacity-60"
-                    disabled={saving}
                 >
                     + 지원 추가
                 </button>
             </header>
 
-            {/* ✅ 요약만 상단에 두고, Create는 모달로 */}
+            {/* summary */}
             <div className="grid gap-6 md:grid-cols-2">
                 <ApplicationSummary
-                    loading={loading}
-                    total={totalCount}
-                    inProgress={inProgressCount}
-                    docDueSoon={docDueSoonCount}
-                    interviewSoon={interviewSoonCount}
-                    finalSoon={finalSoonCount}
+                    loading={c.loading}
+                    total={c.totalCount}
+                    inProgress={c.inProgressCount}
+                    docDueSoon={c.docDueSoonCount}
+                    interviewSoon={c.interviewSoonCount}
+                    finalSoon={c.finalSoonCount}
                 />
-
             </div>
 
             {/* list */}
             <section className="space-y-3">
                 <div className="flex items-end justify-between">
                     <h2 className="text-sm font-semibold text-rose-900">지원 목록</h2>
-                    <span className="text-xs text-rose-700/70">총 {totalCount}건</span>
+                    <span className="text-xs text-rose-700/70">총 {c.totalCount}건</span>
                 </div>
 
                 <ApplicationList
-                    loading={loading}
-                    applications={applications}
-                    onEdit={handleOpenEdit}
-                    onDelete={handleDelete}
+                    loading={c.loading}
+                    applications={c.applications}
+                    onEdit={c.handleOpenEdit}
+                    onDelete={c.handleDelete}
                 />
             </section>
 
-            {/* ✅ Create Modal */}
-            <CreateModal open={createOpen} onClose={closeCreate} disabledClose={saving}>
+            {/* Create Modal */}
+            <CreateModal open={createOpen} onClose={closeCreate} disabledClose={!canCloseCreate}>
                 <ApplicationCreateForm
-                    company={newCompany}
-                    position={newRole}
-                    status={newStatus}
-                    appliedAt={newAppliedAt}
-                    onAppliedAtChange={setNewAppliedAt}
-                    docDeadline={newDocumentDeadline}
-                    interviewAt={newInterviewAt}
-                    finalResultAt={newFinalResultAt}
-                    saving={saving}
-                    error={saveError}
-                    onCompanyChange={setNewCompany}
-                    onPositionChange={setNewRole}
-                    onStatusChange={setNewStatus}
-                    onDocDeadlineChange={setNewDocumentDeadline}
-                    onInterviewAtChange={setNewInterviewAt}
-                    onFinalResultAtChange={setNewFinalResultAt}
+                    company={c.newCompany}
+                    position={c.newRole}
+                    status={c.newStatus}
+                    appliedAt={c.newAppliedAt}
+                    docDeadline={c.newDocumentDeadline}
+                    interviewAt={c.newInterviewAt}
+                    finalResultAt={c.newFinalResultAt}
+                    saving={c.saving}
+                    error={c.saveError}
+                    onCompanyChange={c.setNewCompany}
+                    onPositionChange={c.setNewRole}
+                    onStatusChange={c.setNewStatus}
+                    onAppliedAtChange={c.setNewAppliedAt}
+                    onDocDeadlineChange={c.setNewDocumentDeadline}
+                    onInterviewAtChange={c.setNewInterviewAt}
+                    onFinalResultAtChange={c.setNewFinalResultAt}
                     onSubmit={handleCreateAndClose}
                 />
             </CreateModal>
 
-            {/* Edit Modal 그대로 */}
+            {/* Edit Modal */}
             <ApplicationEditModal
-                open={!!editingTarget}
-                target={editingTarget ?? null}
-                saving={editSaving}
-                error={editError}
-                onClose={handleCloseEdit}
-                onSave={handleSaveEdit}
+                open={!!c.editingTarget}
+                target={c.editingTarget ?? null}
+                saving={c.editSaving}
+                error={c.editError}
+                onClose={c.handleCloseEdit}
+                onSave={c.handleSaveEdit}
             />
         </div>
     );

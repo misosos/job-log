@@ -1,4 +1,3 @@
-// src/components/layout/PageLayout.tsx
 import type { ReactNode } from "react";
 import { Header } from "./Header";
 

@@ -5,21 +5,33 @@ type SectionCardProps = {
     title?: string;
     children: ReactNode;
     className?: string;
-    actions?: ReactNode; // 우측 상단 버튼/필터 같은 거 넣고 싶을 때
+    actions?: ReactNode;
 };
 
-export function SectionCard({ title, children, className, actions }: SectionCardProps) {
+const BASE_CARD_CLASS =
+    "!bg-rose-50 !border !border-rose-200 !shadow-sm !text-rose-900";
+
+export function SectionCard({
+                                title,
+                                children,
+                                className = "",
+                                actions,
+                            }: SectionCardProps) {
+    const hasHeader = Boolean(title) || Boolean(actions);
+
     return (
-        <Card
-            className={
-                "!bg-rose-50 !border !border-rose-200 !shadow-sm !text-rose-900 " +
-                (className ?? "")
-            }
-        >
-            <div className="mb-3 flex items-center justify-between text-rose-900">
-                <h2 className="jl-section-title text-rose-900">{title}</h2>
-                {actions}
-            </div>
+        <Card className={`${BASE_CARD_CLASS} ${className}`.trim()}>
+            {hasHeader && (
+                <div className="mb-3 flex items-center justify-between">
+                    {title ? (
+                        <h2 className="jl-section-title text-rose-900">{title}</h2>
+                    ) : (
+                        <span />
+                    )}
+                    {actions ? <div className="shrink-0">{actions}</div> : null}
+                </div>
+            )}
+
             {children}
         </Card>
     );

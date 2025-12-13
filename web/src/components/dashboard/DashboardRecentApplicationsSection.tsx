@@ -1,4 +1,3 @@
-// src/components/dashboard/DashboardRecentApplicationsSection.tsx
 import { useMemo } from "react";
 
 import { SectionCard } from "../common/SectionCard";
@@ -6,14 +5,16 @@ import { ApplicationList } from "../applications/ApplicationList";
 import { useApplications } from "../../features/applications/useApplications";
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
 
+const RECENT_LIMIT = 5;
+
+function pickRecent(items: ApplicationRow[], limit = RECENT_LIMIT): ApplicationRow[] {
+    return items.slice(0, limit);
+}
+
 export function DashboardRecentApplicationsSection() {
     const { applications, loading } = useApplications();
 
-    // 최근 5개만 사용 (useApplications에서 이미 정렬되어 있다고 가정)
-    const recentItems: ApplicationRow[] = useMemo(
-        () => applications.slice(0, 5),
-        [applications],
-    );
+    const recentItems = useMemo(() => pickRecent(applications), [applications]);
 
     return (
         <SectionCard title="최근 지원 내역">
