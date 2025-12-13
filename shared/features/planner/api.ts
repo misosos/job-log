@@ -63,18 +63,28 @@ function plannerTasksCollection(userId: string) {
 // 문서 → PlannerTask 매핑
 function mapPlannerTaskDoc(docSnap: QueryDocumentSnapshot): PlannerTask {
     const data = docSnap.data() as Partial<PlannerTask> & {
-        ddayLabel?: string;
+        ddayLabel?: string | null;
+        deadline?: string | null;
         scope?: PlannerScope;
         done?: boolean;
         applicationId?: string | null;
+        // createdAt/updatedAt는 PlannerTask에 있을 수도, 없을 수도 있어서 느슨하게
+        createdAt?: PlannerTask["createdAt"];
     };
 
     return {
         id: docSnap.id,
         title: data.title ?? "",
-        ddayLabel: data.ddayLabel ?? "",
-        done: data.done ?? false,
         scope: data.scope ?? "today",
+        done: data.done ?? false,
+
+        // ✅ 신규: 마감일
+        deadline: data.deadline ?? null,
+
+        // ✅ (호환) 기존 ddayLabel은 없으면 빈 문자열로(기존 UI 깨짐 방지)
+        ddayLabel: data.ddayLabel ?? "",
+
+        createdAt: data.createdAt ?? null,
         applicationId: data.applicationId ?? undefined,
     };
 }
@@ -86,16 +96,20 @@ export async function fetchPlannerTasks(): Promise<PlannerTask[]> {
     const q = query(colRef, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
 
-    return snap.docs.map((docSnap: QueryDocumentSnapshot) =>
-        mapPlannerTaskDoc(docSnap),
-    );
+    return snap.docs.map((docSnap: QueryDocumentSnapshot) => mapPlannerTaskDoc(docSnap));
 }
 
 // 새 태스크 생성
 export type CreatePlannerTaskInput = {
     title: string;
-    ddayLabel: string;
     scope: PlannerScope;
+
+    /** ✅ 신규 권장: 마감일(YYYY-MM-DD) */
+    deadline?: string | null;
+
+    /** (호환용) 기존 방식: D-day 라벨 문자열 */
+    ddayLabel?: string;
+
     applicationId?: string;
 };
 
@@ -110,21 +124,27 @@ export async function createPlannerTask(
     const docRef = await addDoc(colRef, {
         userId,
         title: input.title,
-        ddayLabel: input.ddayLabel,
         scope: input.scope,
         done: false,
         createdAt: now,
         updatedAt: now,
         applicationId: input.applicationId ?? null,
+
+        // ✅ 신규
+        deadline: input.deadline ?? null,
+
+        // ✅ (호환)
+        ddayLabel: input.ddayLabel ?? null,
     });
 
     return {
         id: docRef.id,
         title: input.title,
-        ddayLabel: input.ddayLabel,
-        done: false,
         scope: input.scope,
+        done: false,
         applicationId: input.applicationId,
+        deadline: input.deadline ?? null,
+        ddayLabel: input.ddayLabel ?? "",
     };
 }
 
