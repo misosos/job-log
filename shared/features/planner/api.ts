@@ -16,7 +16,7 @@ import type { Auth } from "firebase/auth";
 
 import type { PlannerTask, PlannerScope } from "./types";
 
-// 🔧 웹/앱 공용으로 쓰기 위해 Firestore, Auth를 외부에서 주입
+// 웹/앱 공용으로 쓰기 위해 Firestore, Auth를 외부에서 주입
 let injectedDb: Firestore | null = null;
 let injectedAuth: Auth | null = null;
 
@@ -77,10 +77,10 @@ function mapPlannerTaskDoc(docSnap: QueryDocumentSnapshot): PlannerTask {
         scope: data.scope ?? "today",
         done: data.done ?? false,
 
-        // ✅ 신규: 마감일
+        // 신규: 마감일
         deadline: data.deadline ?? null,
 
-        // ✅ (호환) 기존 ddayLabel은 없으면 빈 문자열로(기존 UI 깨짐 방지)
+        // (호환) 기존 ddayLabel은 없으면 빈 문자열로(기존 UI 깨짐 방지)
         ddayLabel: data.ddayLabel ?? "",
 
         createdAt: data.createdAt ?? null,
@@ -103,7 +103,7 @@ export type CreatePlannerTaskInput = {
     title: string;
     scope: PlannerScope;
 
-    /** ✅ 신규 권장: 마감일(YYYY-MM-DD) */
+    /** 신규 권장: 마감일(YYYY-MM-DD) */
     deadline?: string | null;
 
     /** (호환용) 기존 방식: D-day 라벨 문자열 */
@@ -129,10 +129,10 @@ export async function createPlannerTask(
         updatedAt: now,
         applicationId: input.applicationId ?? null,
 
-        // ✅ 신규
+        // 신규
         deadline: input.deadline ?? null,
 
-        // ✅ (호환)
+        // (호환)
         ddayLabel: input.ddayLabel ?? null,
     });
 

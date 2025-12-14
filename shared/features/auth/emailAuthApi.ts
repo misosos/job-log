@@ -17,7 +17,7 @@ export type EmailSignInInput = {
     password: string;
 };
 
-// ✅ web/app 공통으로 쓸 수 있도록 Auth 인스턴스를 외부에서 주입
+// web/app 공통으로 쓸 수 있도록 Auth 인스턴스를 외부에서 주입
 let authInstance: Auth | null = null;
 
 export function initEmailAuthApi(auth: Auth) {

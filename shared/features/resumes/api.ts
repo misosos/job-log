@@ -12,7 +12,7 @@ import {
 
 import type { ResumeVersion } from "./types";
 
-// 🔧 웹/앱 공용으로 쓰기 위해 Firestore 인스턴스를 외부에서 주입
+// 웹/앱 공용으로 쓰기 위해 Firestore 인스턴스를 외부에서 주입
 let injectedDb: Firestore | null = null;
 
 export function initResumesApi(db: Firestore): void {

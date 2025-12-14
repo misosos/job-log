@@ -1,4 +1,3 @@
-// src/features/applications/api.ts
 import {
     addDoc,
     collection,
@@ -26,7 +25,7 @@ import type { ApplicationStatus, JobApplication } from "./types.ts";
 let injectedDb: Firestore | null = null;
 let injectedAuth: Auth | null = null;
 
-// ✅ 웹/앱에서 앱 시작 시 한 번만 호출해 주입
+// 웹/앱에서 앱 시작 시 한 번만 호출해 주입
 export function initApplicationsApi(deps: { db: Firestore; auth: Auth }) {
     injectedDb = deps.db;
     injectedAuth = deps.auth;
@@ -71,7 +70,7 @@ function mapApplicationDoc(
     // Firestore 문서는 레거시/확장 필드가 섞일 수 있으므로 널널하게 받는다.
     const data = (snap.data() ?? {}) as Record<string, unknown>;
 
-    // ✅ any 없이 처리: 마지막에만 JobApplication으로 캐스팅
+    // any 없이 처리: 마지막에만 JobApplication으로 캐스팅
     return {
         id: snap.id,
         ...(data as Record<string, unknown>),
@@ -79,7 +78,7 @@ function mapApplicationDoc(
 }
 
 /**
- * ✅ 서류마감 동기화 규칙
+ *  서류마감 동기화 규칙
  * - docDeadline이 들어오면: deadline도 같이 맞춰준다(레거시 화면/쿼리 호환)
  * - deadline만 들어오면: docDeadline도 같이 맞춰준다(점진 마이그레이션)
  */
@@ -96,7 +95,7 @@ function resolveDocAndLegacyDeadline(input: {
 export type CreateApplicationInput = {
     company: string;
 
-    /** ✅ 신규 권장: position */
+    /** 신규 권장: position */
     position: string;
 
     /** (옵션) */
@@ -105,16 +104,16 @@ export type CreateApplicationInput = {
     /** 지원일 */
     appliedAt?: Timestamp | null;
 
-    /** ✅ 신규 권장: 서류 마감일 */
+    /**  신규 권장: 서류 마감일 */
     docDeadline?: Timestamp | null;
 
-    /** ✅ 면접일 */
+    /** 면접일 */
     interviewAt?: Timestamp | null;
 
-    /** ✅ 최종 발표일 */
+    /**  최종 발표일 */
     finalResultAt?: Timestamp | null;
 
-    /** ⚠️ 레거시: 예전 마감일(=서류마감으로 취급) */
+    /**  레거시: 예전 마감일(=서류마감으로 취급) */
     deadline?: Timestamp | null;
 
     memo?: string;
@@ -138,17 +137,17 @@ export async function createApplication(
         company: input.company,
         position: input.position,
 
-        // ✅ 기본값은 유니온에 포함된 "지원 예정" 사용 (캐스팅 X)
+        // 기본값은 유니온에 포함된 "지원 예정" 사용 (캐스팅 X)
         status: input.status ?? "지원 예정",
 
         appliedAt: input.appliedAt ?? null,
 
-        // ✅ 신규 필드
+        // 신규 필드
         docDeadline,
         interviewAt: input.interviewAt ?? null,
         finalResultAt: input.finalResultAt ?? null,
 
-        // ⚠️ 레거시 필드도 같이 유지(=서류마감)
+        //  레거시 필드도 같이 유지(=서류마감)
         deadline,
 
         memo: input.memo ?? "",
@@ -204,16 +203,6 @@ export async function listApplications(
     return snap.docs.map((docSnap: QueryDocumentSnapshot) => mapApplicationDoc(docSnap));
 }
 
-// 3) 단건 조회
-export async function getApplication(id: string): Promise<JobApplication | null> {
-    const userId = getUserIdOrThrow();
-    const docRef = doc(getDbOrThrow(), "users", userId, "applications", id);
-    const snap = await getDoc(docRef);
-
-    if (!snap.exists()) return null;
-    return mapApplicationDoc(snap);
-}
-
 // 4) 수정
 export type UpdateApplicationInput = {
     company?: string;
@@ -221,16 +210,16 @@ export type UpdateApplicationInput = {
     status?: ApplicationStatus;
     appliedAt?: Timestamp | null;
 
-    /** ✅ 신규 권장: 서류 마감일 */
+    /** 신규 권장: 서류 마감일 */
     docDeadline?: Timestamp | null;
 
-    /** ✅ 면접일 */
+    /** 면접일 */
     interviewAt?: Timestamp | null;
 
-    /** ✅ 최종 발표일 */
+    /** 최종 발표일 */
     finalResultAt?: Timestamp | null;
 
-    /** ⚠️ 레거시: 예전 마감일(=서류마감) */
+    /**  레거시: 예전 마감일(=서류마감) */
     deadline?: Timestamp | null;
 
     memo?: string;
@@ -253,11 +242,11 @@ export async function updateApplication(
     if (patch.appliedAt !== undefined) payload.appliedAt = patch.appliedAt;
     if (patch.memo !== undefined) payload.memo = patch.memo;
 
-    // ✅ 3대 날짜 업데이트
+    //  3대 날짜 업데이트
     if (patch.interviewAt !== undefined) payload.interviewAt = patch.interviewAt;
     if (patch.finalResultAt !== undefined) payload.finalResultAt = patch.finalResultAt;
 
-    // ✅ 서류마감은 docDeadline/deadline 동기화
+    // 서류마감은 docDeadline/deadline 동기화
     const touchedDocDeadline = patch.docDeadline !== undefined;
     const touchedLegacyDeadline = patch.deadline !== undefined;
 

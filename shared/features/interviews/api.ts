@@ -12,7 +12,7 @@ import {
 
 import type { InterviewItem } from "./interviews";
 
-// ✅ 플랫폼별(FE/앱)에서 주입할 Firestore 인스턴스
+// 플랫폼별(FE/앱)에서 주입할 Firestore 인스턴스
 let injectedDb: Firestore | null = null;
 
 export function initInterviewsApi(db: Firestore): void {
