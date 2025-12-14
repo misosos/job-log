@@ -1,57 +1,51 @@
-import { Badge } from "flowbite-react";
+import { Badge, type BadgeProps } from "flowbite-react";
+import type { IconType } from "react-icons";
 import {
     HiOutlineClipboardList,
     HiCheck,
     HiOutlineClipboardCheck,
     HiOutlineEmojiHappy,
     HiOutlineEmojiSad,
+    HiOutlineCalendar,
+    HiOutlineBan,
 } from "react-icons/hi";
 
-export type ApplicationStatus =
-    | "지원 예정"
-    | "서류 제출"
-    | "서류 통과"
-    | "최종 합격"
-    | "불합격";
+import type { ApplicationStatus } from "../../../../shared/features/applications/types";
 
 type Props = {
-    status: ApplicationStatus;
+    status?: ApplicationStatus;
 };
 
+type StatusConfig = {
+    color: BadgeProps["color"];
+    icon: IconType;
+};
+
+const FALLBACK_STATUS: ApplicationStatus = "지원 예정";
+
+const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
+    "지원 예정": { color: "gray", icon: HiOutlineClipboardList },
+    "서류 제출": { color: "info", icon: HiCheck },
+    "서류 통과": { color: "purple", icon: HiOutlineClipboardCheck },
+    "면접 예정": { color: "warning", icon: HiOutlineCalendar },
+    "면접 완료": { color: "indigo", icon: HiOutlineClipboardCheck },
+    "최종 합격": { color: "success", icon: HiOutlineEmojiHappy },
+    "불합격": { color: "failure", icon: HiOutlineEmojiSad },
+    "지원 철회": { color: "dark", icon: HiOutlineBan },
+} as const;
+
+function resolveStatus(input?: ApplicationStatus): ApplicationStatus {
+    // 타입상 안전하지만(런타임 유입 대비) 방어적으로 처리
+    return input && input in STATUS_CONFIG ? input : FALLBACK_STATUS;
+}
+
 export function ApplicationStatusBadge({ status }: Props) {
-    // 상태에 따른 아이콘/색 매핑
-    switch (status) {
-        case "지원 예정":
-            return (
-                <Badge color="gray" icon={HiOutlineClipboardList}>
-                    지원 예정
-                </Badge>
-            );
-        case "서류 제출":
-            return (
-                <Badge color="info" icon={HiCheck}>
-                    서류 제출
-                </Badge>
-            );
-        case "서류 통과":
-            return (
-                <Badge color="purple" icon={HiOutlineClipboardCheck}>
-                    서류 통과
-                </Badge>
-            );
-        case "최종 합격":
-            return (
-                <Badge color="success" icon={HiOutlineEmojiHappy}>
-                    최종 합격
-                </Badge>
-            );
-        case "불합격":
-            return (
-                <Badge color="failure" icon={HiOutlineEmojiSad}>
-                    불합격
-                </Badge>
-            );
-        default:
-            return <Badge color="gray">{status}</Badge>;
-    }
+    const current = resolveStatus(status);
+    const { color, icon: Icon } = STATUS_CONFIG[current];
+
+    return (
+        <Badge color={color} icon={Icon}>
+            {current}
+        </Badge>
+    );
 }

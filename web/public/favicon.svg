@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="JobLog">
+    <!-- background -->
+    <rect x="32" y="32" width="448" height="448" rx="120" fill="#f43f5e"/>
+
+    <!-- subtle highlight -->
+    <path d="M152 120c-44 0-80 36-80 80v0c0 18 14 32 32 32h0c18 0 32-14 32-32v0c0-9 7-16 16-16h208c9 0 16-7 16-16v0c0-18-14-32-32-32H152z" fill="#fb7185" opacity="0.55"/>
+
+    <!-- checkmark in a circle -->
+    <circle cx="174" cy="220" r="44" fill="#fff" opacity="0.95"/>
+    <path d="M156 220l12 12 28-32" fill="none" stroke="#f43f5e" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- JL monogram -->
+    <path d="M240 176h44v164c0 26-14 44-44 44h-26v-34h18c10 0 14-5 14-16V176z" fill="#fff"/>
+    <path d="M316 176h44v174h86v34H316V176z" fill="#fff"/>
+
+    <!-- small log lines (right) -->
+    <rect x="140" y="300" width="110" height="18" rx="9" fill="#fff" opacity="0.95"/>
+    <rect x="140" y="340" width="90" height="18" rx="9" fill="#fff" opacity="0.85"/>
+</svg>

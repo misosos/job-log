@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "JobLog",
+    "slug": "joblog",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon-1024.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/icon-1024.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/icon-1024.png"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon-1024.png",
+        "backgroundColor": "#f43f5e"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/icon-192.png"
+    },
+    "plugins": ["expo-web-browser"]
+  }
+}

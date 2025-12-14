@@ -1,48 +1,89 @@
-// src/components/dashboard/DashboardUpcomingSection.tsx
+import { useMemo } from "react";
+import { MdEvent } from "react-icons/md";
+import { useAuth } from "../../libs/auth-context";
 import { SectionCard } from "../common/SectionCard";
-import {DashboardUpcomingItem} from "./DashboardUpcomingItem.tsx";
-import { Timeline } from "flowbite-react";
+import { useInterviewPageController } from "../../features/interviews/useInterviewPageController";
 
-const dashboardUpcomingItems = [
-    {
-        id: "1",
-        type: "deadline",
-        dateTime: "2025-11-30T23:59:00",
-        displayTime: "11.30 (토) 서류 마감",
-        title: "카카오페이 데이터 산출 인턴 서류 마감",
-        description: "자기소개서 최종 검토 및 지원서 제출",
-        actionLabel: "지원서 정리하기",
-        actionHref: "/applications", // 나중에 라우터 연결
-    },
-    {
-        id: "2",
-        type: "interview",
-        dateTime: "2025-12-02T10:00:00",
-        displayTime: "12.02 (월) 10:00 · 1차 면접",
-        title: "IBK기업은행 디지털 인턴 1차 면접",
-        description: "AI 서비스 기획 경험 중심으로 예상 질문 준비",
-        actionLabel: "면접 준비하기",
-        actionHref: "/interviews",
-    },
-    {
-        id: "3",
-        type: "deadline",
-        dateTime: "2025-12-05T23:59:00",
-        displayTime: "12.05 (목) 서류 마감",
-        title: "신한은행 AI 인턴 서류 마감",
-        actionLabel: "공고 다시 보기",
-        actionHref: "/planner",
-    },
-];
+const SKELETON_ROWS = [0, 1, 2];
+
+type UpcomingItem = {
+    id: string;
+    company?: string | null;
+    role?: string | null;
+    type?: string | null;
+    scheduledAtLabel?: string | null;
+};
+
+function Skeleton() {
+    return (
+        <div className="space-y-2">
+            {SKELETON_ROWS.map((i) => (
+                <div
+                    key={i}
+                    className="h-14 w-full animate-pulse rounded-md border border-rose-200 bg-rose-100"
+                />
+            ))}
+        </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <p className="text-xs leading-relaxed text-rose-700/80">
+            앞으로 예정된 면접이 없어요.
+            <br />
+            인터뷰 페이지에서 새로운 면접 일정을 추가해보세요.
+        </p>
+    );
+}
+
+function UpcomingRow({ item }: { item: UpcomingItem }) {
+    const dateLabel = item.scheduledAtLabel ?? "일정 미정";
+    const companyLabel = item.company?.trim() ? item.company : "회사 미입력";
+    const roleLabel = item.role?.trim() ? ` · ${item.role}` : "";
+    const typeLabel = item.type?.trim() ? `${item.type} 면접` : "면접 유형 미입력";
+
+    return (
+        <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-rose-200 bg-rose-50">
+                <MdEvent className="h-4 w-4 text-rose-500" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+                <p className="text-[11px] text-rose-600">{dateLabel}</p>
+                <p className="truncate text-sm font-medium text-rose-900">
+                    {companyLabel}
+                    {roleLabel}
+                </p>
+                <p className="mt-0.5 text-[11px] text-rose-600">{typeLabel}</p>
+            </div>
+        </div>
+    );
+}
 
 export function DashboardUpcomingSection() {
+    const { user } = useAuth();
+    const userId = user?.uid ?? "web";
+
+    const { upcoming, loading, listError } = useInterviewPageController(userId);
+
+    const items = useMemo(() => upcoming.slice(0, 3), [upcoming]);
+
     return (
-        <SectionCard title="다가오는 마감 / 면접">
-            <Timeline>
-                {dashboardUpcomingItems.map((item) => (
-                    <DashboardUpcomingItem key={item.id} {...item} />
-                ))}
-            </Timeline>
+        <SectionCard title="다가오는 면접">
+            {!!listError && <p className="mb-2 text-xs text-rose-600">{listError}</p>}
+
+            {loading ? (
+                <Skeleton />
+            ) : items.length === 0 ? (
+                <EmptyState />
+            ) : (
+                <div className="space-y-2">
+                    {items.map((item) => (
+                        <UpcomingRow key={item.id} item={item as UpcomingItem} />
+                    ))}
+                </div>
+            )}
         </SectionCard>
     );
 }
