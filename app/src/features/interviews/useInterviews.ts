@@ -31,11 +31,6 @@ export function useInterviews(userId: string | null | undefined) {
     const load = useCallback(async () => {
         const effectiveUserId = getEffectiveUserId(userId);
 
-        // 디버깅용 로그
-        console.log("[useInterviews] load", {
-            userIdProp: userId,
-            effectiveUserId,
-        });
 
         // 로그인 안 되어 있으면 그냥 빈 리스트로
         if (!effectiveUserId) {

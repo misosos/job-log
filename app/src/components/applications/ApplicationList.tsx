@@ -2,9 +2,7 @@ import React, { memo, useMemo } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 
 import { ApplicationStatusBadge } from "../common/ApplicationStatusBadge";
-
 import type { ApplicationRow } from "../../../../shared/features/applications/types";
-
 import { colors, space, radius, font } from "../../styles/theme";
 
 // -----------------------------
@@ -114,7 +112,9 @@ function SchedulePills({
                            docLabel,
                            interviewLabel,
                            finalLabel,
-                           dday,
+                           docDday,
+                           interviewDday,
+                           finalDday,
                        }: {
     docDeadline: DateLike;
     interviewAt: DateLike;
@@ -122,7 +122,9 @@ function SchedulePills({
     docLabel: string;
     interviewLabel: string;
     finalLabel: string;
-    dday: string;
+    docDday: string;
+    interviewDday: string;
+    finalDday: string;
 }) {
     const hasDoc = Boolean(toDate(docDeadline));
     const hasInterview = Boolean(toDate(interviewAt));
@@ -137,9 +139,9 @@ function SchedulePills({
                     <Text style={styles.pillKey}>서류</Text>
                     <Text style={styles.pillVal}>{docLabel}</Text>
 
-                    {!!dday && (
+                    {!!docDday && (
                         <View style={styles.ddayBadge}>
-                            <Text style={styles.ddayText}>{dday}</Text>
+                            <Text style={styles.ddayText}>{docDday}</Text>
                         </View>
                     )}
                 </View>
@@ -149,6 +151,12 @@ function SchedulePills({
                 <View style={styles.pill}>
                     <Text style={styles.pillKey}>면접</Text>
                     <Text style={styles.pillVal}>{interviewLabel}</Text>
+
+                    {!!interviewDday && (
+                        <View style={styles.ddayBadge}>
+                            <Text style={styles.ddayText}>{interviewDday}</Text>
+                        </View>
+                    )}
                 </View>
             )}
 
@@ -156,6 +164,12 @@ function SchedulePills({
                 <View style={styles.pill}>
                     <Text style={styles.pillKey}>최종</Text>
                     <Text style={styles.pillVal}>{finalLabel}</Text>
+
+                    {!!finalDday && (
+                        <View style={styles.ddayBadge}>
+                            <Text style={styles.ddayText}>{finalDday}</Text>
+                        </View>
+                    )}
                 </View>
             )}
         </View>
@@ -191,7 +205,10 @@ const ApplicationRowItem = memo(function ApplicationRowItem({ app, isLast, onEdi
         const interviewLabel = stripSuffix(ext.interviewAtLabel, /\s*면접\s*$/, formatMd(interviewAt));
         const finalLabel = stripSuffix(ext.finalResultAtLabel, /\s*최종발표\s*$/, formatMd(finalResultAt));
 
-        const dday = formatDday(docDeadline);
+        // 각각 D-day 계산
+        const docDday = formatDday(docDeadline);
+        const interviewDday = formatDday(interviewAt);
+        const finalDday = formatDday(finalResultAt);
 
         const hasActions = Boolean(onEdit || onDelete);
 
@@ -204,7 +221,9 @@ const ApplicationRowItem = memo(function ApplicationRowItem({ app, isLast, onEdi
             docLabel,
             interviewLabel,
             finalLabel,
-            dday,
+            docDday,
+            interviewDday,
+            finalDday,
             hasActions,
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -243,7 +262,7 @@ const ApplicationRowItem = memo(function ApplicationRowItem({ app, isLast, onEdi
                     <ApplicationStatusBadge status={app.status as any} />
                 </View>
 
-                {/* 지원일 */}
+                {/* 지원일 + 일정 */}
                 <View style={styles.rightMid}>
                     <Text style={styles.appliedText}>지원일 {vm.appliedAtText}</Text>
 
@@ -254,7 +273,9 @@ const ApplicationRowItem = memo(function ApplicationRowItem({ app, isLast, onEdi
                         docLabel={vm.docLabel}
                         interviewLabel={vm.interviewLabel}
                         finalLabel={vm.finalLabel}
-                        dday={vm.dday}
+                        docDday={vm.docDday}
+                        interviewDday={vm.interviewDday}
+                        finalDday={vm.finalDday}
                     />
                 </View>
 
@@ -330,7 +351,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.bg,
         borderRadius: radius.lg,
         paddingHorizontal: space.lg,
-        paddingVertical: space.lg - 2, // 14 느낌
+        paddingVertical: space.lg - 2,
         borderWidth: 1,
         borderColor: colors.border,
     },
@@ -362,7 +383,7 @@ const styles = StyleSheet.create({
 
     countText: {
         fontSize: font.small,
-        color: colors.placeholder, // 포인트
+        color: colors.placeholder,
         fontWeight: "800",
     },
 
@@ -370,7 +391,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        paddingVertical: space.md - 2, // 10 느낌
+        paddingVertical: space.md - 2,
     },
 
     rowDivider: {
@@ -380,19 +401,19 @@ const styles = StyleSheet.create({
 
     infoLeft: {
         flex: 1,
-        paddingRight: space.md - 2, // 10
+        paddingRight: space.md - 2,
         minWidth: 0,
     },
 
     companyText: {
-        fontSize: font.h2, // 15
+        fontSize: font.h2,
         fontWeight: "800",
         color: colors.textStrong,
     },
 
     roleText: {
-        marginTop: space.xs / 2, // 2
-        fontSize: font.body, // 13
+        marginTop: space.xs / 2,
+        fontSize: font.body,
         color: colors.text,
         fontWeight: "700",
     },
@@ -404,7 +425,6 @@ const styles = StyleSheet.create({
         maxWidth: "58%",
     },
 
-    // 우측 영역을 3층으로 명확히
     rightTop: {
         alignSelf: "stretch",
         flexDirection: "row",
@@ -428,7 +448,7 @@ const styles = StyleSheet.create({
     },
 
     scheduleWrap: {
-        marginTop: space.sm - 2, // 6
+        marginTop: space.sm - 2,
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "flex-end",
@@ -444,8 +464,8 @@ const styles = StyleSheet.create({
         borderRadius: radius.pill,
         paddingHorizontal: space.sm,
         paddingVertical: space.xs,
-        marginLeft: space.sm - 2, // 6
-        marginTop: space.sm - 2, // 6
+        marginLeft: space.sm - 2,
+        marginTop: space.sm - 2,
         maxWidth: "100%",
     },
 
@@ -459,13 +479,13 @@ const styles = StyleSheet.create({
         fontSize: font.small,
         color: colors.text,
         fontWeight: "800",
-        marginLeft: space.sm - 2, // 6
+        marginLeft: space.sm - 2,
         flexShrink: 1,
     },
 
     ddayBadge: {
-        paddingHorizontal: space.sm - 2, // 6
-        paddingVertical: space.xs / 2, // 2
+        paddingHorizontal: space.sm - 2,
+        paddingVertical: space.xs / 2,
         borderRadius: radius.pill,
         backgroundColor: colors.accentSoft,
         marginLeft: space.sm - 2,

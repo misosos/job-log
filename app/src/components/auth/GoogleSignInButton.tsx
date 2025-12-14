@@ -75,12 +75,10 @@ export const GoogleSignInButton = memo(function GoogleSignInButton({
     const signInWeb = useCallback(async () => {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
-        console.log("[Auth] web signInWithPopup success");
     }, []);
 
     const signInNative = useCallback(async () => {
         if (!request) {
-            console.log("[Auth] Google request not ready yet");
             return;
         }
         await promptAsync();
@@ -93,13 +91,11 @@ export const GoogleSignInButton = memo(function GoogleSignInButton({
 
         const idToken = getIdTokenFromResponse(response);
         if (!idToken) {
-            console.log("[Auth] no id_token in response", JSON.stringify(response));
             return;
         }
 
         const credential = GoogleAuthProvider.credential(idToken);
         await signInWithCredential(auth, credential);
-        console.log("[Auth] native signIn success");
     }, [response]);
 
     useEffect(() => {

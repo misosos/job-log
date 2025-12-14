@@ -2,7 +2,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import * as AuthSession from "expo-auth-session";
 
 import { LoginScreen } from "./src/screens/auth/LoginScreen";
 import { DashboardScreen } from "./src/screens/dashboard/DashboardScreen";
@@ -54,9 +53,6 @@ function initSharedApisOnce() {
 }
 
 initSharedApisOnce();
-
-const redirectUri = AuthSession.makeRedirectUri();
-if (__DEV__) console.log("redirectUri >>>", redirectUri);
 
 // Screen에 PageLayout을 깔끔하게 감싸는 래퍼(렌더 안에서 함수 생성 X)
 function withPageLayout<TProps extends object>(
