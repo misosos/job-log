@@ -41,7 +41,6 @@ function toDate(value: DateLike): Date | null {
     if (!value) return null;
     if (isTimestampLike(value)) return value.toDate();
     if (value instanceof Date) return value;
-    // DateLike에서 남는 건 string
     return parseYmdToDate(value);
 }
 
@@ -51,11 +50,11 @@ function formatMdFromDate(d: Date): string {
     return `${month}.${day}`;
 }
 
-function formatDdayFromDate(deadline: Date): string {
+function formatDdayFromDate(targetDate: Date): string {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const target = new Date(deadline);
+    const target = new Date(targetDate);
     target.setHours(0, 0, 0, 0);
 
     const diffMs = target.getTime() - today.getTime();
@@ -91,7 +90,8 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                                                             }: RowProps) {
     const ext = app as ApplicationRowExtended;
 
-    const positionLabel = (app.position ?? "").trim() || (app.role ?? "").trim() || "";
+    const positionLabel =
+        (app.position ?? "").trim() || (app.role ?? "").trim() || "";
 
     // 날짜 값은 "딱 1번"만 Date로 변환해서 재사용
     const docDeadlineValue: DateLike = app.docDeadline ?? app.deadline ?? null;
@@ -115,7 +115,11 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
     const deadlineLabel = docDate ? formatMdFromDate(docDate) : "-";
     const interviewLabel = interviewDate ? formatMdFromDate(interviewDate) : "-";
     const finalLabel = finalDate ? formatMdFromDate(finalDate) : "-";
-    const dday = docDate ? formatDdayFromDate(docDate) : "";
+
+    // ✅ 각각 D-day 계산
+    const docDday = docDate ? formatDdayFromDate(docDate) : "";
+    const interviewDday = interviewDate ? formatDdayFromDate(interviewDate) : "";
+    const finalDday = finalDate ? formatDdayFromDate(finalDate) : "";
 
     return (
         <div className="flex items-center justify-between py-3">
@@ -127,7 +131,9 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
             <div className="flex flex-col items-end gap-1">
                 <ApplicationStatusBadge status={app.status} />
 
-                {hasAppliedAt && <span className="text-xs text-rose-600">지원일 {appliedAtText}</span>}
+                {hasAppliedAt && (
+                    <span className="text-xs text-rose-600">지원일 {appliedAtText}</span>
+                )}
 
                 {hasAnySchedule && (
                     <div className="mt-0.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[11px] text-rose-700">
@@ -135,9 +141,9 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                             <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5">
                 <span className="text-rose-600">서류</span>
                 <span className="text-rose-900">{deadlineLabel}</span>
-                                {dday && (
+                                {docDday && (
                                     <span className="ml-1 rounded-full bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-500">
-                    {dday}
+                    {docDday}
                   </span>
                                 )}
               </span>
@@ -147,6 +153,11 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                             <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5">
                 <span className="text-rose-600">면접</span>
                 <span className="text-rose-900">{interviewLabel}</span>
+                                {interviewDday && (
+                                    <span className="ml-1 rounded-full bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-500">
+                    {interviewDday}
+                  </span>
+                                )}
               </span>
                         )}
 
@@ -154,6 +165,11 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                             <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5">
                 <span className="text-rose-600">최종</span>
                 <span className="text-rose-900">{finalLabel}</span>
+                                {finalDday && (
+                                    <span className="ml-1 rounded-full bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-500">
+                    {finalDday}
+                  </span>
+                                )}
               </span>
                         )}
                     </div>
@@ -162,12 +178,20 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
                 {(onEdit || onDelete) && (
                     <div className="mt-1 flex gap-3 text-[11px] text-rose-600">
                         {onEdit && (
-                            <button type="button" onClick={() => onEdit(app)} className="hover:text-rose-500">
+                            <button
+                                type="button"
+                                onClick={() => onEdit(app)}
+                                className="hover:text-rose-500"
+                            >
                                 수정
                             </button>
                         )}
                         {onDelete && (
-                            <button type="button" onClick={() => onDelete(app.id)} className="hover:text-rose-500">
+                            <button
+                                type="button"
+                                onClick={() => onDelete(app.id)}
+                                className="hover:text-rose-500"
+                            >
                                 삭제
                             </button>
                         )}
@@ -178,11 +202,18 @@ const ApplicationRowItem = memo(function ApplicationRowItem({
     );
 });
 
-export function ApplicationList({ loading, applications, onEdit, onDelete }: ApplicationListProps) {
+export function ApplicationList({
+                                    loading,
+                                    applications,
+                                    onEdit,
+                                    onDelete,
+                                }: ApplicationListProps) {
     if (loading) {
         return (
             <SectionCard title="지원 목록">
-                <div className="py-6 text-sm text-rose-600">지원 내역을 불러오는 중입니다…</div>
+                <div className="py-6 text-sm text-rose-600">
+                    지원 내역을 불러오는 중입니다…
+                </div>
             </SectionCard>
         );
     }
@@ -200,12 +231,19 @@ export function ApplicationList({ loading, applications, onEdit, onDelete }: App
     return (
         <SectionCard title="지원 목록">
             <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-rose-600">총 {applications.length}건의 지원 내역</p>
+                <p className="text-xs text-rose-600">
+                    총 {applications.length}건의 지원 내역
+                </p>
             </div>
 
             <div className="divide-y divide-rose-100">
                 {applications.map((app) => (
-                    <ApplicationRowItem key={app.id} app={app} onEdit={onEdit} onDelete={onDelete} />
+                    <ApplicationRowItem
+                        key={app.id}
+                        app={app}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
                 ))}
             </div>
         </SectionCard>

@@ -76,19 +76,19 @@ export function ApplicationSummary({
     const badges: BadgeSpec[] = [
         {
             key: "doc",
-            label: "서류 마감(7일)",
+            label: "서류 (D-7)",
             title: "오늘 포함 7일 이내 서류 마감",
             count: docCount,
         },
         {
             key: "interview",
-            label: "면접(7일)",
+            label: "면접 (D-7)",
             title: "오늘 포함 7일 이내 면접 일정",
             count: interviewCount,
         },
         {
             key: "final",
-            label: "최종 발표(7일)",
+            label: "최종 발표 (D-7)",
             title: "오늘 포함 7일 이내 최종 발표",
             count: finalCount,
         },
