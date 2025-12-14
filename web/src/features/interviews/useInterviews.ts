@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { InterviewItem } from "../../../../shared/features/interviews/interviews";
 import { fetchInterviews } from "../../../../shared/features/interviews/api";
 
-// 🔹 웹 Firebase auth
+//  웹 Firebase auth
 import { auth } from "../../libs/firebase";
 
 /** 전달된 userId + Firebase auth.currentUser를 합쳐서 실제로 쓸 userId 계산 */
@@ -31,12 +31,6 @@ export function useInterviews(userId: string | null | undefined) {
     const load = useCallback(async () => {
         const effectiveUserId = getEffectiveUserId(userId);
 
-        // 디버깅용 로그
-        console.log("[useInterviews] load", {
-            userIdProp: userId,
-            effectiveUserId,
-        });
-
         // 로그인 안 되어 있으면 그냥 빈 리스트로
         if (!effectiveUserId) {
             setInterviews([]);
@@ -51,8 +45,7 @@ export function useInterviews(userId: string | null | undefined) {
         try {
             const items = await fetchInterviews(effectiveUserId);
             setInterviews(items);
-        } catch (err) {
-            console.error("면접 기록 불러오기 실패:", err);
+        } catch{
             setError("면접 기록을 불러오는 중 문제가 발생했습니다.");
         } finally {
             setLoading(false);
