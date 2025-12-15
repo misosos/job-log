@@ -115,7 +115,6 @@ export type CreatePlannerTaskInput = {
 export async function createPlannerTask(
     input: CreatePlannerTaskInput,
 ): Promise<PlannerTask> {
-    const db = getDbOrThrow();
     const userId = getUserIdOrThrow();
     const colRef = plannerTasksCollection(userId);
     const now = serverTimestamp();

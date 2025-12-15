@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@plugin "flowbite-react/plugin/tailwindcss";
+@import "flowbite-react/plugin/tailwindcss";
 @source "../../.flowbite-react/class-list.json";
 
 /* ✅ 다크모드 완전 차단: 브라우저/OS가 다크여도 form UI 포함 라이트로 강제 */

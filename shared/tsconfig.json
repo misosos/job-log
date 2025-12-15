@@ -1,18 +1,16 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "firebase": [
-        "../web/node_modules/firebase",
-        "../app/node_modules/firebase"
-      ],
-      "firebase/*": [
-        "../web/node_modules/firebase/*",
-        "../app/node_modules/firebase/*"
-      ]
-    },
-    "moduleResolution": "Bundler",
     "target": "ES2017",
-    "lib": ["ES2017", "DOM"]
-  }
+    "lib": ["ES2017", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
 }
