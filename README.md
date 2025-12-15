@@ -37,19 +37,53 @@ job-log/
 
 ---
 
+## 설치 (npm workspaces)
+
+루트에서 한 번만 설치합니다. (web/app/shared가 루트 `node_modules`를 공유)
+
+```bash
+cd job-log
+npm install
+```
+
+> 개별 폴더(`web/`, `app/`, `shared/`)에서 `npm install`을 반복할 필요가 없습니다.
+
 ## Web 실행 방법
 
 ```bash
-cd web
-npm install
-npm run dev
-```
+# 개발 서버 (HMR)
+cd job-log
+npm run dev:web
 
+# 빌드
+npm run build:web
+
+# (배포처럼) 빌드 결과 미리보기
+npm -w web run preview
+```
 
 ## App 실행 방법 (Expo)
 
 ```bash
-cd app
-npm install
-npx expo start
+cd job-log
+
+# Expo 개발 서버
+npm -w app run start
+# 또는
+npx -w app expo start
 ```
+
+---
+
+## 공통 빌드/타입체크
+
+```bash
+cd job-log
+
+# shared → web 순서로 전체 빌드
+npm run build
+
+# 타입체크
+npm run typecheck
+```
+
