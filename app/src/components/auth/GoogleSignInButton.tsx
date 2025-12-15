@@ -1,7 +1,6 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -9,141 +8,92 @@ import {
 } from "react-native";
 import {
     GoogleAuthProvider,
-    onAuthStateChanged,
     signInWithCredential,
-    signInWithPopup,
-    signOut,
+    User,
+    onAuthStateChanged,
+    signOut
 } from "firebase/auth";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-
 import { auth } from "../../libs/firebase";
 import { colors, space, radius, font } from "../../styles/theme";
 
+// ✅ 1. 웹 브라우저 팝업 완료 처리
 WebBrowser.maybeCompleteAuthSession();
 
-type GoogleSignInButtonProps = {
-    hideWhenLoggedOut?: boolean;
-};
-
-type GoogleResponseLike = {
-    type?: string;
-    authentication?: { idToken?: string };
-    params?: { id_token?: string };
-};
-
-function useAuthEmail() {
-    const [email, setEmail] = useState<string | null>(null);
-
-    useEffect(() => {
-        const unsub = onAuthStateChanged(auth, (user) => setEmail(user?.email ?? null));
-        return () => unsub();
-    }, []);
-
-    return email;
-}
-
-function getIdTokenFromResponse(response: unknown): string | null {
-    const r = response as GoogleResponseLike | null;
-    const idToken = r?.authentication?.idToken ?? r?.params?.id_token ?? null;
-    return typeof idToken === "string" && idToken.length > 0 ? idToken : null;
-}
-
-export const GoogleSignInButton = memo(function GoogleSignInButton({
-                                                                       hideWhenLoggedOut = false,
-                                                                   }: GoogleSignInButtonProps) {
-    const userEmail = useAuthEmail();
+export const GoogleSignInButton = memo(function GoogleSignInButton() {
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const [request, response, promptAsync] = Google.useAuthRequest({
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) setLoading(false);
+        });
+        return unsubscribe;
+    }, []);
+
+    // ✅ 2. 요청 객체 생성
+    const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
         clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        scopes: ["openid", "email", "profile"],
+        redirectUri: "https://auth.expo.io/@misosos/joblog",
+        selectAccount: true, // 계정 선택창 강제 표시
     });
 
-    const withLoading = useCallback(async (fn: () => Promise<void>) => {
-        setLoading(true);
-        try {
-            await fn();
-        } finally {
+
+    // ✅ 3. 응답 처리
+    useEffect(() => {
+        if (response?.type === "success") {
+            const { id_token } = response.params;
+            if (id_token) {
+                setLoading(true);
+                const credential = GoogleAuthProvider.credential(id_token);
+                signInWithCredential(auth, credential)
+                    .then(() => {
+                        console.log("🔥 Firebase 로그인 성공!");
+                    })
+                    .catch((err) => {
+                        console.error("Firebase Login Error:", err);
+                        alert("로그인 실패: " + err.message);
+                        setLoading(false);
+                    });
+            }
+        } else if (response?.type === "error") {
+            console.error("❌ Google Login Error:", response.error);
+            setLoading(false);
+        } else if (response?.type === "dismiss") {
             setLoading(false);
         }
-    }, []);
-
-    const signInWeb = useCallback(async () => {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-    }, []);
-
-    const signInNative = useCallback(async () => {
-        if (!request) {
-            return;
-        }
-        await promptAsync();
-    }, [request, promptAsync]);
-
-    const handleNativeResponse = useCallback(async () => {
-        if (Platform.OS === "web") return;
-        if (!response) return;
-        if ((response as { type?: string }).type !== "success") return;
-
-        const idToken = getIdTokenFromResponse(response);
-        if (!idToken) {
-            return;
-        }
-
-        const credential = GoogleAuthProvider.credential(idToken);
-        await signInWithCredential(auth, credential);
     }, [response]);
 
-    useEffect(() => {
-        void withLoading(handleNativeResponse);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [handleNativeResponse]);
-
-    const handleSignIn = useCallback(() => {
-        return withLoading(async () => {
-            if (Platform.OS === "web") {
-                await signInWeb();
+    // ✅ 4. 로그인 버튼 핸들러 (수정됨: 인자 없음)
+    const handleSignIn = async () => {
+        setLoading(true);
+        try {
+            if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+                alert("Client ID 없음 (.env 확인)");
+                setLoading(false);
                 return;
             }
-            await signInNative();
-        });
-    }, [withLoading, signInWeb, signInNative]);
+            // 👇 [수정] 옵션을 다 지우고 빈 괄호로 실행하세요. (TS 에러 해결)
+            await promptAsync();
+        } catch (error) {
+            console.error("Sign In Exception:", error);
+            setLoading(false);
+        }
+    };
 
-    const handleSignOut = useCallback(() => {
-        return withLoading(async () => {
-            await signOut(auth);
-        });
-    }, [withLoading]);
-
-    const isDisabled = useMemo(() => {
-        const needsRequest = Platform.OS !== "web";
-        return loading || (needsRequest && !request);
-    }, [loading, request]);
-
-    if (!userEmail && hideWhenLoggedOut) return null;
-
-    if (userEmail) {
+    /* ---------- UI 렌더링 ---------- */
+    if (user) {
         return (
             <View style={styles.container}>
-                <Text style={styles.email} numberOfLines={1}>
-                    {userEmail}
-                </Text>
-
+                <Text style={styles.email} numberOfLines={1}>{user.email}</Text>
                 <TouchableOpacity
                     style={[styles.button, styles.logoutButton]}
-                    onPress={handleSignOut}
-                    disabled={loading}
-                    activeOpacity={0.9}
+                    onPress={() => signOut(auth)}
                 >
-                    {loading ? (
-                        <ActivityIndicator size="small" color={colors.text} />
-                    ) : (
-                        <Text style={[styles.buttonText, styles.logoutText]}>로그아웃</Text>
-                    )}
+                    <Text style={[styles.buttonText, styles.logoutText]}>로그아웃</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -151,13 +101,12 @@ export const GoogleSignInButton = memo(function GoogleSignInButton({
 
     return (
         <TouchableOpacity
-            style={[styles.button, isDisabled && styles.buttonDisabled]}
+            style={styles.button}
             onPress={handleSignIn}
-            disabled={isDisabled}
-            activeOpacity={0.9}
+            disabled={!request || loading}
         >
             {loading ? (
-                <ActivityIndicator size="small" color={colors.bg} />
+                <ActivityIndicator size="small" color={colors.bg || "#fff"} />
             ) : (
                 <Text style={styles.buttonText}>Google로 로그인</Text>
             )}
@@ -170,41 +119,32 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
     },
-
     email: {
-        fontSize: font.small + 1, // 12
-        color: colors.text,
+        fontSize: (font?.small || 12) + 1,
+        color: colors.text || "#000",
         maxWidth: 180,
+        marginRight: 10,
     },
-
     button: {
-        paddingHorizontal: space.md - 2, // 12
-        paddingVertical: space.sm - 2, // 6
-        borderRadius: radius.pill,
-        backgroundColor: colors.accent,
-        marginLeft: space.sm, // 8 (RN gap 대체)
+        paddingHorizontal: space.md || 12,
+        paddingVertical: space.sm || 8,
+        borderRadius: radius.pill || 50,
+        backgroundColor: colors.accent || "#000",
         alignItems: "center",
         justifyContent: "center",
+        minWidth: 120,
     },
-
-    buttonDisabled: {
-        opacity: 0.55,
-    },
-
     buttonText: {
-        fontSize: font.small + 1, // 12
+        fontSize: (font?.small || 12) + 1,
         fontWeight: "800",
-        color: colors.bg,
+        color: colors.bg || "#fff",
     },
-
     logoutButton: {
-        backgroundColor: colors.card,
+        backgroundColor: colors.card || "#fff",
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: colors.border || "#ddd",
     },
-
     logoutText: {
-        color: colors.text,
-        fontWeight: "800",
+        color: colors.text || "#000",
     },
 });
