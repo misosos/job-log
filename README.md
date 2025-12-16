@@ -28,6 +28,15 @@ Firebase(Firestore/Auth)를 공통 백엔드로 사용하고, `shared/` 패키�
 ### Shared
 - 공통 feature API / types / 유틸(웹/앱에서 init 해서 사용)
 
+## 사전 준비물
+
+### Web
+- Node.js / npm
+
+### App (Android)
+- Android Studio 설치
+- Android SDK + Platform Tools
+- Android Emulator(AVD) **또는** 실제 Android 디바이스(USB 디버깅)
 ---
 
 ## 폴더 구조
@@ -97,10 +106,16 @@ npm run dev:web
 
 ## App 실행 방법 (Expo)
 
+> Android는 **에뮬레이터(AVD)** 또는 **실제 기기**가 준비되어 있어야 실행됩니다.
+
 ```bash
-#Dev Client로 네이티브 빌드/실행 (Google Sign-in 포함 네이티브 모듈 사용 시)
-cd app
+# Dev Client로 네이티브 빌드/실행 (Google Sign-in 등 네이티브 모듈 사용)
+cd job-log/app
+
+# (처음 1회 또는 네이티브 설정 변경 시) 네이티브 프로젝트 생성/정리
 npx expo prebuild --platform android --clean
+
+# Android Emulator(AVD) 실행 상태이거나, USB 디버깅된 실제 기기가 연결된 상태에서 실행
 npx expo run:android
 ```
 
