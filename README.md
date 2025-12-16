@@ -7,6 +7,32 @@ Firebase(Firestore/Auth)를 공통 백엔드로 사용하고, `shared/` 패키�
 
 ---
 
+## 주요 기능
+
+### Dashboard
+- 전체 진행 상황을 한눈에 보는 요약 화면
+
+### 지원 현황 (Applications)
+- 회사/직무별 지원 리스트 관리
+- 상태(지원/서류/면접/최종/불합격 등) 기준으로 정리
+
+### 플래너 (Planner)
+- 특정 공고(지원 건)를 선택해서 할 일을 연결
+- 해야 할 일(투두) 추가/완료 체크로 준비 과정을 관리
+- 면접/서류 준비 등 단계별로 정리하기 좋게 설계
+
+### 이력서 버전 관리 (Resumes)
+- 이력서 버전별로 제목/타겟/링크/메모 저장
+- 노션/구글드라이브 링크와 함께 버전 히스토리 관리
+- 지원 공고별로 어떤 이력서 버전을 썼는지 추적하기 용이
+
+### 면접 기록 (Interviews)
+- 면접 일정(회사/직무/날짜/시간/형태) 기록
+- 예상 질문/준비 내용/회고를 메모로 남겨 반복 개선
+- 다가올 면접(Upcoming)과 지난 면접(Review)을 분리해 확인
+
+---
+
 ## 기술 스택
 
 ### Web
@@ -28,15 +54,6 @@ Firebase(Firestore/Auth)를 공통 백엔드로 사용하고, `shared/` 패키�
 ### Shared
 - 공통 feature API / types / 유틸(웹/앱에서 init 해서 사용)
 
-## 사전 준비물
-
-### Web
-- Node.js / npm
-
-### App (Android)
-- Android Studio 설치
-- Android SDK + Platform Tools
-- Android Emulator(AVD) **또는** 실제 Android 디바이스(USB 디버깅)
 ---
 
 ## 폴더 구조
@@ -106,16 +123,13 @@ npm run dev:web
 
 ## App 실행 방법 (Expo)
 
-> Android는 **에뮬레이터(AVD)** 또는 **실제 기기**가 준비되어 있어야 실행됩니다.
+> **사전 준비:** 앱은 **Android 에뮬레이터(Android Studio AVD)** 또는 **실기기**가 필요합니다.
+> - Android Studio 설치 → AVD Manager에서 Emulator 생성/실행
+> - 또는 USB 디버깅 가능한 Android 실기기 연결
 
 ```bash
-# Dev Client로 네이티브 빌드/실행 (Google Sign-in 등 네이티브 모듈 사용)
-cd job-log/app
-
-# (처음 1회 또는 네이티브 설정 변경 시) 네이티브 프로젝트 생성/정리
+# Dev Client로 네이티브 빌드/실행 (Google Sign-in 포함 네이티브 모듈 사용 시)
+cd app
 npx expo prebuild --platform android --clean
-
-# Android Emulator(AVD) 실행 상태이거나, USB 디버깅된 실제 기기가 연결된 상태에서 실행
 npx expo run:android
 ```
-
