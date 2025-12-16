@@ -10,6 +10,10 @@ type LocationState = {
     from?: { pathname?: string };
 } | null;
 
+function resolveFromPath(state: LocationState): string {
+    return state?.from?.pathname ?? "/";
+}
+
 export function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -17,8 +21,7 @@ export function LoginPage() {
     const { rememberMe, setRememberMe } = useAuth();
 
     const fromPath = useMemo(() => {
-        const state = location.state as LocationState;
-        return state?.from?.pathname ?? "/";
+        return resolveFromPath(location.state as LocationState);
     }, [location.state]);
 
     const {
@@ -40,6 +43,7 @@ export function LoginPage() {
 
     const isSignup = mode === "signup";
 
+    // 로그인 완료 시 원래 가려던 경로(없으면 /)로 이동
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) navigate(fromPath, { replace: true });
@@ -47,6 +51,7 @@ export function LoginPage() {
         return unsubscribe;
     }, [navigate, fromPath]);
 
+    // 제출 직전에 rememberMe에 맞는 persistence 적용
     const onSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
             await applyWebAuthPersistence(rememberMe);
@@ -61,6 +66,13 @@ export function LoginPage() {
         },
         [setRememberMe],
     );
+
+    const submitText = loading ? "처리 중..." : isSignup ? "회원가입" : "이메일로 로그인";
+    const switchHint = isSignup ? "이미 계정이 있나요?" : "아직 계정이 없나요?";
+    const switchActionText = isSignup ? "로그인하기" : "회원가입하기";
+
+    const inputClassName =
+        "block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none";
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-rose-50 px-4">
@@ -82,7 +94,7 @@ export function LoginPage() {
                                 type="text"
                                 value={displayName}
                                 onChange={(e) => setDisplayName(e.target.value)}
-                                className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
+                                className={inputClassName}
                                 autoComplete="name"
                             />
                         </div>
@@ -98,7 +110,7 @@ export function LoginPage() {
                             value={email}
                             autoComplete="email"
                             onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
+                            className={inputClassName}
                             placeholder="you@example.com"
                         />
                     </div>
@@ -113,7 +125,7 @@ export function LoginPage() {
                             value={password}
                             autoComplete={isSignup ? "new-password" : "current-password"}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
+                            className={inputClassName}
                         />
                     </div>
 
@@ -129,7 +141,7 @@ export function LoginPage() {
                                 value={passwordConfirm}
                                 autoComplete="new-password"
                                 onChange={(e) => setPasswordConfirm(e.target.value)}
-                                className="block w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-900 placeholder-rose-300 focus:border-rose-400 focus:outline-none"
+                                className={inputClassName}
                             />
                         </div>
                     )}
@@ -157,34 +169,19 @@ export function LoginPage() {
                         disabled={loading || !isFormValid}
                         className="mt-2 flex w-full items-center justify-center rounded-md bg-rose-500 px-3 py-2 text-sm font-semibold text-rose-50 shadow-sm transition hover:bg-rose-400 disabled:opacity-60"
                     >
-                        {loading ? "처리 중..." : isSignup ? "회원가입" : "이메일로 로그인"}
+                        {submitText}
                     </button>
                 </form>
 
                 <div className="mb-4 text-center text-xs text-rose-700/80">
-                    {isSignup ? (
-                        <>
-                            이미 계정이 있나요?{" "}
-                            <button
-                                type="button"
-                                onClick={toggleMode}
-                                className="font-semibold text-rose-500 hover:underline"
-                            >
-                                로그인하기
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            아직 계정이 없나요?{" "}
-                            <button
-                                type="button"
-                                onClick={toggleMode}
-                                className="font-semibold text-rose-500 hover:underline"
-                            >
-                                회원가입하기
-                            </button>
-                        </>
-                    )}
+                    {switchHint}{" "}
+                    <button
+                        type="button"
+                        onClick={toggleMode}
+                        className="font-semibold text-rose-500 hover:underline"
+                    >
+                        {switchActionText}
+                    </button>
                 </div>
 
                 <div className="my-4 flex items-center gap-2">
