@@ -71,10 +71,10 @@ function CreateResumeSheet({
         >
             <KeyboardAvoidingView
                 style={styles.sheetRoot}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
             >
-                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+                <Pressable pointerEvents="box-only" style={styles.sheetBackdrop} onPress={onClose} />
 
                 <View style={styles.modalCard}>
                     <View style={styles.sheetHandle} />
@@ -93,7 +93,7 @@ function CreateResumeSheet({
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
                         nestedScrollEnabled
-                        automaticallyAdjustKeyboardInsets
+                        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
                     >
                         <ResumeForm
                             title={title}
