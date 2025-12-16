@@ -15,7 +15,9 @@ Firebase(Firestore/Auth)를 공통 백엔드로 사용하고, `shared/` 패키�
 ### App
 - React Native (Expo) + TypeScript
 - React Navigation
-- expo-auth-session (OAuth 리다이렉트 처리)
+- Firebase Auth/Firestore (Web SDK)
+- Google 로그인: @react-native-google-signin/google-signin
+- (Dev Client) `expo prebuild` + `expo run:android` 기반
 
 ### Backend (BaaS)
 - Firebase Auth
@@ -48,6 +50,7 @@ npm install
 
 > 개별 폴더(`web/`, `app/`, `shared/`)에서 `npm install`을 반복할 필요가 없습니다.
 
+
 ## Web 실행 방법
 
 ```bash
@@ -62,16 +65,22 @@ npm run build:web
 npm -w web run preview
 ```
 
+
 ## App 실행 방법 (Expo)
 
 ```bash
 cd job-log
 
-# Expo 개발 서버
+# 1) JS 번들러만 띄우기(Expo Go/Dev Client 공통)
 npm -w app run start
-# 또는
-npx -w app expo start
+
+# 2) Dev Client로 네이티브 빌드/실행 (Google Sign-in 포함 네이티브 모듈 사용 시)
+cd app
+rm -rf android  # (선택) 완전 클린
+npx expo prebuild --platform android --clean
+npx expo run:android
 ```
+
 
 ---
 
@@ -86,4 +95,3 @@ npm run build
 # 타입체크
 npm run typecheck
 ```
-
