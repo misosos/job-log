@@ -59,13 +59,13 @@ export function AppHeader() {
 
     const handleSignOut = useCallback(async () => {
         try {
-            await signOut(auth);
             setMenuVisible(false);
-            navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+            await signOut(auth);
+
         } catch (error) {
             console.error("로그아웃 실패:", error);
         }
-    }, [navigation]);
+    }, []);
 
     const navItems = useMemo(() => NAV_ITEMS, []);
 

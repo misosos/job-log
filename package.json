@@ -13,10 +13,22 @@
     "build": "npm run build:shared && npm run build:web",
     "dev:web": "npm -w web run dev",
     "lint:web": "npm -w web run lint",
-    "typecheck": "npm -w shared run typecheck && npm -w web run typecheck"
+    "typecheck": "npm -w shared run typecheck && npm -w web run typecheck",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "overrides": {
     "react": "19.1.0",
     "react-dom": "19.1.0"
-  }
+  },
+  "dependencies": {
+    "@react-native-firebase/app": "^23.7.0",
+    "@react-native-firebase/auth": "^23.7.0",
+    "@react-native-google-signin/google-signin": "^16.0.0",
+    "expo-dev-client": "~6.0.20",
+    "expo": "~54.0.29",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  },
+  "version": "1.0.0"
 }

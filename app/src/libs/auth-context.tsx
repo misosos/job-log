@@ -6,9 +6,10 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import { auth } from "./firebase";
-import { signOut, type User } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { auth } from "./firebase";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 
 type AuthContextValue = {
     user: User | null;
@@ -24,8 +25,11 @@ const REMEMBER_KEY = "remember_me";
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+
     const [rememberMe, setRememberMeState] = useState(false);
     const rememberMeRef = useRef(false);
+
+    const bootstrappedRef = useRef(false);
 
     const setRememberMe = async (enabled: boolean) => {
         setRememberMeState(enabled);
@@ -34,11 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        let unsub: (() => void) | undefined;
+        let unsubscribe: (() => void) | null = null;
         let cancelled = false;
 
         (async () => {
             try {
+                // 1) rememberMe 로드
                 const stored = await AsyncStorage.getItem(REMEMBER_KEY);
                 const remembered = stored === "1";
                 if (cancelled) return;
@@ -46,34 +51,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setRememberMeState(remembered);
                 rememberMeRef.current = remembered;
 
-                unsub = auth.onAuthStateChanged(async (u) => {
-                    // rememberMe가 OFF인데, 이전 세션이 복원된 경우 → 앱 시작 시 자동 로그아웃
-                    if (!rememberMeRef.current && u) {
-                        try {
-                            await signOut(auth);
-                        } catch {
-                            // ignore
+                // 2) auth 구독
+                unsubscribe = onAuthStateChanged(auth, async (u) => {
+                    if (!bootstrappedRef.current) {
+                        bootstrappedRef.current = true;
+
+                        if (!rememberMeRef.current && u) {
+                            try {
+                                await signOut(auth);
+                            } catch {
+                                // ignore
+                            }
+                            if (!cancelled) {
+                                setUser(null);
+                                setLoading(false);
+                            }
+                            return;
                         }
-                        setUser(null);
-                        setLoading(false);
-                        return;
                     }
 
-                    setUser(u);
-                    setLoading(false);
+                    if (!cancelled) {
+                        setUser(u ?? null);
+                        setLoading(false);
+                    }
                 });
             } catch {
-                // AsyncStorage 읽기 실패 시에도 auth 구독은 유지
-                unsub = auth.onAuthStateChanged((u) => {
-                    setUser(u);
-                    setLoading(false);
+                unsubscribe = onAuthStateChanged(auth, (u) => {
+                    if (!cancelled) {
+                        setUser(u ?? null);
+                        setLoading(false);
+                    }
                 });
             }
         })();
 
         return () => {
             cancelled = true;
-            if (unsub) unsub();
+            if (unsubscribe) unsubscribe();
         };
     }, []);
 

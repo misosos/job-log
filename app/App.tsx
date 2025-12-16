@@ -1,4 +1,5 @@
 // App.tsx
+import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -51,12 +52,11 @@ function initSharedApisOnce() {
     initResumesApi(db);
     initEmailAuthApi(auth);
 }
-
 initSharedApisOnce();
 
-// Screen에 PageLayout을 깔끔하게 감싸는 래퍼(렌더 안에서 함수 생성 X)
+// Screen에 PageLayout을 깔끔하게 감싸는 래퍼
 function withPageLayout<TProps extends object>(
-    Screen: React.ComponentType<TProps>,
+    Screen: React.ComponentType<TProps>
 ) {
     return function Wrapped(props: TProps) {
         return (
@@ -76,8 +76,12 @@ const InterviewsWithLayout = withPageLayout(InterviewsScreen);
 function AppNavigator() {
     return (
         <Stack.Navigator
+            // ✅ 여기 initialRouteName은 유지해도 되는데, 스택이 리마운트되므로 안정적임
             initialRouteName="Dashboard"
-            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: UI.bg } }}
+            screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: UI.bg },
+            }}
         >
             <Stack.Screen name="Dashboard" component={DashboardWithLayout} />
             <Stack.Screen name="Applications" component={ApplicationsWithLayout} />
@@ -91,7 +95,11 @@ function AppNavigator() {
 function AuthNavigator() {
     return (
         <Stack.Navigator
-            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: UI.bg } }}
+            initialRouteName="Login"
+            screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: UI.bg },
+            }}
         >
             <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>
@@ -110,8 +118,11 @@ function RootNavigator() {
         );
     }
 
+    // ✅ 핵심: user 상태에 따라 NavigationContainer를 통째로 리마운트
+    // - 로그인 성공 시 AuthNavigator 상태(로그인 화면) 날리고 AppNavigator로 즉시 전환
+    // - 로그아웃 시 AppNavigator 상태 날리고 AuthNavigator로 즉시 전환
     return (
-        <NavigationContainer>
+        <NavigationContainer key={user ? "app" : "auth"}>
             {user ? <AppNavigator /> : <AuthNavigator />}
         </NavigationContainer>
     );
