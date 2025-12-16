@@ -1,7 +1,9 @@
 # Job Log
 
-지원 현황 / 플래너 / 이력서 버전 / 면접 기록을 한 곳에서 관리하는 **웹 + 앱(Expo)** 프로젝트입니다.  
+지원 현황 / 플래너 / 이력서 버전 / 면접 기록을 한 곳에서 관리하는 **웹 + 앱** 프로젝트입니다.  
 Firebase(Firestore/Auth)를 공통 백엔드로 사용하고, `shared/` 패키지에 공통 도메인/로직을 두어 **웹과 앱이 같은 데이터 구조/기능을 공유**합니다.
+
+- **Web 배포 주소:** http://113.198.66.68:13165
 
 ---
 
@@ -28,12 +30,12 @@ Firebase(Firestore/Auth)를 공통 백엔드로 사용하고, `shared/` 패키�
 
 ---
 
-## Repository Structure
+## 폴더 구조
 
 ```bash
 job-log/
   web/        # 웹(React/Vite)
-  app/        # 앱(Expo)
+  app/        # 앱(React Native)
   shared/     # 공통 types / feature api (웹/앱에서 init해서 사용)
 ```
 
@@ -48,50 +50,57 @@ cd job-log
 npm install
 ```
 
-> 개별 폴더(`web/`, `app/`, `shared/`)에서 `npm install`을 반복할 필요가 없습니다.
+
+---
+
+## 환경변수 설정
+
+> **중요:** `.env.local` / `google-services.json` 같은 민감 파일은 Git에 커밋하지 않습니다.
+
+### Web (Vite)
+
+- 위치: `job-log/web/.env.local`
+- 예시 파일: `job-log/web/.env.example` 를 복사해서 사용
+
+```bash
+cd job-log/web
+cp .env.example .env.local
+```
+
+### App (Expo / React Native)
+
+- 위치: `job-log/app/.env.local`
+- 예시 파일: `job-log/app/.env.example` 를 복사해서 사용
+
+```bash
+cd job-log/app
+cp .env.example .env.local
+```
+
+### Android Google 로그인 (google-services.json)
+
+- 위치: `job-log/app/google-services.json`
+- Firebase 콘솔에서 **Android 앱(package: `com.misosos.joblog`)** 용 `google-services.json` 를 내려받아 위 경로에 두면 됩니다.
+- `app.json`(또는 `app.config.*`)의 `android.googleServicesFile`이 `./google-services.json` 를 가리키도록 유지합니다.
+
+
+---
 
 
 ## Web 실행 방법
 
 ```bash
-# 개발 서버 (HMR)
+# 개발 서버 
 cd job-log
 npm run dev:web
-
-# 빌드
-npm run build:web
-
-# (배포처럼) 빌드 결과 미리보기
-npm -w web run preview
 ```
-
 
 ## App 실행 방법 (Expo)
 
 ```bash
-cd job-log
-
-# 1) JS 번들러만 띄우기(Expo Go/Dev Client 공통)
-npm -w app run start
-
-# 2) Dev Client로 네이티브 빌드/실행 (Google Sign-in 포함 네이티브 모듈 사용 시)
+#Dev Client로 네이티브 빌드/실행 (Google Sign-in 포함 네이티브 모듈 사용 시)
 cd app
-rm -rf android  # (선택) 완전 클린
 npx expo prebuild --platform android --clean
 npx expo run:android
 ```
 
-
----
-
-## 공통 빌드/타입체크
-
-```bash
-cd job-log
-
-# shared → web 순서로 전체 빌드
-npm run build
-
-# 타입체크
-npm run typecheck
-```

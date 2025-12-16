@@ -1,13 +1,13 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { PageLayout } from "./components/layout/PageLayout";
-import { DashboardPage } from "./pages/dashboard/DashboardPage";
+import { LoginPage } from "./pages/auth/LoginPage";
 import { ApplicationsPage } from "./pages/applications/ApplicationsPage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
+import { InterviewsPage } from "./pages/interviews/InterviewsPage";
 import { PlannerPage } from "./pages/planner/PlannerPage";
 import { ResumesPage } from "./pages/resumes/ResumesPage";
-import { InterviewsPage } from "./pages/interviews/InterviewsPage";
-import { LoginPage } from "./pages/auth/LoginPage";
 
 import { useAuth } from "./libs/auth-context";
 
@@ -34,52 +34,27 @@ function RequireAuth({ children }: RequireAuthProps) {
     return <>{children}</>;
 }
 
+const protectedRoutes: Array<{ path: string; element: ReactNode }> = [
+    { path: "/", element: <DashboardPage /> },
+    { path: "/applications", element: <ApplicationsPage /> },
+    { path: "/planner", element: <PlannerPage /> },
+    { path: "/resumes", element: <ResumesPage /> },
+    { path: "/interviews", element: <InterviewsPage /> },
+];
+
 function App() {
     return (
         <PageLayout>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
 
-                <Route
-                    path="/"
-                    element={
-                        <RequireAuth>
-                            <DashboardPage />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/applications"
-                    element={
-                        <RequireAuth>
-                            <ApplicationsPage />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/planner"
-                    element={
-                        <RequireAuth>
-                            <PlannerPage />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/resumes"
-                    element={
-                        <RequireAuth>
-                            <ResumesPage />
-                        </RequireAuth>
-                    }
-                />
-                <Route
-                    path="/interviews"
-                    element={
-                        <RequireAuth>
-                            <InterviewsPage />
-                        </RequireAuth>
-                    }
-                />
+                {protectedRoutes.map(({ path, element }) => (
+                    <Route
+                        key={path}
+                        path={path}
+                        element={<RequireAuth>{element}</RequireAuth>}
+                    />
+                ))}
 
                 {/* 404 */}
                 <Route
