@@ -146,10 +146,11 @@ function CreateTaskSheet({
         >
             <KeyboardAvoidingView
                 style={styles.sheetRoot}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                enabled={Platform.OS === "ios"}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
             >
-                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+                <Pressable style={styles.sheetBackdrop} onPress={onClose} pointerEvents="box-only" />
 
                 <View style={styles.modalCard}>
                     <View style={styles.sheetHandle} />
@@ -168,7 +169,7 @@ function CreateTaskSheet({
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
                         nestedScrollEnabled
-                        automaticallyAdjustKeyboardInsets
+                        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
                     >
                         <PlannerNewTaskForm
                             title={title}

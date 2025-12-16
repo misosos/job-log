@@ -18,7 +18,6 @@ import { ApplicationCreateForm } from "../../components/applications/Application
 import { ApplicationEditModal } from "../../components/applications/ApplicationEditModal";
 import { useApplicationsPageController } from "../../features/applications/useApplicationsPageController";
 
-// ✅ 테마 토큰 import (경로만 맞춰줘)
 import { colors, space, radius, font } from "../../styles/theme";
 
 type CreateApplicationSheetProps = {
@@ -83,12 +82,12 @@ function CreateApplicationSheet({
         >
             <KeyboardAvoidingView
                 style={styles.sheetRoot}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
             >
-                <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+                <Pressable style={styles.sheetBackdrop} onPress={onClose} pointerEvents="box-only" />
 
-                <View style={styles.modalCard}>
+                <View style={styles.modalCard} pointerEvents="auto">
                     <View style={styles.sheetHandle} />
 
                     <View style={styles.modalHeader}>
@@ -102,10 +101,10 @@ function CreateApplicationSheet({
                         style={styles.modalBody}
                         contentContainerStyle={styles.modalBodyContent}
                         showsVerticalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+                        keyboardShouldPersistTaps="always"
+                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
                         nestedScrollEnabled
-                        automaticallyAdjustKeyboardInsets
+                        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
                     >
                         <ApplicationCreateForm
                             key={`create-${nonce}`}
@@ -365,6 +364,8 @@ const styles = StyleSheet.create({
     },
     sheetBackdrop: {
         ...StyleSheet.absoluteFillObject,
+        zIndex: 1,
+        elevation: 1,
     },
 
     sheetHandle: {
@@ -377,6 +378,7 @@ const styles = StyleSheet.create({
     },
 
     modalCard: {
+        zIndex: 2,
         width: "100%",
         height: "85%",
         maxHeight: "92%",
